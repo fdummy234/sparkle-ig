@@ -469,7 +469,22 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     if (!row)
         return nil;
 
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    // Phase 0.2 — recyclage des cellules. Un identifiant PAR TYPE : une cellule
+    // Switch ne renaît jamais en Navigation, chaque branche du switch retrouve
+    // donc la famille d'accessoires qu'elle attend. Tout le reste de la méthode
+    // reconfigure déjà chaque propriété à chaque passage (contentConfiguration
+    // repart d'une config par défaut, accessoires réassignés) — le recyclage
+    // change le coût du défilement, pas l'état des rangées.
+    NSString *reuseIdentifier = [NSString stringWithFormat:@"SPKSettingsCell.%ld", (long)row.type];
+    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier];
+    if (cell == nil) {
+        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
+    }
+    // Un recyclé du même type peut porter l'accessoire de sa vie d'avant :
+    // on repart neutre, chaque branche pose le sien.
+    cell.accessoryView = nil;
+    cell.editingAccessoryView = nil;
+    cell.accessoryType = UITableViewCellAccessoryNone;
     UIListContentConfiguration *cellContentConfig = cell.defaultContentConfiguration;
     // Plain (flat) pages use the page background so rows sit edge-to-edge with no
     // grouped-card tint; inset-grouped pages keep the elevated secondary color.
