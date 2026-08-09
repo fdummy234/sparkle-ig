@@ -24,6 +24,14 @@ typedef NS_ENUM(NSInteger, SPKTableCell) {
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic, strong) NSString *subtitle;
 
+/// Long-form explanation, shown only in the section's ⓘ sheet. Any section with
+/// at least one row carrying `helpText` gets its ⓘ button automatically.
+///
+/// The sheet prints the row's title above this text, so a `helpText` that merely
+/// restates the title reads twice. Leave it nil there — the row is then simply
+/// absent from the sheet.
+@property (nonatomic, copy, nullable) NSString *helpText;
+
 @property (nonatomic, strong, nullable) UIImage *icon;
 @property (nonatomic, strong, nullable) UIColor *iconTintColor;
 @property (nonatomic, copy, nullable) UIImage * (^iconProvider)(void);
