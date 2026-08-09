@@ -1,10 +1,9 @@
 name: Build Sparkle tweak for Rootless
 
 on:
-    push:
-        branches:
-            - 'main'
-            - 'dev'
+    # Manual only. The on-push trigger rebuilt the tweak on every commit —
+    # including doc or workflow edits — burning runner minutes for builds
+    # nobody asked for. Launch from the Actions tab when you want a build.
     workflow_dispatch:
   
 concurrency:

@@ -165,7 +165,7 @@ jobs:
               uses: actions/upload-artifact@v4
               with:
                 name: ${{ steps.package_name.outputs.package }}
-                path: ${{ github.workspace }}/main/${{ steps.package_name.outputs.path }}
+                path: ${{ github.workspace }}/${{ steps.package_name.outputs.path }}
                 if-no-files-found: error
 
             - name: Create Release
