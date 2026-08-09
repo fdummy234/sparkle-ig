@@ -12,6 +12,7 @@
 #import "SPKOnboardingViewController.h"
 #import "SPKPreferenceAvailability.h"
 #import "SPKWhatsNewViewController.h"
+#import "SPKSettingsHelpSheetViewController.h"
 
 static char rowStaticRef[] = "row";
 static CGFloat const kSPKSettingsRemoteImageSize = 45.0;
@@ -62,6 +63,7 @@ static double SPKNormalizedStepperValue(SPKSetting *row, double value) {
 @property (nonatomic) BOOL defersRestartPrompt;
 @property (nonatomic) BOOL hasPendingRestartChanges;
 @property (nonatomic) BOOL didAttemptOnboarding;
+@property (nonatomic, strong) NSMutableDictionary<NSNumber *, UIView *> *footerViewCache;
 
 @end
 
@@ -309,7 +311,17 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 }
 
 - (UITableViewStyle)preferredTableViewStyle {
-    return UITableViewStyleInsetGrouped;
+    // Convention v1 (GO gate 0) : habillage natif Instagram — rangées pleine
+    // largeur, pas de cartes. Le reste du VC branche déjà sur ce style.
+    return UITableViewStylePlain;
+}
+
+- (void)setSections:(NSMutableArray *)sections {
+    _sections = sections;
+    // Les vues de pied sont indexées par numéro de section : dès que la liste
+    // change (recherche, hiddenProvider, replaceSections:), les index ne
+    // désignent plus les mêmes sections.
+    [_footerViewCache removeAllObjects];
 }
 
 - (void)viewDidLoad {
@@ -349,6 +361,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     // with long footers like Storage). Computing the real heights up front removes it.
     self.tableView.estimatedSectionHeaderHeight = 0.0;
     self.tableView.estimatedSectionFooterHeight = 0.0;
+
+    self.footerViewCache = [NSMutableDictionary dictionary];
 
     [self.view addSubview:self.tableView];
     [self setupNavigationItems];
@@ -753,7 +767,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     NSArray<NSString *> *components = self.sections[section][@"breadcrumbComponents"];
     if (![self isSearching] || ![components isKindOfClass:[NSArray class]] || components.count == 0) {
-        return nil;
+        return [self spk_nativeHeaderForSection:section];
     }
 
     UITableViewHeaderFooterView *header = [[UITableViewHeaderFooterView alloc] initWithReuseIdentifier:nil];
@@ -823,6 +837,89 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     return self.sections[section][@"footer"];
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    // Convention : aucun pied de texte. Une bande pleine largeur sépare les
+    // groupes, comme dans les réglages natifs d'Instagram.
+    UIView *band = [UIView new];
+    band.backgroundColor = [UIColor colorWithRed:0.937 green:0.937 blue:0.945 alpha:1.0];  // #EFEFF1
+    return band;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return (section == (NSInteger)self.sections.count - 1) ? 24.0 : 8.0;
+}
+
+- (UIView *)spk_nativeHeaderForSection:(NSInteger)section {
+    NSString *title = self.sections[section][@"header"];
+    NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
+    if (title.length == 0 && helpRows.count == 0) {
+        return nil;  // heightForHeaderInSection écrase déjà à CGFLOAT_MIN
+    }
+
+    NSNumber *cacheKey = @(section);
+    UIView *cached = self.footerViewCache[cacheKey];
+    if (cached) {
+        return cached;
+    }
+
+    UITableViewHeaderFooterView *header = [[UITableViewHeaderFooterView alloc] initWithReuseIdentifier:nil];
+    header.contentView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
+
+    UILabel *label = [UILabel new];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    label.text = title;
+    UIFont *base = [UIFont systemFontOfSize:14.5 weight:UIFontWeightSemibold];
+    label.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:base];
+    label.adjustsFontForContentSizeCategory = YES;
+    label.textColor = [UIColor colorWithRed:0.396 green:0.404 blue:0.420 alpha:1.0];  // #65676B
+    [header.contentView addSubview:label];
+
+    NSMutableArray<NSLayoutConstraint *> *constraints = [@[
+        [label.leadingAnchor constraintEqualToAnchor:header.contentView.leadingAnchor constant:16.0],
+        [label.topAnchor constraintEqualToAnchor:header.contentView.topAnchor constant:18.0],
+        [label.bottomAnchor constraintEqualToAnchor:header.contentView.bottomAnchor constant:-6.0]
+    ] mutableCopy];
+
+    if (helpRows.count > 0) {
+        UIButton *helpButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        helpButton.translatesAutoresizingMaskIntoConstraints = NO;
+        helpButton.tag = section;
+        helpButton.tintColor = [UIColor colorWithRed:0.651 green:0.651 blue:0.675 alpha:1.0];  // #A6A6AC
+        helpButton.accessibilityLabel = @"About these settings";
+        [helpButton setImage:[UIImage systemImageNamed:@"info.circle"
+                                     withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:17.0
+                                                                                                       weight:UIImageSymbolWeightRegular]]
+                    forState:UIControlStateNormal];
+        [helpButton addTarget:self action:@selector(spk_helpButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
+        helpButton.contentEdgeInsets = UIEdgeInsetsMake(12.0, 12.0, 12.0, 12.0);  // cible 44 pt
+        [header.contentView addSubview:helpButton];
+        [constraints addObjectsFromArray:@[
+            [helpButton.trailingAnchor constraintEqualToAnchor:header.contentView.trailingAnchor constant:-6.0],
+            [helpButton.centerYAnchor constraintEqualToAnchor:label.centerYAnchor constant:2.0],
+            [label.trailingAnchor constraintLessThanOrEqualToAnchor:helpButton.leadingAnchor constant:-4.0]
+        ]];
+    } else {
+        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:header.contentView.trailingAnchor constant:-16.0]];
+    }
+    [NSLayoutConstraint activateConstraints:constraints];
+
+    self.footerViewCache[cacheKey] = header;
+    return header;
+}
+
+- (void)spk_helpButtonTapped:(UIButton *)sender {
+    NSInteger section = sender.tag;
+    if (section < 0 || section >= (NSInteger)self.sections.count)
+        return;
+
+    NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
+    // Les sections sans titre (Meta AI, par ex.) empruntent le titre de la page.
+    NSString *header = self.sections[section][@"header"];
+    [SPKSettingsHelpSheetViewController presentForSectionTitle:header.length > 0 ? header : self.title
+                                                          rows:helpRows
+                                            fromViewController:self];
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
