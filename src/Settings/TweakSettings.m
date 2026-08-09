@@ -32,8 +32,9 @@ static void SPKCountRows(NSArray *rows, NSUInteger *on, NSUInteger *total) {
     for (SPKSetting *row in rows) {
         if (![row isKindOfClass:[SPKSetting class]])
             continue;
-        if (row.navSections.count > 0) {
-            SPKCountRowsInSections(row.navSections, on, total);
+        if (row.navSections.count > 0 || row.searchSectionsProvider != nil) {
+            // Non récursif : « N active » compte la page elle-même. En récursif,
+            // Interface additionnait ses sous-pages générées (138 à l'écran).
             continue;
         }
         if (row.defaultsKey.length == 0)
@@ -51,12 +52,17 @@ static void SPKCountRowsInSections(NSArray *sections, NSUInteger *on, NSUInteger
 }
 
 static SPKSetting *SPKRootRow(SPKSetting *topic) {
-    NSArray *navSections = topic.navSections;
-    if (navSections.count == 0)
+    // Stories, Messages et Instants n'ont pas de navSections : leurs sections
+    // vivent derrière searchSectionsProvider (le même bloc qui nourrit la
+    // recherche). On boit à la même source, paresseusement, à chaque affichage.
+    NSArray *eagerSections = topic.navSections;
+    NSArray * (^lazySections)(void) = topic.searchSectionsProvider;
+    if (eagerSections.count == 0 && lazySections == nil)
         return topic;
     topic.accessoryTextProvider = ^NSString * {
+        NSArray *sections = eagerSections.count > 0 ? eagerSections : lazySections();
         NSUInteger on = 0, total = 0;
-        SPKCountRowsInSections(navSections, &on, &total);
+        SPKCountRowsInSections(sections, &on, &total);
         if (total == 0)
             return nil;  // page informative (About) : pas d'accessoire
         return on == 0 ? @"Off" : [NSString stringWithFormat:@"%lu active", (unsigned long)on];

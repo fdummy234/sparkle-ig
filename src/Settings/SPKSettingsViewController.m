@@ -363,6 +363,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     self.tableView.estimatedSectionFooterHeight = 0.0;
 
     self.footerViewCache = [NSMutableDictionary dictionary];
+    // Natif IG : aucune hairline entre les rangées (les bandes de groupe suffisent).
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
 
     [self.view addSubview:self.tableView];
     [self setupNavigationItems];
@@ -829,10 +831,24 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     // Flat pages: collapse the empty section header so rows meet the nav bar with
     // no grey plain-header strip.
     NSString *header = self.sections[section][@"header"];
-    if ([self preferredTableViewStyle] == UITableViewStylePlain && header.length == 0) {
+    NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
+    if ([self preferredTableViewStyle] == UITableViewStylePlain && header.length == 0 && helpRows.count == 0) {
         return CGFLOAT_MIN;
     }
-    return UITableViewAutomaticDimension;
+    UIView *native = [self spk_nativeHeaderForSection:section];
+    if (native == nil) {
+        return UITableViewAutomaticDimension;
+    }
+    // estimatedSectionHeaderHeight est à 0 : sans mesure explicite, la vue custom
+    // se rend écrasée. Même patron que les footers — le cache rend l'appel gratuit.
+    CGFloat width = CGRectGetWidth(tableView.bounds);
+    if (width <= 0.0) {
+        width = CGRectGetWidth(UIScreen.mainScreen.bounds);
+    }
+    CGSize fitting = [native systemLayoutSizeFittingSize:CGSizeMake(width, UILayoutFittingCompressedSize.height)
+                           withHorizontalFittingPriority:UILayoutPriorityRequired
+                                 verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
+    return MAX(fitting.height, 30.0);
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
@@ -855,7 +871,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     NSString *title = self.sections[section][@"header"];
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
     if (title.length == 0 && helpRows.count == 0) {
-        return nil;  // heightForHeaderInSection écrase déjà à CGFLOAT_MIN
+        return nil;
     }
 
     NSNumber *cacheKey = @(section);
@@ -864,8 +880,13 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         return cached;
     }
 
-    UITableViewHeaderFooterView *header = [[UITableViewHeaderFooterView alloc] initWithReuseIdentifier:nil];
-    header.contentView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
+    // Un UIView nu, PAS un UITableViewHeaderFooterView : quand
+    // titleForHeaderInSection: fournit aussi le titre, UIKit remplit le
+    // textLabel intégré du HeaderFooterView par-dessus notre label — c'était
+    // le texte dédoublé de la capture. Un UIView n'a rien à remplir.
+    UIView *container = [UIView new];
+    // Opaque : au pinning du style plain, rien ne transparaît derrière.
+    container.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
 
     UILabel *label = [UILabel new];
     label.translatesAutoresizingMaskIntoConstraints = NO;
@@ -874,12 +895,12 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     label.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:base];
     label.adjustsFontForContentSizeCategory = YES;
     label.textColor = [UIColor colorWithRed:0.396 green:0.404 blue:0.420 alpha:1.0];  // #65676B
-    [header.contentView addSubview:label];
+    [container addSubview:label];
 
     NSMutableArray<NSLayoutConstraint *> *constraints = [@[
-        [label.leadingAnchor constraintEqualToAnchor:header.contentView.leadingAnchor constant:16.0],
-        [label.topAnchor constraintEqualToAnchor:header.contentView.topAnchor constant:18.0],
-        [label.bottomAnchor constraintEqualToAnchor:header.contentView.bottomAnchor constant:-6.0]
+        [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16.0],
+        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:18.0],
+        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-6.0]
     ] mutableCopy];
 
     if (helpRows.count > 0) {
@@ -893,20 +914,20 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                                                                                                        weight:UIImageSymbolWeightRegular]]
                     forState:UIControlStateNormal];
         [helpButton addTarget:self action:@selector(spk_helpButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
-        helpButton.contentEdgeInsets = UIEdgeInsetsMake(12.0, 12.0, 12.0, 12.0);  // cible 44 pt
-        [header.contentView addSubview:helpButton];
+        helpButton.contentEdgeInsets = UIEdgeInsetsMake(12.0, 12.0, 12.0, 12.0);
+        [container addSubview:helpButton];
         [constraints addObjectsFromArray:@[
-            [helpButton.trailingAnchor constraintEqualToAnchor:header.contentView.trailingAnchor constant:-6.0],
+            [helpButton.trailingAnchor constraintEqualToAnchor:container.trailingAnchor constant:-6.0],
             [helpButton.centerYAnchor constraintEqualToAnchor:label.centerYAnchor constant:2.0],
             [label.trailingAnchor constraintLessThanOrEqualToAnchor:helpButton.leadingAnchor constant:-4.0]
         ]];
     } else {
-        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:header.contentView.trailingAnchor constant:-16.0]];
+        [constraints addObject:[label.trailingAnchor constraintLessThanOrEqualToAnchor:container.trailingAnchor constant:-16.0]];
     }
     [NSLayoutConstraint activateConstraints:constraints];
 
-    self.footerViewCache[cacheKey] = header;
-    return header;
+    self.footerViewCache[cacheKey] = container;
+    return container;
 }
 
 - (void)spk_helpButtonTapped:(UIButton *)sender {
