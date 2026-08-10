@@ -6,6 +6,7 @@
 #import "../../Utils.h"
 #import "../SPKPreferenceAvailability.h"
 #import "../SPKSettingsViewController.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 
 static NSString *const kSPKInstantsActionButtonEnabledKey = @"instants_action_btn";
@@ -62,33 +63,37 @@ static NSArray *SPKInstantsSettingsSections(void) {
                                                     defaultsKey:@"instants_disable_camera_control"];
                 s;
             }),
-        ],
-                        @"1. Blocks Instant capture (photo and video) without disabling received Instants. The shutter is darkened.\n"
-                        @"2. Skips the camera page Instagram opens after viewing the last Instant.\n"
-                        @"3. Stops the hardware Camera Control button (iPhone 16/17) from taking an Instant."),
-        SPKTopicSection(@"", @[
             // Same glyph the button itself wears: the global "Open Menu Icon" choice.
+            // Merged in from its own untitled one-row section — it is a camera
+            // setting like the three above.
             [SPKSetting switchCellWithTitle:@"Camera View Button"
                                        icon:SPKSettingsIcon(SPKActionButtonOpenMenuIconName())
                                 defaultsKey:@"instants_camera_btn"],
         ],
-                        @"Adds a Sparkle button to the Instants camera view to upload a photo from Photos, Files, or Gallery, and to browse the Instants you have saved."),
-        SPKTopicSection(@"Confirmation", @[
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Confirm Instant Capture"
-                                                           icon:SPKSettingsIcon(@"instants_burst")
-                                                    defaultsKey:@"instants_confirm_capture"];
-                s.enabledProvider = ^BOOL {
-                    return NO;
-                };
-                s;
-            }),
-            [SPKSetting switchCellWithTitle:@"Confirm Instant Reaction"
-                                       icon:SPKSettingsIcon(@"reactions")
-                                defaultsKey:@"instants_confirm_reaction"],
+                        @"1. Blocks Instant capture (photo and video) without disabling received Instants. The shutter is darkened.\n"
+                        @"2. Skips the camera page Instagram opens after viewing the last Instant.\n"
+                        @"3. Stops the hardware Camera Control button (iPhone 16/17) from taking an Instant.\n"
+                        @"4. Adds a Sparkle button to the Instants camera view to upload a photo from Photos, Files, or Gallery, and to browse the Instants you have saved."),
+        // Convention v1.2 gate row — see SPKToggleMenu.h. "Instants ›
+        // Confirmations › Capture": both dropped words sit right above.
+        // Capture keeps its disabled state (feature suspended).
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                ({
+                    SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:@"Capture"
+                                                                      iconName:@"instants_burst"
+                                                                   defaultsKey:@"instants_confirm_capture"];
+                    item.enabledProvider = ^BOOL {
+                        return NO;
+                    };
+                    item;
+                }),
+                [SPKToggleMenuItem itemWithTitle:@"Reaction"
+                                        iconName:@"reactions"
+                                     defaultsKey:@"instants_confirm_reaction"],
+            ])
         ],
-                        @"1. Asks for confirmation when you send a captured Instant. Temporarily unavailable.\n"
-                        @"2. Shows a confirmation alert before an Instant reaction is sent."),
+                        nil),
     ];
 }
 
@@ -100,7 +105,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
 
 + (SPKSetting *)rootSetting {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Instants"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"instants")
                                                viewController:[[SPKInstantsSettingsViewController alloc] init]];
     setting.searchSectionsProvider = ^NSArray * {

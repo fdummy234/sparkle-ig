@@ -171,6 +171,16 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                                        icon:SPKSettingsIcon(@"trending")
                                 defaultsKey:@"interface_hide_trending_searches"],
             ({
+                // Moved from General (was "No Recent Searches") — it belongs
+                // with the rest of the search screen. The hook gates logging,
+                // hence "Disable"; the key is unchanged, so nothing migrates.
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Recent Searches"
+                                                           icon:SPKSettingsIcon(@"search")
+                                                    defaultsKey:@"general_no_recent_searches"];
+                s.searchKeywords = @"no history log recent";
+                s;
+            }),
+            ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Open Clipboard Link"
                                                            icon:SPKSettingsIcon(@"link")
                                                     defaultsKey:@"interface_open_clipboard_link"];

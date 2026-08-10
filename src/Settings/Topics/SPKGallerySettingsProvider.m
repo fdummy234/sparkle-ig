@@ -9,7 +9,7 @@
 @implementation SPKGallerySettingsProvider
 
 + (SPKSetting *)rootSetting {
-    SPKSetting *gallerySettings = [SPKSetting navigationCellWithTitle:@"Gallery Settings"
+    SPKSetting *gallerySettings = [SPKSetting navigationCellWithTitle:@"Settings"
                                                              subtitle:nil
                                                                  icon:SPKSettingsIcon(@"settings")
                                                        viewController:[[SPKGallerySettingsViewController alloc] init]];
@@ -17,21 +17,21 @@
         return [SPKGallerySettingsViewController searchSections];
     };
 
+    // One section, no header: three rows do not need two headers and a
+    // "Gallery › Settings › Gallery Settings" triple. Both footer facts merge.
     return SPKTopicNavigationSetting(@"Gallery", @"sparkle_gallery", 24.0, @[
-        SPKTopicSection(@"Access", @[
+        SPKTopicSection(@"", @[
             [SPKSetting buttonCellWithTitle:@"Open Gallery"
-                                   subtitle:@""
+                                   subtitle:nil
                                        icon:SPKSettingsIcon(@"sparkle_gallery")
                                      action:^(void) {
                                          [SPKGalleryViewController presentGallery];
                                      }],
-            SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Quick Gallery Access" icon:SPKSettingsIcon(@"circle_off") menu:SPKGalleryShortcutTargetMenu()], SPKSettingsIcon(@"circle_off"))
-        ],
-                        @"Choose the tab that opens Gallery on long press. None disables the action."),
-        SPKTopicSection(@"Settings", @[
+            SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Quick Gallery Access" icon:SPKSettingsIcon(@"circle_off") menu:SPKGalleryShortcutTargetMenu()], SPKSettingsIcon(@"circle_off")),
             gallerySettings
         ],
-                        @"The same screen you reach from inside Gallery.")
+                        @"Quick Gallery Access chooses the tab that opens Gallery on long press — None disables it. "
+                        @"Settings is the same screen you reach from inside Gallery.")
     ]);
 }
 

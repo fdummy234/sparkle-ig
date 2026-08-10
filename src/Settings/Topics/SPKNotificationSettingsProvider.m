@@ -16,7 +16,7 @@
             NSString *title = item[@"title"] ?: @"Feature";
             NSString *iconName = item[@"iconName"] ?: @"info";
             SPKSetting *setting = [SPKSetting switchCellWithTitle:title
-                                                         subtitle:@""
+                                                         subtitle:nil
                                                              icon:SPKSettingsIcon(iconName)
                                                       defaultsKey:haptics ? SPKNotificationHapticDefaultsKey(identifier) : SPKNotificationDefaultsKey(identifier)];
             setting.userInfo = @{@"defaultValue" : @YES};
@@ -76,10 +76,10 @@
                                                  : @"Requires iOS 26 or later")
                                    defaultsKey:kSPKNotificationPillLiquidGlassEnabledKey],
             [SPKSetting menuCellWithTitle:@"Download Progress"
-                                 subtitle:@""
+                                 subtitle:nil
                                      menu:SPKNotificationProgressSubtitleStyleMenu()],
             [SPKSetting menuCellWithTitle:@"Position"
-                                 subtitle:@""
+                                 subtitle:nil
                                      menu:SPKNotificationPillPositionMenu()],
             [SPKSetting stepperCellWithTitle:@"Duration"
                                     subtitle:@"Dismiss after %@%@"
@@ -93,7 +93,7 @@
                         nil),
         SPKTopicSection(@"Preview", @[
             [SPKSetting buttonCellWithTitle:@"Test Notification"
-                                   subtitle:@""
+                                   subtitle:nil
                                        icon:nil
                                      action:^{
                                          [self spk_showNextNotificationPreview];
@@ -102,7 +102,7 @@
                         nil),
         SPKTopicSection(@"", @[
             [SPKSetting navigationCellWithTitle:@"Haptics"
-                                       subtitle:@""
+                                       subtitle:nil
                                            icon:SPKSettingsIcon(@"haptics")
                                     navSections:[self spk_featureSectionsForHaptics:YES]]
         ],

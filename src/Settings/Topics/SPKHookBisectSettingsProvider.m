@@ -78,7 +78,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     };
 
     SPKSetting *summary = [SPKSetting buttonCellWithTitle:@"Blocked Time"
-                                                 subtitle:@""
+                                                 subtitle:nil
                                                      icon:nil
                                                    action:^{
                                                        SPKHookBisectReloadVisibleSettings();
@@ -90,7 +90,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     // The whole point of the scope timers: the answer is readable here, without
     // attaching a console.
     SPKSetting *worst = [SPKSetting buttonCellWithTitle:@"Most Expensive Hook"
-                                               subtitle:@""
+                                               subtitle:nil
                                                    icon:nil
                                                  action:^{
                                                      SPKPerfMeterLogSnapshot(@"worst hook");
@@ -101,7 +101,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     };
 
     SPKSetting *reset = [SPKSetting buttonCellWithTitle:@"Start New Measurement"
-                                               subtitle:@""
+                                               subtitle:nil
                                                    icon:nil
                                                  action:^{
                                                      SPKPerfMeterLogSnapshot(@"before reset");
@@ -113,7 +113,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     };
 
     SPKSetting *log = [SPKSetting buttonCellWithTitle:@"Log Snapshot"
-                                             subtitle:@""
+                                             subtitle:nil
                                                  icon:nil
                                                action:^{
                                                    SPKPerfMeterLogSnapshot(@"manual");
@@ -134,7 +134,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     // which the table only honours for button and navigation cells. Tapping just
     // re-reads the counters.
     SPKSetting *status = [SPKSetting buttonCellWithTitle:@"Skipped Installers"
-                                                subtitle:@""
+                                                subtitle:nil
                                                     icon:nil
                                                   action:^{
                                                       SPKHookBisectReloadVisibleSettings();
@@ -146,7 +146,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     };
 
     SPKSetting *skipHalf = [SPKSetting buttonCellWithTitle:@"Skip Half of Remaining"
-                                                  subtitle:@""
+                                                  subtitle:nil
                                                       icon:nil
                                                     action:^{
                                                         NSUInteger skipped = SPKHookBisectSkipHalfOfRemaining();
@@ -156,7 +156,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
                                                     }];
 
     SPKSetting *skipAll = [SPKSetting buttonCellWithTitle:@"Skip All"
-                                                 subtitle:@""
+                                                 subtitle:nil
                                                      icon:nil
                                                    action:^{
                                                        SPKHookBisectSetAll(YES);
@@ -165,7 +165,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
                                                    }];
 
     SPKSetting *restoreAll = [SPKSetting buttonCellWithTitle:@"Restore All"
-                                                    subtitle:@""
+                                                    subtitle:nil
                                                         icon:nil
                                                       action:^{
                                                           SPKHookBisectSetAll(NO);
@@ -177,7 +177,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     // table's own requiresRestart prompt, and prompting per row would fight the
     // workflow (a bisect round flips many rows at once). One explicit relaunch.
     SPKSetting *relaunch = [SPKSetting buttonCellWithTitle:@"Relaunch Instagram"
-                                                  subtitle:@""
+                                                  subtitle:nil
                                                       icon:nil
                                                     action:^{
                                                         [SPKUtils showRestartConfirmation];
@@ -225,7 +225,7 @@ static NSArray<SPKSetting *> *SPKPerfMeterRows(void) {
     }
 
     return [SPKSetting navigationCellWithTitle:@"Hook Bisect"
-                                      subtitle:@""
+                                      subtitle:nil
                                           icon:SPKSettingsIcon(@"beaker")
                                    navSections:sections];
 }

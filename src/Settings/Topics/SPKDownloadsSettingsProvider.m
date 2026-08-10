@@ -14,7 +14,7 @@
     // to the download settings. The settings sections are still surfaced to
     // settings search via the provider below.
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Downloads"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"download")
                                                viewController:[SPKDownloadsHistoryViewController new]];
     setting.searchKeywords = @"downloads history queue retry cancel duplicate parallel concurrent quality encoding ffmpeg audio resolution";

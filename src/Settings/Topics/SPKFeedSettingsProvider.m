@@ -2,6 +2,7 @@
 
 #import "../../Features/Feed/HeaderActionButton.h"
 #import "../../Shared/ActionButton/SPKActionButtonConfiguration.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 
 static NSString *const kSPKFeedActionButtonEnabledKey = @"feed_action_btn";
@@ -150,19 +151,22 @@ static NSString *const kSPKFeedActionButtonEnabledKey = @"feed_action_btn";
                                 defaultsKey:@"feed_disable_bg_refresh"]
         ],
                         nil),
-        SPKTopicSection(@"Confirmation", @[
-            [SPKSetting switchCellWithTitle:@"Confirm Like"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"feed_confirm_post_like"],
-            [SPKSetting switchCellWithTitle:@"Confirm Double Tap"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"feed_confirm_double_tap_like"],
-            [SPKSetting switchCellWithTitle:@"Confirm Repost"
-                                       icon:SPKSettingsIcon(@"repost")
-                                defaultsKey:@"feed_confirm_repost"],
-            [SPKSetting switchCellWithTitle:@"Confirm Posting Comment"
-                                       icon:SPKSettingsIcon(@"comment")
-                                defaultsKey:@"feed_confirm_post_comment"]
+        // Convention v1.2 gate row — see SPKToggleMenu.h.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Like"
+                                        iconName:@"heart"
+                                     defaultsKey:@"feed_confirm_post_like"],
+                [SPKToggleMenuItem itemWithTitle:@"Double Tap"
+                                        iconName:@"heart"
+                                     defaultsKey:@"feed_confirm_double_tap_like"],
+                [SPKToggleMenuItem itemWithTitle:@"Repost"
+                                        iconName:@"repost"
+                                     defaultsKey:@"feed_confirm_repost"],
+                [SPKToggleMenuItem itemWithTitle:@"Posting Comment"
+                                        iconName:@"comment"
+                                     defaultsKey:@"feed_confirm_post_comment"],
+            ])
         ],
                         nil)
     ]);

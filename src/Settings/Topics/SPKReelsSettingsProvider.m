@@ -1,6 +1,8 @@
 #import "SPKReelsSettingsProvider.h"
 
 #import "../../Shared/ActionButton/SPKActionButtonConfiguration.h"
+#import "../../Utils.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 
 static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
@@ -38,17 +40,28 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                        icon:SPKSettingsIcon(@"autoscroll")
                                 defaultsKey:@"reels_disable_scrolling"
                             requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Prevent Doom Scrolling"
-                                       icon:SPKSettingsIcon(@"arrow_down")
-                                defaultsKey:@"reels_prevent_doom_scroll"],
-            [SPKSetting stepperCellWithTitle:@"Doom Scrolling Limit"
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Prevent Doom Scrolling"
+                                                           icon:SPKSettingsIcon(@"arrow_down")
+                                                    defaultsKey:@"reels_prevent_doom_scroll"];
+                // The limit below only matters while this is on — grey it live.
+                s.reloadsTableOnSwitchChange = YES;
+                s;
+            }),
+            ({
+                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Doom Scrolling Limit"
                                     subtitle:@"Only loads %@ %@"
                                  defaultsKey:@"reels_doom_scroll_limit"
                                          min:1
                                          max:100
                                         step:1
                                        label:@"reels"
-                               singularLabel:@"reel"]
+                               singularLabel:@"reel"];
+                s.enabledProvider = ^BOOL {
+                    return [SPKUtils getBoolPref:@"reels_prevent_doom_scroll"];
+                };
+                s;
+            }),
         ],
                         @"1. Stop vertical swiping between reels so the current reel stays put.\n"
                         @"2. Stop loading more reels once the limit below is reached.\n"
@@ -81,21 +94,25 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                 defaultsKey:@"reels_hide_save_count"]
         ],
                         nil),
-        SPKTopicSection(@"Confirmation", @[
-            [SPKSetting switchCellWithTitle:@"Confirm Like"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"reels_confirm_like"],
-            [SPKSetting switchCellWithTitle:@"Confirm Double Tap"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"reels_confirm_double_tap_like"],
-            [SPKSetting switchCellWithTitle:@"Confirm Reel Refresh"
-                                       icon:SPKSettingsIcon(@"arrow_cw")
-                                defaultsKey:@"reels_confirm_refresh"],
-            [SPKSetting switchCellWithTitle:@"Confirm Repost"
-                                       icon:SPKSettingsIcon(@"repost")
-                                defaultsKey:@"reels_confirm_repost"]
+        // Convention v1.2 gate row — see SPKToggleMenu.h. "Reel Refresh" keeps
+        // its qualifier: the page also has Disable Reels Tab Refresh.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Like"
+                                        iconName:@"heart"
+                                     defaultsKey:@"reels_confirm_like"],
+                [SPKToggleMenuItem itemWithTitle:@"Double Tap"
+                                        iconName:@"heart"
+                                     defaultsKey:@"reels_confirm_double_tap_like"],
+                [SPKToggleMenuItem itemWithTitle:@"Reel Refresh"
+                                        iconName:@"arrow_cw"
+                                     defaultsKey:@"reels_confirm_refresh"],
+                [SPKToggleMenuItem itemWithTitle:@"Repost"
+                                        iconName:@"repost"
+                                     defaultsKey:@"reels_confirm_repost"],
+            ])
         ],
-                        @"Shows confirmation alerts before the enabled reels actions are performed.")
+                        nil)
     ]);
 }
 

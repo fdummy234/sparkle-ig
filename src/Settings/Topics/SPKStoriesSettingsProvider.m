@@ -4,6 +4,7 @@
 #import "../../Shared/Stories/SPKStoryContext.h"
 #import "../../Utils.h"
 #import "../SPKSettingsViewController.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 static NSString *const kSPKStoriesActionButtonEnabledKey = @"stories_action_btn";
 
@@ -44,7 +45,7 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
                              @"3. Mark the story as seen when you send a reply.\n"
                              @"4. Included Users require the eye button, story like, or story reply to mark seen.";
     SPKSetting *manualSeenList = [SPKSetting navigationCellWithTitle:SPKStoryManualSeenListTitle(manualSeen)
-                                                            subtitle:@""
+                                                            subtitle:nil
                                                                 icon:SPKSettingsIcon(@"users")
                                                       viewController:SPKStoryManualSeenListViewController()];
     manualSeenList.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)SPKStoryManualSeenUserList(manualSeen).count]};
@@ -82,17 +83,23 @@ static NSArray *SPKStoriesSettingsSections(void) {
         ],
                         @"1. Add an action button above the bottom story bar.\n"
                         @"2. Choose the default action. Long press opens the full menu."),
-        SPKStoriesSeenReceiptsSection(), SPKTopicSection(@"Story Navigation", @[
-            [SPKSetting switchCellWithTitle:@"Stop Auto Advance"
-                                       icon:SPKSettingsIcon(@"autoscroll")
-                                defaultsKey:@"stories_stop_auto_advance"],
+        SPKStoriesSeenReceiptsSection(), SPKTopicSection(@"Navigation", @[
+            ({
+                // Renamed from "Stop Auto Advance" — aligned with the Messages
+                // twin (lot 1) and the Disable lexicon; "stop" stays searchable.
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Auto Advance"
+                                                           icon:SPKSettingsIcon(@"autoscroll")
+                                                    defaultsKey:@"stories_stop_auto_advance"];
+                s.searchKeywords = @"stop next skip";
+                s;
+            }),
             [SPKSetting switchCellWithTitle:@"Advance on Eye Button"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"stories_advance_on_manual_seen"],
-            [SPKSetting switchCellWithTitle:@"Advance on Story Like"
+            [SPKSetting switchCellWithTitle:@"Advance on Like"
                                        icon:SPKSettingsIcon(@"heart")
                                 defaultsKey:@"stories_advance_on_like_seen"],
-            [SPKSetting switchCellWithTitle:@"Advance on Story Reply"
+            [SPKSetting switchCellWithTitle:@"Advance on Reply"
                                        icon:SPKSettingsIcon(@"reply")
                                 defaultsKey:@"stories_advance_on_reply_seen"],
         ],
@@ -100,21 +107,6 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                                          @"2. Move to the next story when you press the eye button.\n"
                                                          @"3. Move to the next story when you press like.\n"
                                                          @"4. Move to the next story when you reply."),
-        SPKTopicSection(@"Confirmations", @[
-            [SPKSetting switchCellWithTitle:@"Confirm Like"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"stories_confirm_like"],
-            [SPKSetting switchCellWithTitle:@"Confirm Quick Reaction"
-                                       icon:SPKSettingsIcon(@"reactions")
-                                defaultsKey:@"stories_confirm_quick_reaction"],
-            [SPKSetting switchCellWithTitle:@"Confirm Sticker Interaction"
-                                       icon:SPKSettingsIcon(@"sticker")
-                                defaultsKey:@"stories_confirm_sticker"]
-        ],
-                        @"1. Show a confirmation alert when you try to like a story.\n"
-                        @"2. Show a confirmation alert when you tap a quick reaction emoji.\n"
-                        @"3. Show a confirmation alert when a story has a sticker and you tap on it."),
-        
         SPKTopicSection(@"Instagram Plus", @[
             [SPKSetting switchCellWithTitle:@"Unlock Story Preview"
                                        icon:SPKSettingsIcon(@"story_preview")
@@ -158,7 +150,24 @@ static NSArray *SPKStoriesSettingsSections(void) {
                         @"1. Add a search button to your story's viewer list to search and filter anyone who viewed it.\n"
                         @"2. Hide the the \"Join a trending\" / \"Add Yours\" promo cards from stories.\n"
                         @"3. Enabling this will add a button above the bottom story bar, where you can see all mentioned users.\n"
-                        @"4. Display the vote counts for each option the poll has.")
+                        @"4. Display the vote counts for each option the poll has."),
+
+        // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
+        // section (mid-page, plural header); now closes the page like everywhere.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Like"
+                                        iconName:@"heart"
+                                     defaultsKey:@"stories_confirm_like"],
+                [SPKToggleMenuItem itemWithTitle:@"Quick Reaction"
+                                        iconName:@"reactions"
+                                     defaultsKey:@"stories_confirm_quick_reaction"],
+                [SPKToggleMenuItem itemWithTitle:@"Sticker Interaction"
+                                        iconName:@"sticker"
+                                     defaultsKey:@"stories_confirm_sticker"],
+            ])
+        ],
+                        nil)
     ];
 }
 
@@ -166,7 +175,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
 
 + (SPKSetting *)rootSetting {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Stories"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"story")
                                                viewController:[[SPKStoriesSettingsViewController alloc] init]];
     setting.searchSectionsProvider = ^NSArray * {

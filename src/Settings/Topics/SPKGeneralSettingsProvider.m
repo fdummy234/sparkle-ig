@@ -3,9 +3,9 @@
 #import "../../AssetUtils.h"
 #import "../../Shared/Account/SPKAccountManager.h"
 #import "../../Shared/ActionButton/ActionButtonCore.h"
-#import "../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../Utils.h"
 #import "../SPKActionSectionIconPickerViewController.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKAppIconCatalog.h"
 #import "../SPKAppIconPickerViewController.h"
 #import "../SPKTopicSettingsSupport.h"
@@ -21,10 +21,10 @@
 
 static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralAdsToggles(void) {
     return @[
-        @{@"title" : @"Hide Feed Ads", @"key" : @"general_hide_ads_feed"},
-        @{@"title" : @"Hide Story Ads", @"key" : @"general_hide_ads_stories"},
-        @{@"title" : @"Hide Reels Ads", @"key" : @"general_hide_ads_reels"},
-        @{@"title" : @"Hide Explore Ads", @"key" : @"general_hide_ads_explore"},
+        @{@"title" : @"Hide in Feed", @"key" : @"general_hide_ads_feed"},
+        @{@"title" : @"Hide in Stories", @"key" : @"general_hide_ads_stories"},
+        @{@"title" : @"Hide in Reels", @"key" : @"general_hide_ads_reels"},
+        @{@"title" : @"Hide in Explore", @"key" : @"general_hide_ads_explore"},
         @{@"title" : @"Hide Reels Shopping CTA", @"key" : @"general_hide_reels_shopping_cta"}
     ];
 }
@@ -45,14 +45,14 @@ static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralMetaAIToggles(
 
 static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralSuggestedUserToggles(void) {
     return @[
-        @{@"title" : @"Hide Feed Suggestions", @"key" : @"general_hide_suggested_users_feed"},
-        @{@"title" : @"Hide Reels Suggestions", @"key" : @"general_hide_suggested_users_reels"},
-        @{@"title" : @"Hide Direct Suggestions", @"key" : @"general_hide_suggested_users_msgs"},
-        @{@"title" : @"Hide Search Suggestions", @"key" : @"general_hide_suggested_users_search"},
-        @{@"title" : @"Hide Profile Suggestions", @"key" : @"general_hide_suggested_users_profile"},
-        @{@"title" : @"Hide Activity Suggestions", @"key" : @"general_hide_suggested_users_activity"},
-        @{@"title" : @"Hide Follow-List Suggestions", @"key" : @"general_hide_suggested_users_follow_lists"},
-        @{@"title" : @"Hide Subscription Suggestions", @"key" : @"general_hide_suggested_users_subscriptions"}
+        @{@"title" : @"Hide in Feed", @"key" : @"general_hide_suggested_users_feed"},
+        @{@"title" : @"Hide in Reels", @"key" : @"general_hide_suggested_users_reels"},
+        @{@"title" : @"Hide in Direct", @"key" : @"general_hide_suggested_users_msgs"},
+        @{@"title" : @"Hide in Search", @"key" : @"general_hide_suggested_users_search"},
+        @{@"title" : @"Hide in Profile", @"key" : @"general_hide_suggested_users_profile"},
+        @{@"title" : @"Hide in Activity", @"key" : @"general_hide_suggested_users_activity"},
+        @{@"title" : @"Hide in Follow Lists", @"key" : @"general_hide_suggested_users_follow_lists"},
+        @{@"title" : @"Hide in Subscriptions", @"key" : @"general_hide_suggested_users_subscriptions"}
     ];
 }
 
@@ -92,7 +92,7 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
                                                           NSArray<NSDictionary<NSString *, NSString *> *> *specs,
                                                           NSString *_Nullable searchKeywords) {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:title
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(iconName)
                                                   navSections:@[
                                                       SPKTopicSection(sectionHeader,
@@ -120,7 +120,7 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
     controller.title = @"Open Menu Icon";
 
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Open Menu Icon"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"action")
                                                viewController:controller];
     // The row's icon mirrors the chosen glyph, so the (cryptic) catalog name is
@@ -137,7 +137,7 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
     SPKAppIconPickerViewController *controller = [[SPKAppIconPickerViewController alloc] initWithSelectedIdentifier:[SPKAppIconCatalog currentAppIconIdentifier]
                                                                                                            onSelect:nil];
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"App Icon"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"app")
                                                viewController:controller];
     setting.accessoryTextProvider = ^NSString * {
@@ -156,42 +156,30 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
     // Changes which key namespace every feature reads, and most enabled-state is
     // captured at hook install, so a restart applies it cleanly.
     setting.requiresRestart = YES;
+    // Was the "How It Works" alert button — same text, standard ⓘ sheet now.
+    setting.helpText = @"Each logged-in account gets its own Sparkle settings. A newly seen "
+                       @"account starts from your current settings until you change something.\n\n"
+                       @"These stay shared across all accounts:\n"
+                       @"•  App icon\n"
+                       @"•  Appearance & Liquid Glass\n"
+                       @"•  Tab bar order & visibility\n"
+                       @"•  Quick access shortcuts (Settings & Gallery)\n"
+                       @"•  Main feed mode (For You / Following)\n"
+                       @"•  Disable video autoplay\n"
+                       @"•  Reels doom scroll & limits\n"
+                       @"•  Hide UI on capture\n"
+                       @"•  Download encoding settings\n"
+                       @"•  Gallery view, sort & lock\n"
+                       @"•  Fix duplicate notifications\n"
+                       @"•  Disable All (master switch)\n\n"
+                       @"Gallery media ownership is controlled separately in Gallery settings.";
+    setting.searchKeywords = @"how it works multi account shared";
     return setting;
-}
-
-+ (SPKSetting *)perAccountInfoSetting {
-    return [SPKSetting buttonCellWithTitle:@"How It Works"
-                                  subtitle:nil
-                                      icon:SPKSettingsIcon(@"info")
-                                    action:^{
-                                        NSString *message =
-                                            @"Each logged-in account gets its own Sparkle settings. A newly seen "
-                                            @"account starts from your current settings until you change something.\n\n"
-                                            @"These stay shared across all accounts:\n"
-                                            @"•  App icon\n"
-                                            @"•  Appearance & Liquid Glass\n"
-                                            @"•  Tab bar order & visibility\n"
-                                            @"•  Quick access shortcuts (Settings & Gallery)\n"
-                                            @"•  Main feed mode (For You / Following)\n"
-                                            @"•  Disable video autoplay\n"
-                                            @"•  Reels doom scroll & limits\n"
-                                            @"•  Hide UI on capture\n"
-                                            @"•  Download encoding settings\n"
-                                            @"•  Gallery view, sort & lock\n"
-                                            @"•  Fix duplicate notifications\n"
-                                            @"•  Disable All (master switch)\n\n"
-                                            @"Gallery media ownership is controlled separately in Gallery settings.";
-
-                                        [SPKIGAlertPresenter presentAlertFromViewController:topMostController()
-                                                                                      title:@"Per-Account Settings"
-                                                                                    message:message
-                                                                                    actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
-                                    }];
 }
 
 + (SPKSetting *)rootSetting {
     SPKSetting *clearCacheSetting = [SPKSetting buttonCellWithTitle:@"Clear Cache"
-                                                           subtitle:@""
+                                                           subtitle:nil
                                                                icon:SPKSettingsIcon(@"trash")
                                                              action:^(void) {
                                                                  unsigned long long freedBytes = [SPKUtils cleanCacheReturningFreedBytes];
@@ -214,13 +202,6 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
     copyText.helpText = @"Long-press any text field in the app.";
     copyText.searchKeywords = @"long press clipboard select";
 
-    // No footer line: "Search bars will no longer save recent searches" only
-    // restates the title, and the sheet shows the title above the text.
-    SPKSetting *noRecentSearches = [SPKSetting switchCellWithTitle:@"No Recent Searches"
-                                                              icon:SPKSettingsIcon(@"search")
-                                                       defaultsKey:@"general_no_recent_searches"];
-    noRecentSearches.searchKeywords = @"history recents search bar";
-
     SPKSetting *stripTracking = [SPKSetting switchCellWithTitle:@"Copy Links Without Tracking"
                                                            icon:SPKSettingsIcon(@"user_unfollow")
                                                     defaultsKey:@"general_strip_share_link_tracking"];
@@ -239,15 +220,6 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
                                                              icon:SPKSettingsIcon(@"group")
                                                       defaultsKey:@"general_hide_create_group"];
     hideCreateGroup.searchKeywords = @"send share sheet";
-
-    // Both "Confirm …" rows had footer lines that only said "Show a confirmation
-    // alert when …" — the title already says it.
-    SPKSetting *confirmCreateGroup = [SPKSetting switchCellWithTitle:@"Confirm Create Group"
-                                                                icon:SPKSettingsIcon(@"group")
-                                                         defaultsKey:@"general_confirm_create_group"];
-    SPKSetting *confirmSendingPost = [SPKSetting switchCellWithTitle:@"Confirm Sending Post"
-                                                                icon:SPKSettingsIcon(@"messages")
-                                                         defaultsKey:@"general_confirm_send"];
 
     // ---- Media Preview & Menu ------------------------------------------
 
@@ -273,11 +245,11 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
                                                   defaultsKey:@"general_comments_copy_text"];
     copyComment.searchKeywords = @"clipboard comment menu";
 
-    SPKSetting *commentMediaActions = [SPKSetting switchCellWithTitle:@"Comment Media Actions"
+    SPKSetting *commentMediaActions = [SPKSetting switchCellWithTitle:@"Media Actions"
                                                                  icon:SPKSettingsIcon(@"action")
                                                           defaultsKey:@"general_comments_media_actions"];
     commentMediaActions.helpText = @"Adds Photos, Share, Gallery and link actions to GIF and photo comments.";
-    commentMediaActions.searchKeywords = @"gif photos share gallery link";
+    commentMediaActions.searchKeywords = @"comment gif photos share gallery link";
 
     SPKSetting *commentGalleryUpload = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
                                                                   icon:SPKSettingsIcon(@"photo")
@@ -285,10 +257,10 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
     commentGalleryUpload.helpText = @"Long-press the composer's photo button to attach from your Sparkle Gallery.";
     commentGalleryUpload.searchKeywords = @"attach composer sparkle gallery";
 
-    SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close Comments"
+    SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close"
                                                                 icon:SPKSettingsIcon(@"left_right")
                                                          defaultsKey:@"general_comments_swipe_close"];
-    swipeCloseComments.searchKeywords = @"gesture horizontal dismiss";
+    swipeCloseComments.searchKeywords = @"comments gesture horizontal dismiss";
     // Greys Swipe Direction out immediately instead of after leaving the page.
     swipeCloseComments.reloadsTableOnSwitchChange = YES;
 
@@ -300,15 +272,11 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
         return [SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
-    SPKSetting *confirmCommentLike = [SPKSetting switchCellWithTitle:@"Confirm Comment Like"
-                                                                icon:SPKSettingsIcon(@"heart")
-                                                         defaultsKey:@"general_comments_confirm_like"];
-
-    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Comment Shopping"
+    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
                                                           defaultsKey:@"general_comments_hide_shopping"];
     hideCommentShopping.helpText = @"Removes commerce carousels from comment threads.";
-    hideCommentShopping.searchKeywords = @"commerce carousel shop";
+    hideCommentShopping.searchKeywords = @"comment commerce carousel shop";
 
     SPKSetting *hideGiftsButton = [SPKSetting switchCellWithTitle:@"Hide Gifts Button"
                                                              icon:SPKSettingsIcon(@"gift")
@@ -328,23 +296,20 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
 
     // The footer line only restated the title; "vibrations" was the one word
     // worth keeping, so it moves to the search keywords.
-    SPKSetting *disableHaptics = [SPKSetting switchCellWithTitle:@"Disable App Haptics"
+    SPKSetting *disableHaptics = [SPKSetting switchCellWithTitle:@"Disable Haptics"
                                                             icon:SPKSettingsIcon(@"haptics")
                                                      defaultsKey:@"general_disable_haptics"];
-    disableHaptics.searchKeywords = @"vibration vibrations taptic feedback";
+    disableHaptics.searchKeywords = @"app vibration vibrations taptic feedback";
 
     return SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
-        SPKTopicSection(@"Behavior", @[
+        // Behavior + Sharing merged: four rows, one subject — copying and
+        // sharing. (No Recent Searches moved to Interface › Explore & Search;
+        // the two Confirm rows live in the Confirmations gate row below.)
+        SPKTopicSection(@"Sharing & Copying", @[
             copyText,
-            noRecentSearches,
             stripTracking,
-            holdSendCopyLink
-        ],
-                        nil),
-        SPKTopicSection(@"Sharing", @[
-            hideCreateGroup,
-            confirmCreateGroup,
-            confirmSendingPost
+            holdSendCopyLink,
+            hideCreateGroup
         ],
                         nil),
         // Kept as a footer: it describes the section, not any one row, so it has
@@ -352,8 +317,8 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
         SPKTopicSection(@"Recommendations", @[
             SPKGeneralToggleGroupNavigationSetting(@"Ads", @"ads", @"Ads", nil,
                                                    SPKGeneralAdsToggles(),
-                                                   @"advertising sponsored promoted"),
-            SPKGeneralToggleGroupNavigationSetting(@"Meta AI", @"meta_ai", @"", nil,
+                                                   @"ads advertising sponsored promoted"),
+            SPKGeneralToggleGroupNavigationSetting(@"Meta AI", @"meta_ai", @"Meta AI", nil,
                                                    SPKGeneralMetaAIToggles(),
                                                    @"ai assistant llama"),
             SPKGeneralToggleGroupNavigationSetting(@"Suggested Users", @"users", @"Suggested Users", nil,
@@ -372,14 +337,12 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
             commentGalleryUpload,
             swipeCloseComments,
             swipeDirection,
-            confirmCommentLike,
             hideCommentShopping,
             hideGiftsButton
         ],
                         nil),
         SPKTopicSection(@"Accounts", @[
-            [self perAccountSetting],
-            [self perAccountInfoSetting]
+            [self perAccountSetting]
         ],
                         nil),
         SPKTopicSection(@"Storage", @[
@@ -391,6 +354,24 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
             [self appIconSetting],
             [self defaultMenuIconSetting],
             disableHaptics
+        ],
+                        nil),
+
+        // Convention v1.2 gate row — see SPKToggleMenu.h. The three Confirm
+        // rows that lived in Sharing and Comments, short residues like
+        // everywhere else.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Create Group"
+                                        iconName:@"group"
+                                     defaultsKey:@"general_confirm_create_group"],
+                [SPKToggleMenuItem itemWithTitle:@"Sending Post"
+                                        iconName:@"messages"
+                                     defaultsKey:@"general_confirm_send"],
+                [SPKToggleMenuItem itemWithTitle:@"Comment Like"
+                                        iconName:@"heart"
+                                     defaultsKey:@"general_comments_confirm_like"],
+            ])
         ],
                         nil),
     ]);

@@ -41,7 +41,7 @@ static void SPKSettingsLockReloadPresenter(UIViewController *presenter) {
 }
 
 static NSDictionary *SPKSettingsLockSection(void) {
-    SPKSetting *lockSwitch = [SPKSetting switchCellWithTitle:@"Settings Passcode Lock"
+    SPKSetting *lockSwitch = [SPKSetting switchCellWithTitle:@"Passcode Lock"
                                                         icon:SPKSettingsIcon(@"lock")
                                                  defaultsKey:@""];
     lockSwitch.switchValueProvider = ^BOOL {
@@ -79,7 +79,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
         }
     };
 
-    SPKSetting *changePasscode = [SPKSetting buttonCellWithTitle:@"Change Settings Passcode"
+    SPKSetting *changePasscode = [SPKSetting buttonCellWithTitle:@"Change Passcode"
                                                         subtitle:nil
                                                             icon:SPKSettingsIcon(@"key")
                                                           action:^{
@@ -107,7 +107,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
     SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch" defaultsKey:@"tools_flex_app_launch"];
     SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on App Focus" defaultsKey:@"tools_flex_app_start"];
     SPKSetting *flexOpen = [SPKSetting buttonCellWithTitle:@"Open FLEX Now"
-                                                  subtitle:@""
+                                                  subtitle:nil
                                                       icon:nil
                                                     action:^(void) {
                                                         SPKFlexShowExplorer(@"settings");
@@ -118,67 +118,6 @@ static NSDictionary *SPKSettingsLockSection(void) {
         flexFocus.userInfo = @{@"enabled" : @NO};
         flexOpen.userInfo = @{@"enabled" : @NO};
     }
-    NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
-        SPKTopicSection(@"FLEX", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter),
-        SPKTopicSection(@"Tweak", @[
-            [SPKSetting switchCellWithTitle:@"Quick Settings Access"
-                                defaultsKey:@"tools_settings_shortcut"
-                            requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
-                                defaultsKey:@"tools_shortcut_haptics"],
-            [SPKSetting switchCellWithTitle:@"Show Settings on App Launch"
-                                defaultsKey:@"tools_open_settings_on_launch"],
-            [SPKSetting switchCellWithTitle:@"Disable All Settings"
-                                defaultsKey:@"tools_disable_all"
-                            requiresRestart:YES],
-            [SPKSetting buttonCellWithTitle:@"Show Onboarding"
-                                   subtitle:@""
-                                       icon:nil
-                                     action:^(void) {
-                                         [SPKOnboardingViewController presentFromViewController:nil onFinish:nil];
-                                     }],
-            [SPKSetting buttonCellWithTitle:@"Show What's New"
-                                   subtitle:@""
-                                       icon:nil
-                                     action:^(void) {
-                                         [SPKWhatsNewViewController presentFromViewController:nil onFinish:nil];
-                                     }],
-        ],
-                        @"1. Opens settings when long pressing the Home tab or the next visible tab if the Home tab is hidden.\n"
-                        @"2. Haptic feedback when the settings shortcut gesture fires.\n"
-                        @"3. Open Sparkle settings automatically every time Instagram launches.\n"
-                        @"4. Suppress every Sparkle feature hook, leaving only the shortcut to reach this screen. Use to isolate crashes."),
-
-        SPKTopicSection(@"", @[
-            [SPKSetting buttonCellWithTitle:@"Reset Safe Startup Mode"
-                                   subtitle:@""
-                                       icon:nil
-                                     action:^(void) {
-                                         SPKStabilityGuardReset();
-                                         [SPKUtils showRestartConfirmation];
-                                     }],
-#if SPK_DEV
-            // Dev builds only: wipe the intro-sheet state so the onboarding /
-            // What's New gating fires from scratch on the next launch.
-            [SPKSetting buttonCellWithTitle:@"[DEV] Reset Intro State"
-                                   subtitle:@""
-                                       icon:nil
-                                     action:^(void) {
-                                         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-                                         [defaults removeObjectForKey:@"app_first_run"];
-                                         [defaults removeObjectForKey:@"app_last_whatsnew_version"];
-                                         [SPKUtils showRestartConfirmation];
-                                     }],
-#endif
-        ], @"Clears failed-launch counters and temporary hook suppression. Tap this button if it appears as if features aren't enabled."),
-#if SPK_DEV
-        SPKTopicSection(@"Diagnostics",
-                        @[ [SPKHookBisectSettingsProvider rootSetting] ],
-                        @"Skip individual hook installers at launch to isolate a crash or a slowdown to one feature."),
-#endif
-        SPKSettingsLockSection(),
-    ]];
-
     // The TestFlight/Beta popup suppression is always active on release builds.
     // On dev builds, we keep a toggle to allow disabling it for testing.
     NSMutableArray *instagramCells = [NSMutableArray array];
@@ -203,7 +142,72 @@ static NSDictionary *SPKSettingsLockSection(void) {
         @"2. Makes Instagram not reset settings after subsequent crashes. Use at your own risk.";
 #endif
 
-    [sections addObject:SPKTopicSection(@"Instagram", instagramCells, instagramFooter)];
+    // Section order: everyday settings first, recovery and developer tooling
+    // last — FLEX often is not even installed on regular builds.
+    NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
+        SPKTopicSection(@"Tweak", @[
+            [SPKSetting switchCellWithTitle:@"Quick Settings Access"
+                                defaultsKey:@"tools_settings_shortcut"
+                            requiresRestart:YES],
+            [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
+                                defaultsKey:@"tools_shortcut_haptics"],
+            [SPKSetting switchCellWithTitle:@"Show Settings on App Launch"
+                                defaultsKey:@"tools_open_settings_on_launch"],
+            [SPKSetting buttonCellWithTitle:@"Show Onboarding"
+                                   subtitle:nil
+                                       icon:nil
+                                     action:^(void) {
+                                         [SPKOnboardingViewController presentFromViewController:nil onFinish:nil];
+                                     }],
+            [SPKSetting buttonCellWithTitle:@"Show What's New"
+                                   subtitle:nil
+                                       icon:nil
+                                     action:^(void) {
+                                         [SPKWhatsNewViewController presentFromViewController:nil onFinish:nil];
+                                     }],
+        ],
+                        @"1. Opens settings when long pressing the Home tab or the next visible tab if the Home tab is hidden.\n"
+                        @"2. Haptic feedback when the settings shortcut gesture fires.\n"
+                        @"3. Open Sparkle settings automatically every time Instagram launches."),
+        SPKSettingsLockSection(),
+        SPKTopicSection(@"Instagram", instagramCells, instagramFooter),
+
+        // "Recovery" — was the untitled section. Disable All Settings moved in
+        // from Tweak: its own footer said "Use to isolate crashes."
+        SPKTopicSection(@"Recovery", @[
+            [SPKSetting switchCellWithTitle:@"Disable All Settings"
+                                defaultsKey:@"tools_disable_all"
+                            requiresRestart:YES],
+            [SPKSetting buttonCellWithTitle:@"Reset Safe Startup Mode"
+                                   subtitle:nil
+                                       icon:nil
+                                     action:^(void) {
+                                         SPKStabilityGuardReset();
+                                         [SPKUtils showRestartConfirmation];
+                                     }],
+#if SPK_DEV
+            // Dev builds only: wipe the intro-sheet state so the onboarding /
+            // What's New gating fires from scratch on the next launch.
+            [SPKSetting buttonCellWithTitle:@"[DEV] Reset Intro State"
+                                   subtitle:nil
+                                       icon:nil
+                                     action:^(void) {
+                                         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                                         [defaults removeObjectForKey:@"app_first_run"];
+                                         [defaults removeObjectForKey:@"app_last_whatsnew_version"];
+                                         [SPKUtils showRestartConfirmation];
+                                     }],
+#endif
+        ],
+                        @"1. Suppress every Sparkle feature hook, leaving only the shortcut to reach this screen. Use to isolate crashes.\n"
+                        @"2. Clears failed-launch counters and temporary hook suppression. Tap this button if it appears as if features aren't enabled."),
+        SPKTopicSection(@"FLEX", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter),
+#if SPK_DEV
+        SPKTopicSection(@"Diagnostics",
+                        @[ [SPKHookBisectSettingsProvider rootSetting] ],
+                        @"Skip individual hook installers at launch to isolate a crash or a slowdown to one feature."),
+#endif
+    ]];
 
     return SPKTopicNavigationSetting(@"Tools", @"toolbox", 24.0, sections);
 }

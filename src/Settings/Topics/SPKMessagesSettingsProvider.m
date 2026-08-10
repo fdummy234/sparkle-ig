@@ -7,6 +7,7 @@
 #import "../../Shared/Messages/SPKDirectSeenContext.h"
 #import "../../Utils.h"
 #import "../SPKSettingsViewController.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 
 static NSString *const kSPKMessagesActionButtonEnabledKey = @"msgs_action_btn";
@@ -310,31 +311,36 @@ static NSArray *SPKMessagesSettingsSections(void) {
             uploadGalleryPhoto,
         ],
                         nil),
-        SPKTopicSection(@"Confirmation", @[
-            [SPKSetting switchCellWithTitle:@"Confirm Audio Call"
-                                       icon:SPKSettingsIcon(@"call")
-                                defaultsKey:kSPKMessagesAudioCallConfirmKey],
-            [SPKSetting switchCellWithTitle:@"Confirm Video Call"
-                                       icon:SPKSettingsIcon(@"video")
-                                defaultsKey:kSPKMessagesVideoCallConfirmKey],
-            [SPKSetting switchCellWithTitle:@"Confirm Double Tap"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"msgs_confirm_double_tap"],
-            [SPKSetting switchCellWithTitle:@"Confirm Reactions"
-                                       icon:SPKSettingsIcon(@"reactions")
-                                defaultsKey:@"msgs_confirm_reaction"],
-            [SPKSetting switchCellWithTitle:@"Confirm Voice Messages"
-                                       icon:SPKSettingsIcon(@"voice")
-                                defaultsKey:@"msgs_confirm_voice_msg"],
-            [SPKSetting switchCellWithTitle:@"Confirm Follow Requests"
-                                       icon:SPKSettingsIcon(@"user_request")
-                                defaultsKey:@"msgs_confirm_follow_request"],
-            [SPKSetting switchCellWithTitle:@"Confirm Vanish Mode"
-                                       icon:SPKSettingsIcon(@"vanish")
-                                defaultsKey:@"msgs_confirm_vanish_mode"],
-            [SPKSetting switchCellWithTitle:@"Confirm Changing Theme"
-                                       icon:SPKSettingsIcon(@"palette")
-                                defaultsKey:@"msgs_confirm_theme_change"]
+        // Convention v1.2: the "Confirmations" gate row closes every page — one
+        // tap opens the multi-toggle menu (icon left, checkmark right, stays
+        // open while toggling). Items keep the old switches' keys and icons.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Audio Call"
+                                        iconName:@"call"
+                                     defaultsKey:kSPKMessagesAudioCallConfirmKey],
+                [SPKToggleMenuItem itemWithTitle:@"Video Call"
+                                        iconName:@"video"
+                                     defaultsKey:kSPKMessagesVideoCallConfirmKey],
+                [SPKToggleMenuItem itemWithTitle:@"Double Tap"
+                                        iconName:@"heart"
+                                     defaultsKey:@"msgs_confirm_double_tap"],
+                [SPKToggleMenuItem itemWithTitle:@"Reactions"
+                                        iconName:@"reactions"
+                                     defaultsKey:@"msgs_confirm_reaction"],
+                [SPKToggleMenuItem itemWithTitle:@"Voice Messages"
+                                        iconName:@"voice"
+                                     defaultsKey:@"msgs_confirm_voice_msg"],
+                [SPKToggleMenuItem itemWithTitle:@"Follow Requests"
+                                        iconName:@"user_request"
+                                     defaultsKey:@"msgs_confirm_follow_request"],
+                [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
+                                        iconName:@"vanish"
+                                     defaultsKey:@"msgs_confirm_vanish_mode"],
+                [SPKToggleMenuItem itemWithTitle:@"Changing Theme"
+                                        iconName:@"palette"
+                                     defaultsKey:@"msgs_confirm_theme_change"],
+            ])
         ],
                         nil)
     ];

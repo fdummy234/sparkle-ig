@@ -10,7 +10,7 @@
 + (SPKSetting *)rootSetting {
     // Larger, bolder title so it reads in balance with the 45pt Ko-fi icon.
     SPKSetting *donate = [SPKSetting linkCellWithTitle:@"Donate to waffle"
-                                              subtitle:@""
+                                              subtitle:nil
                                               imageUrl:@"https://cdn.prod.website-files.com/5c14e387dab576fe667689cf/670f5a01229bf8a18f97a3c1_favion.png"
                                                    url:@"https://ko-fi.com/sparkle_ig"];
     donate.userInfo = @{

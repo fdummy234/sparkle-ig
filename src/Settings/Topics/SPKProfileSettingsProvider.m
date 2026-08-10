@@ -4,6 +4,7 @@
 #import "../../Features/Profile/FollowIndicator.h"
 #import "../../Shared/ActionButton/SPKActionButtonConfiguration.h"
 #import "../../Utils.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 
 static NSString *const kSPKProfileActionNone = @"none";
@@ -181,15 +182,18 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                                 defaultsKey:@"profile_hide_threads_btn"]
         ],
                         @"Following Indicator shows whether a profile follows you back, under their stats. Text or Icon; it's Instagram's native gray unless you turn on Colorful Indicator for green/red."),
-        SPKTopicSection(@"Confirmation", @[
-            [SPKSetting switchCellWithTitle:@"Confirm Follow"
-                                       icon:SPKSettingsIcon(@"user_follow")
-                                defaultsKey:@"profile_confirm_follow"],
-            [SPKSetting switchCellWithTitle:@"Confirm Unfollow"
-                                       icon:SPKSettingsIcon(@"user_unfollow")
-                                defaultsKey:@"profile_confirm_unfollow"]
+        // Convention v1.2 gate row — see SPKToggleMenu.h.
+        SPKTopicSection(@"", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+                [SPKToggleMenuItem itemWithTitle:@"Follow"
+                                        iconName:@"user_follow"
+                                     defaultsKey:@"profile_confirm_follow"],
+                [SPKToggleMenuItem itemWithTitle:@"Unfollow"
+                                        iconName:@"user_unfollow"
+                                     defaultsKey:@"profile_confirm_unfollow"],
+            ])
         ],
-                        @"Shows confirmation alerts before the enabled profile actions are performed.")
+                        nil)
     ]);
 }
 

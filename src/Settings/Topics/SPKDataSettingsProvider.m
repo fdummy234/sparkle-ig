@@ -54,7 +54,7 @@
 
 - (void)rebuildSections {
     SPKSetting *settingsRow = [SPKSetting buttonCellWithTitle:@"Settings"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"settings")
                                                        action:^{
                                                            self.includeSettings = !self.includeSettings;
@@ -64,7 +64,7 @@
     settingsRow.userInfo = @{@"checkmarked" : @(self.includeSettings)};
 
     SPKSetting *galleryRow = [SPKSetting buttonCellWithTitle:@"Gallery"
-                                                    subtitle:@""
+                                                    subtitle:nil
                                                         icon:SPKSettingsIcon(@"sparkle_gallery")
                                                       action:^{
                                                           self.includeGallery = !self.includeGallery;
@@ -74,7 +74,7 @@
     galleryRow.userInfo = @{@"checkmarked" : @(self.includeGallery)};
 
     SPKSetting *deletedMessagesRow = [SPKSetting buttonCellWithTitle:@"Deleted Messages"
-                                                            subtitle:@""
+                                                            subtitle:nil
                                                                 icon:SPKSettingsIcon(@"channels")
                                                               action:^{
                                                                   self.includeDeletedMessages = !self.includeDeletedMessages;
@@ -84,7 +84,7 @@
     deletedMessagesRow.userInfo = @{@"checkmarked" : @(self.includeDeletedMessages)};
 
     SPKSetting *profileAnalyzerRow = [SPKSetting buttonCellWithTitle:@"Profile Analyzer"
-                                                            subtitle:@""
+                                                            subtitle:nil
                                                                 icon:SPKSettingsIcon(@"profile_analyzer")
                                                               action:^{
                                                                   self.includeProfileAnalyzer = !self.includeProfileAnalyzer;
@@ -142,7 +142,7 @@
 
 + (SPKSetting *)rootSetting {
     SPKSetting *resetAllSettings = [SPKSetting buttonCellWithTitle:@"Reset All Settings"
-                                                          subtitle:@""
+                                                          subtitle:nil
                                                               icon:SPKSettingsIcon(@"arrow_ccw")
                                                             action:^(void) {
                                                                 UIWindowScene *scene = (UIWindowScene *)UIApplication.sharedApplication.connectedScenes.anyObject;
@@ -157,19 +157,19 @@
     NSArray *sections = @[
         SPKTopicSection(@"Storage", @[
             [SPKSetting navigationCellWithTitle:@"Storage Usage"
-                                       subtitle:@""
+                                       subtitle:nil
                                            icon:SPKSettingsIcon(@"info")
                                  viewController:[SPKStorageUsageViewController new]]
         ],
                         @"See how much on-device space each Sparkle feature uses."),
         SPKTopicSection(@"Backup & Transfer", @[
             SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export"
-                                                               subtitle:@""
+                                                               subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_up")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:NO]],
                                     [SPKUtils SPKColor_InstagramPrimaryText]),
             SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Import"
-                                                               subtitle:@""
+                                                               subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_down")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:YES]],
                                     [SPKUtils SPKColor_InstagramPrimaryText])
