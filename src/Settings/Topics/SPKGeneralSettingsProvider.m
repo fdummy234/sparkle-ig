@@ -183,7 +183,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                                      defaultsKey:@"general_disable_haptics"];
     disableHaptics.searchKeywords = @"app vibration vibrations taptic feedback";
 
-    return SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
+    SPKSetting *root = SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
         // Behavior + Sharing merged: four rows, one subject — copying and
         // sharing. (No Recent Searches moved to Interface › Explore & Search;
         // the two Confirm rows live in the Confirmations gate row below.)
@@ -316,6 +316,10 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         ],
                         nil),
     ]);
+    // The only root tab whose name doesn't describe its content — the native
+    // "Accounts Center" pattern. Mirrors the six real sections.
+    root.subtitle = @"Recommendations, sharing, media, accounts, storage";
+    return root;
 }
 
 @end
