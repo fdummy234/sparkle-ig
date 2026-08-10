@@ -100,7 +100,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
         // Convention v1.2 gate row — see SPKToggleMenu.h. "Reel Refresh" keeps
         // its qualifier: the page also has Disable Reels Tab Refresh.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
                                      defaultsKey:@"reels_confirm_like"],

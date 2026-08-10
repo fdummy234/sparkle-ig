@@ -234,7 +234,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                         nil),
         // Convention v1.2 gate row — see SPKToggleMenu.h.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
                                      defaultsKey:@"feed_confirm_post_like"],

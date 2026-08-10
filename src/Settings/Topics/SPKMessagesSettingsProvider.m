@@ -338,7 +338,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
         // tap opens the multi-toggle menu (icon left, checkmark right, stays
         // open while toggling). Items keep the old switches' keys and icons.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Audio Call"
                                         iconName:@"call"
                                      defaultsKey:kSPKMessagesAudioCallConfirmKey],

@@ -78,7 +78,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
         // Confirmations › Capture": both dropped words sit right above.
         // Capture keeps its disabled state (feature suspended).
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 ({
                     SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:@"Capture"
                                                                       iconName:@"instants_burst"

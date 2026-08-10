@@ -184,7 +184,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                         @"Following Indicator shows whether a profile follows you back, under their stats. Text or Icon; it's Instagram's native gray unless you turn on Colorful Indicator for green/red."),
         // Convention v1.2 gate row — see SPKToggleMenu.h.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Follow"
                                         iconName:@"user_follow"
                                      defaultsKey:@"profile_confirm_follow"],

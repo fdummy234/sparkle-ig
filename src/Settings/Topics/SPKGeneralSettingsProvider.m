@@ -302,7 +302,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // rows that lived in Sharing and Comments, short residues like
         // everywhere else.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Create Group"
                                         iconName:@"group"
                                      defaultsKey:@"general_confirm_create_group"],

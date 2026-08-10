@@ -166,7 +166,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
         // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
         // section (mid-page, plural header); now closes the page like everywhere.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check_filled", @[
+            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
                                      defaultsKey:@"stories_confirm_like"],
