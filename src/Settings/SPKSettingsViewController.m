@@ -23,6 +23,7 @@ static CGFloat const SPKUI_RowVMargin         = 9.0;   // marge verticale du con
 static CGFloat const SPKUI_RowLeading         = 15.0;  // gauche des icônes (rend ~17 à l'écran : les glyphes portent ~2 pt d'encart interne)
 static CGFloat const SPKUI_RowTrailing        = 16.0;
 static CGFloat const SPKUI_IconMax            = 26.0;  // plafond des glyphes
+static CGFloat const SPKUI_SubtitleIconRise   = 8.0;   // rangées à sous-titre : glyphe et accessoire remontent vers le titre (natif « Accounts Center » mesuré)
 static CGFloat const SPKUI_IconTextGap        = 14.0;
 static CGFloat const SPKUI_BandHeight         = 6.0;   // bande entre groupes
 static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de page
@@ -88,6 +89,24 @@ static double SPKNormalizedStepperValue(SPKSetting *row, double value) {
 @end
 
 ///
+
+// Multi-line rows: the native pattern lifts the glyph toward the title instead
+// of centering it on the whole block. The glyph is drawn at its final size in a
+// taller transparent box — the box stays centered, so the glyph rises by `rise`.
+static UIImage *SPKSettingsIconRaisedForSubtitle(UIImage *icon, CGFloat side, CGFloat rise) {
+    if (!icon || rise <= 0.0 || side <= 0.0 || icon.size.width <= 0.0 || icon.size.height <= 0.0)
+        return icon;
+
+    CGFloat fit = MIN(side / icon.size.width, side / icon.size.height);
+    CGSize glyph = CGSizeMake(floor(icon.size.width * fit), floor(icon.size.height * fit));
+    CGSize boxed = CGSizeMake(glyph.width, glyph.height + 2.0 * rise);
+
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:boxed];
+    UIImage *raised = [renderer imageWithActions:^(UIGraphicsImageRendererContext *_Nonnull context) {
+        [icon drawInRect:CGRectMake(0.0, 0.0, glyph.width, glyph.height)];
+    }];
+    return [raised imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+}
 
 static UIImage *SPKSettingsReorderCompositeImage(UIImage *iconImage, UIColor *tintColor) {
     UIImageSymbolConfiguration *grabberConfig = [UIImageSymbolConfiguration configurationWithPointSize:12.0 weight:UIImageSymbolWeightSemibold];
@@ -590,6 +609,15 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             cellContentConfig.imageToTextPadding = 14;
         } else {
             cellContentConfig.imageProperties.tintColor = row.iconTintColor ?: [SPKUtils SPKColor_InstagramPrimaryText];
+            if (row.subtitle.length > 0) {
+                UIImage *raised = SPKSettingsIconRaisedForSubtitle(rowIcon, SPKUI_IconMax, SPKUI_SubtitleIconRise);
+                if (raised != rowIcon) {
+                    CGSize box = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax + 2.0 * SPKUI_SubtitleIconRise);
+                    cellContentConfig.image = raised;
+                    cellContentConfig.imageProperties.maximumSize = box;       // déjà à sa taille finale : aucun redimensionnement
+                    cellContentConfig.imageProperties.reservedLayoutSize = box;
+                }
+            }
         }
     }
 
@@ -801,10 +829,14 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             chevronView.tintColor = [SPKUtils SPKColor_InstagramTertiaryText];
             [accessoryLabel sizeToFit];
             [chevronView sizeToFit];
-            CGFloat gap = 6.0;
+            // Same trailing margin the native side-by-side layout uses, so the
+            // value column lines up with every single-line row above and below.
+            CGFloat gap = SPKUI_RowTrailing;
             CGFloat w = accessoryLabel.bounds.size.width + gap + chevronView.bounds.size.width;
             CGFloat h = MAX(accessoryLabel.bounds.size.height, chevronView.bounds.size.height);
-            UIView *trailing = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+            // The box is taller than its content and stays centered by UIKit:
+            // value + chevron ride up to the title line, like the glyph.
+            UIView *trailing = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h + 2.0 * SPKUI_SubtitleIconRise)];
             accessoryLabel.frame = CGRectMake(0, (h - accessoryLabel.bounds.size.height) / 2.0,
                                               accessoryLabel.bounds.size.width, accessoryLabel.bounds.size.height);
             chevronView.frame = CGRectMake(w - chevronView.bounds.size.width, (h - chevronView.bounds.size.height) / 2.0,
