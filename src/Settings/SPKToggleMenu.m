@@ -127,7 +127,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         return;
     BOOL next = ![SPKUtils getBoolPref:self.item.defaultsKey];
     SPKPreferenceSetObject(@(next), self.item.defaultsKey);
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackGeneratorStyleLight] impactOccurred];
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [self refreshAnimated:YES];
 }
 
