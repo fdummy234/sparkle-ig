@@ -516,8 +516,16 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     NSDirectionalEdgeInsets rowMargins = cellContentConfig.directionalLayoutMargins;
     rowMargins.top = 9.0;
     rowMargins.bottom = 9.0;
+    // Mesuré sur le natif : icônes à ~17 pt du bord (les nôtres étaient à 21).
+    rowMargins.leading = 16.0;
+    rowMargins.trailing = 16.0;
     cellContentConfig.directionalLayoutMargins = rowMargins;
     cellContentConfig.imageToTextPadding = 14.0;
+    // Les glyphes du bundle IG sortent à ~34 pt et gonflaient la rangée à 52
+    // (34 + 9 + 9). Plafond 26 → rangée 44, le pas natif mesuré. Les cas
+    // spéciaux (avatars, images distantes) reposent leur propre taille après.
+    cellContentConfig.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+    cellContentConfig.imageProperties.reservedLayoutSize = CGSizeMake(26.0, 26.0);
     BOOL rowEnabled = (row.userInfo[@"enabled"] ? [row.userInfo[@"enabled"] boolValue] : YES) &&
                       (!row.enabledProvider || row.enabledProvider()) &&
                       SPKPrefIsAvailable(row.defaultsKey);
@@ -805,7 +813,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
     NSArray<NSString *> *components = self.sections[section][@"breadcrumbComponents"];
     if (![self isSearching] || ![components isKindOfClass:[NSArray class]] || components.count == 0) {
-        return [self spk_nativeHeaderForSection:section];
+        return [self spk_nativeHeaderForSection:section forSizing:NO];
     }
 
     UITableViewHeaderFooterView *header = [[UITableViewHeaderFooterView alloc] initWithReuseIdentifier:nil];
@@ -871,7 +879,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     if ([self preferredTableViewStyle] != UITableViewStyleInsetGrouped && header.length == 0 && helpRows.count == 0) {
         return CGFLOAT_MIN;
     }
-    UIView *native = [self spk_nativeHeaderForSection:section];
+    UIView *native = [self spk_nativeHeaderForSection:section forSizing:YES];
     if (native == nil) {
         return UITableViewAutomaticDimension;
     }
@@ -900,20 +908,27 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
-    return (section == (NSInteger)self.sections.count - 1) ? 24.0 : 8.0;
+    // Bande native mesurée : 6 pt (18 px), pas 8.
+    return (section == (NSInteger)self.sections.count - 1) ? 24.0 : 6.0;
 }
 
-- (UIView *)spk_nativeHeaderForSection:(NSInteger)section {
+- (UIView *)spk_nativeHeaderForSection:(NSInteger)section forSizing:(BOOL)forSizing {
     NSString *title = self.sections[section][@"header"];
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
     if (title.length == 0 && helpRows.count == 0) {
         return nil;
     }
 
+    // Le cache ne sert QUE de gabarit de mesure (heightForHeader). Jamais
+    // affiché : rendre à UIKit une instance qu'il possède déjà — toléré en
+    // plain par chance — devient dangereux en grouped, dont le cycle de vie
+    // des en-têtes diffère. L'affichage reçoit toujours une vue fraîche.
     NSNumber *cacheKey = @(section);
-    UIView *cached = self.footerViewCache[cacheKey];
-    if (cached) {
-        return cached;
+    if (forSizing) {
+        UIView *cached = self.footerViewCache[cacheKey];
+        if (cached) {
+            return cached;
+        }
     }
 
     // Un UIView nu, PAS un UITableViewHeaderFooterView : quand
@@ -962,7 +977,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     }
     [NSLayoutConstraint activateConstraints:constraints];
 
-    self.footerViewCache[cacheKey] = container;
+    if (forSizing) {
+        self.footerViewCache[cacheKey] = container;
+    }
     return container;
 }
 
