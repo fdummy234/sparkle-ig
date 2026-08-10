@@ -313,7 +313,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 - (UITableViewStyle)preferredTableViewStyle {
     // Convention v1 (GO gate 0) : habillage natif Instagram — rangées pleine
     // largeur, pas de cartes. Le reste du VC branche déjà sur ce style.
-    return UITableViewStylePlain;
+    // Grouped (pas inset) : mêmes rangées pleine largeur que plain, mais les
+    // en-têtes de section DÉFILENT avec le contenu au lieu de s'épingler en
+    // haut — la « barre blanche flottante » de la vidéo. Comportement IG.
+    return UITableViewStyleGrouped;
 }
 
 - (void)setSections:(NSMutableArray *)sections {
@@ -330,7 +333,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     self.navigationController.navigationBar.prefersLargeTitles = NO;
 
     UITableViewStyle style = [self preferredTableViewStyle];
-    UIColor *backgroundColor = (style == UITableViewStylePlain)
+    UIColor *backgroundColor = (style != UITableViewStyleInsetGrouped)
                                    ? [SPKUtils SPKColor_InstagramBackground]
                                    : [SPKUtils SPKColor_InstagramGroupedBackground];
     self.view.backgroundColor = backgroundColor;
@@ -453,6 +456,13 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                              forSearchBarIcon:UISearchBarIconSearch
                                         state:UIControlStateNormal];
     self.searchController.searchBar.placeholder = self.searchesAllSettings ? @"Search All Settings" : [NSString stringWithFormat:@"Search %@", self.title ?: @"settings"];
+    if (@available(iOS 16.0, *)) {
+        // Sans ceci, l'iOS récent docke la recherche en pilule flottante au bas
+        // de l'écran — et notre table pleine largeur défile derrière (le
+        // « Gallery » fantôme de la vidéo). Stacked = sous le titre, comme les
+        // réglages natifs d'Instagram.
+        self.navigationItem.preferredSearchBarPlacement = UINavigationItemSearchBarPlacementStacked;
+    }
     self.navigationItem.searchController = self.searchController;
     self.navigationItem.hidesSearchBarWhenScrolling = YES;
     self.definesPresentationContext = YES;
@@ -488,7 +498,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     UIListContentConfiguration *cellContentConfig = cell.defaultContentConfiguration;
     // Plain (flat) pages use the page background so rows sit edge-to-edge with no
     // grouped-card tint; inset-grouped pages keep the elevated secondary color.
-    cell.backgroundColor = ([self preferredTableViewStyle] == UITableViewStylePlain)
+    cell.backgroundColor = ([self preferredTableViewStyle] != UITableViewStyleInsetGrouped)
                                ? [SPKUtils SPKColor_InstagramBackground]
                                : [SPKUtils SPKColor_InstagramSecondaryBackground];
     cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
@@ -498,6 +508,16 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     cellContentConfig.textProperties.numberOfLines = 0;
     cellContentConfig.secondaryTextProperties.numberOfLines = 0;
     cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByWordWrapping;
+    // Calibration native, 2e passe (mesures des captures côte à côte) :
+    // IG = grand texte DENSE — titre 17 pt mais pas de rangée ~43-44 pt
+    // (centre à centre), pas 60. Marges 9/9 : icône 26 + 18 = 44.
+    cellContentConfig.textProperties.font =
+        [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+    NSDirectionalEdgeInsets rowMargins = cellContentConfig.directionalLayoutMargins;
+    rowMargins.top = 9.0;
+    rowMargins.bottom = 9.0;
+    cellContentConfig.directionalLayoutMargins = rowMargins;
+    cellContentConfig.imageToTextPadding = 14.0;
     BOOL rowEnabled = (row.userInfo[@"enabled"] ? [row.userInfo[@"enabled"] boolValue] : YES) &&
                       (!row.enabledProvider || row.enabledProvider()) &&
                       SPKPrefIsAvailable(row.defaultsKey);
@@ -658,7 +678,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
             cellContentConfig.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
-                                                                               weight:UIFontWeightMedium];
+                                                                               weight:UIFontWeightRegular];
         }
         // Avatar rows read as flat list entries (like Profile Analyzer), not
         // settings nav rows — no disclosure chevron.
@@ -678,6 +698,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         menuButton.menu = [row menuForButton:menuButton];
         menuButton.showsMenuAsPrimaryAction = YES;
         menuButton.enabled = rowEnabled;
+        // Même graisse que les autres valeurs d'état (Regular, comme IG).
         menuButton.titleLabel.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
                                                        weight:UIFontWeightMedium];
         menuButton.titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
@@ -720,7 +741,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByTruncatingTail;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
             cellContentConfig.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
-                                                                               weight:UIFontWeightMedium];
+                                                                               weight:UIFontWeightRegular];
         }
         cell.accessoryType = rowEnabled ? UITableViewCellAccessoryDisclosureIndicator : UITableViewCellAccessoryNone;
         if (!rowEnabled) {
@@ -847,7 +868,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     // no grey plain-header strip.
     NSString *header = self.sections[section][@"header"];
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
-    if ([self preferredTableViewStyle] == UITableViewStylePlain && header.length == 0 && helpRows.count == 0) {
+    if ([self preferredTableViewStyle] != UITableViewStyleInsetGrouped && header.length == 0 && helpRows.count == 0) {
         return CGFLOAT_MIN;
     }
     UIView *native = [self spk_nativeHeaderForSection:section];
@@ -906,7 +927,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     UILabel *label = [UILabel new];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = title;
-    UIFont *base = [UIFont systemFontOfSize:14.5 weight:UIFontWeightSemibold];
+    UIFont *base = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
     label.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:base];
     label.adjustsFontForContentSizeCategory = YES;
     label.textColor = [UIColor colorWithRed:0.396 green:0.404 blue:0.420 alpha:1.0];  // #65676B
@@ -914,8 +935,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
     NSMutableArray<NSLayoutConstraint *> *constraints = [@[
         [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16.0],
-        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:18.0],
-        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-6.0]
+        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:12.0],
+        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-8.0]
     ] mutableCopy];
 
     if (helpRows.count > 0) {
