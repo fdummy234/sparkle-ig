@@ -15,7 +15,7 @@ static CGFloat const kSPKToggleMenuIconSize = 22.0;
 static CGFloat const kSPKToggleMenuHPad = 14.0;
 static CGFloat const kSPKToggleMenuMargin = 20.0;
 static CGFloat const kSPKToggleMenuContentPadding = 6.0;   // v1.4: breathing room above/below items
-static CGFloat const kSPKToggleMenuFooterGap = 8.0;        // v1.4: sectioned gap before Done
+static CGFloat const kSPKToggleMenuFooterGap = 6.0;        // v1.4.1: sectioned gap before Done (lighter, slimmer)
 static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
 #pragma mark - Item
@@ -224,7 +224,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     // v1.4 footer — sectioned gap, then an explicit way out. Same dismissal
     // path as tapping outside (animation + onDismiss), with a light tick.
     UIView *gapBand = [[UIView alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterGap)];
-    gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.5];
+    gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.18];
     UIView *gapTop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSPKToggleMenuWidth, hairline)];
     gapTop.backgroundColor = UIColor.separatorColor;
     UIView *gapBottom = [[UIView alloc] initWithFrame:CGRectMake(0, kSPKToggleMenuFooterGap - hairline, kSPKToggleMenuWidth, hairline)];

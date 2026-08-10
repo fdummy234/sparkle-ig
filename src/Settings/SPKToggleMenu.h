@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 //   · checkmark on the RIGHT
 //   · item height 44 pt (= SPKUI_RowHeight), width 262 pt, corner radius 13
 //   · the menu STAYS OPEN while toggling — tap outside or the Done
-//     footer to dismiss (v1.4: 6pt content padding, 8pt sectioned gap +
+//     footer to dismiss (v1.4: 6pt content padding, 6pt sectioned gap +
 //     44pt centered semibold "Done", 20pt screen margin)
 //
 // The host row ("gate row") is built with SPKToggleMenuRowSetting(): a button

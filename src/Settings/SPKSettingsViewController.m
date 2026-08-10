@@ -784,10 +784,37 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
     case SPKTableCellNavigation: {
         NSString *accessoryText = SPKSettingsAccessoryText(row);
-        if (rowEnabled && accessoryText.length > 0) {
+        if (rowEnabled && accessoryText.length > 0 && row.subtitle.length > 0) {
+            // Both a subtitle and an accessory ("General · 4 active"): keep
+            // the subtitle below the title, move the accessory into a
+            // trailing label + chevron so neither steals secondaryText.
+            UILabel *accessoryLabel = [[UILabel alloc] init];
+            accessoryLabel.text = accessoryText;
+            accessoryLabel.textColor = [SPKUtils SPKColor_InstagramSecondaryText];
+            accessoryLabel.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
+                                                                                                                     weight:UIFontWeightRegular]];
+            UIImageView *chevronView = [[UIImageView alloc] initWithImage:
+                [UIImage systemImageNamed:@"chevron.right"
+                        withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:13.0
+                                                                                          weight:UIImageSymbolWeightSemibold]]];
+            chevronView.tintColor = [SPKUtils SPKColor_InstagramTertiaryText];
+            [accessoryLabel sizeToFit];
+            [chevronView sizeToFit];
+            CGFloat gap = 6.0;
+            CGFloat w = accessoryLabel.bounds.size.width + gap + chevronView.bounds.size.width;
+            CGFloat h = MAX(accessoryLabel.bounds.size.height, chevronView.bounds.size.height);
+            UIView *trailing = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, h)];
+            accessoryLabel.frame = CGRectMake(0, (h - accessoryLabel.bounds.size.height) / 2.0,
+                                              accessoryLabel.bounds.size.width, accessoryLabel.bounds.size.height);
+            chevronView.frame = CGRectMake(w - chevronView.bounds.size.width, (h - chevronView.bounds.size.height) / 2.0,
+                                           chevronView.bounds.size.width, chevronView.bounds.size.height);
+            [trailing addSubview:accessoryLabel];
+            [trailing addSubview:chevronView];
+            cell.accessoryView = trailing;
+        } else if (rowEnabled && accessoryText.length > 0) {
             cellContentConfig.secondaryText = accessoryText;
             cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
-            cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByTruncatingTail;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
@@ -795,7 +822,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                 [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
                                                                                                                      weight:UIFontWeightRegular]];
         }
-        cell.accessoryType = rowEnabled ? UITableViewCellAccessoryDisclosureIndicator : UITableViewCellAccessoryNone;
+        if (cell.accessoryView == nil)
+            cell.accessoryType = rowEnabled ? UITableViewCellAccessoryDisclosureIndicator : UITableViewCellAccessoryNone;
         if (!rowEnabled) {
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
             cellContentConfig.textProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
