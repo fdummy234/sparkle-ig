@@ -1,4 +1,5 @@
 #import "SPKSettingsViewController.h"
+#import "SPKToggleMenu.h"
 #import "../App/SPKStartupHooks.h"
 #import "../AssetUtils.h"
 #import "../Features/Messages/MessageSeenButtons.h"
@@ -1062,7 +1063,14 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     if (row.type == SPKTableCellLink) {
         [[UIApplication sharedApplication] openURL:row.url options:@{} completionHandler:nil];
     } else if (row.type == SPKTableCellButton) {
-        if (row.action != nil) {
+        NSArray *spk_toggleMenuItems = row.userInfo[@"spk_toggleMenuItems"];
+        if (spk_toggleMenuItems.count > 0) {
+            UITableViewCell *anchorCell = [tableView cellForRowAtIndexPath:indexPath];
+            [SPKToggleMenu presentWithItems:spk_toggleMenuItems
+                                   fromView:(anchorCell ?: tableView)
+                           inViewController:self
+                                  onDismiss:^{ [tableView reloadData]; }];
+        } else if (row.action != nil) {
             row.action();
             [tableView reloadData];
         }
