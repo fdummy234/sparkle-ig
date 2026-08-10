@@ -14,6 +14,23 @@
 #import "SPKWhatsNewViewController.h"
 #import "SPKSettingsHelpSheetViewController.h"
 
+#pragma mark - Convention UI — métriques mesurées (une ligne = un réglage)
+// Relevées sur les réglages natifs d'Instagram par mesure de captures.
+// TOUTE retouche de mise en page se fait ICI, nulle part ailleurs.
+static CGFloat const SPKUI_RowHeight          = 44.0;  // pas de rangée standard
+static CGFloat const SPKUI_RowVMargin         = 9.0;   // marge verticale du contenu
+static CGFloat const SPKUI_RowLeading         = 17.0;  // gauche des icônes
+static CGFloat const SPKUI_RowTrailing        = 16.0;
+static CGFloat const SPKUI_IconMax            = 26.0;  // plafond des glyphes
+static CGFloat const SPKUI_IconTextGap        = 14.0;
+static CGFloat const SPKUI_BandHeight         = 6.0;   // bande entre groupes
+static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de page
+static CGFloat const SPKUI_HeaderTop          = 14.0;
+static CGFloat const SPKUI_HeaderBottom       = 14.0;
+static CGFloat const SPKUI_HeaderLeading      = 18.0;
+static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
+
+
 static char rowStaticRef[] = "row";
 static CGFloat const kSPKSettingsRemoteImageSize = 45.0;
 
@@ -487,7 +504,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                           row.avatarPK.length > 0 ||
                           row.imageUrl != nil ||
                           [row.userInfo[@"avatarIcon"] boolValue];
-    return needsAutomatic ? UITableViewAutomaticDimension : 44.0;
+    return needsAutomatic ? UITableViewAutomaticDimension : SPKUI_RowHeight;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -530,18 +547,22 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     cellContentConfig.textProperties.font =
         [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
     NSDirectionalEdgeInsets rowMargins = cellContentConfig.directionalLayoutMargins;
-    rowMargins.top = 9.0;
-    rowMargins.bottom = 9.0;
-    // Mesuré sur le natif : icônes à ~17 pt du bord (les nôtres étaient à 21).
-    rowMargins.leading = 16.0;
-    rowMargins.trailing = 16.0;
+    rowMargins.top = SPKUI_RowVMargin;
+    rowMargins.bottom = SPKUI_RowVMargin;
+    // Mesuré sur le natif : icônes à 17 pt du bord. La config PRÉSERVE par
+    // défaut les marges du conteneur quand elles sont plus grandes
+    // (axesPreservingSuperviewLayoutMargins) — c'est pour ça que 16 ne
+    // s'appliquait pas : il perdait contre les ~22 de la cellule.
+    rowMargins.leading = SPKUI_RowLeading;
+    rowMargins.trailing = SPKUI_RowTrailing;
     cellContentConfig.directionalLayoutMargins = rowMargins;
-    cellContentConfig.imageToTextPadding = 14.0;
+    cellContentConfig.axesPreservingSuperviewLayoutMargins = UIAxisNone;
+    cellContentConfig.imageToTextPadding = SPKUI_IconTextGap;
     // Les glyphes du bundle IG sortent à ~34 pt et gonflaient la rangée à 52
     // (34 + 9 + 9). Plafond 26 → rangée 44, le pas natif mesuré. Les cas
     // spéciaux (avatars, images distantes) reposent leur propre taille après.
-    cellContentConfig.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-    cellContentConfig.imageProperties.reservedLayoutSize = CGSizeMake(26.0, 26.0);
+    cellContentConfig.imageProperties.maximumSize = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax);
+    cellContentConfig.imageProperties.reservedLayoutSize = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax);
     BOOL rowEnabled = (row.userInfo[@"enabled"] ? [row.userInfo[@"enabled"] boolValue] : YES) &&
                       (!row.enabledProvider || row.enabledProvider()) &&
                       SPKPrefIsAvailable(row.defaultsKey);
@@ -895,7 +916,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     NSString *header = self.sections[section][@"header"];
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
     if ([self preferredTableViewStyle] != UITableViewStyleInsetGrouped && header.length == 0 && helpRows.count == 0) {
-        return CGFLOAT_MIN;
+        // Première section sans titre (la racine, les pages plates) : une
+        // respiration sous la barre de titre au lieu de coller le contenu.
+        return (section == 0) ? SPKUI_FirstSectionTop : CGFLOAT_MIN;
     }
     UIView *native = [self spk_nativeHeaderForSection:section forSizing:YES];
     if (native == nil) {
@@ -927,7 +950,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
     // Bande native mesurée : 6 pt (18 px), pas 8.
-    return (section == (NSInteger)self.sections.count - 1) ? 24.0 : 6.0;
+    return (section == (NSInteger)self.sections.count - 1) ? SPKUI_BandLast : SPKUI_BandHeight;
 }
 
 - (UIView *)spk_nativeHeaderForSection:(NSInteger)section forSizing:(BOOL)forSizing {
@@ -967,9 +990,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     [container addSubview:label];
 
     NSMutableArray<NSLayoutConstraint *> *constraints = [@[
-        [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16.0],
-        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:12.0],
-        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-10.0]
+        [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:SPKUI_HeaderLeading],
+        [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:SPKUI_HeaderTop],
+        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-SPKUI_HeaderBottom]
     ] mutableCopy];
 
     if (helpRows.count > 0) {
