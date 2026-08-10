@@ -71,6 +71,22 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
 @implementation SPKInterfaceSettingsProvider
 
 + (SPKSetting *)rootSetting {
+    // ---- Tabs ----------------------------------------------------------
+    // The order glossary used to live in the section footer; it moves onto the
+    // two rows it explains.
+
+    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab Icon Order"
+                                                        icon:SPKSettingsIcon(@"sort")
+                                                        menu:SPKNavigationIconOrderingMenu()];
+    tabIconOrder.helpText = @"Standard: Home, Reels, Messages, Explore, Profile. Classic puts Messages top-right; Alternate swaps Home and Reels.";
+    tabIconOrder.searchKeywords = @"standard classic alternate layout order";
+
+    SPKSetting *swipeBetweenTabs = [SPKSetting menuCellWithTitle:@"Swipe Between Tabs"
+                                                            icon:SPKSettingsIcon(@"left_right")
+                                                            menu:SPKSwipeBetweenTabsMenu()];
+    swipeBetweenTabs.helpText = @"For Instagram's old layout, pick the Classic order and turn swiping off.";
+    swipeBetweenTabs.searchKeywords = @"old layout gesture";
+
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Notifications", @[
             [SPKSetting navigationCellWithTitle:@"Notifications"
@@ -83,19 +99,10 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
             [SPKSetting menuCellWithTitle:@"Launch Tab"
                                      icon:SPKSettingsIcon(@"home")
                                      menu:SPKLaunchTabMenu()],
-            [SPKSetting menuCellWithTitle:@"Tab Icon Order"
-                                     icon:SPKSettingsIcon(@"sort")
-                                     menu:SPKNavigationIconOrderingMenu()],
-            [SPKSetting menuCellWithTitle:@"Swipe Between Tabs"
-                                     icon:SPKSettingsIcon(@"left_right")
-                                     menu:SPKSwipeBetweenTabsMenu()],
+            tabIconOrder,
+            swipeBetweenTabs,
         ],
-                        @"Control the order of the tabs:\n"
-                        @"   - Default: Instagram default\n"
-                        @"   - Standard: Home, Reels, Messages, Explore, Profile\n"
-                        @"   - Classic: Messages in the top right corner\n"
-                        @"   - Alternate: Home and Reels tabs swapped\n"
-                        @"To get the old layout back, use Classic and disable swiping between tabs."),
+                        nil),
         SPKTopicSection(@"", @[
             SPKHideTabSwitch(@"Hide Feed Tab", @"home", @"interface_hide_feed_tab"),
             SPKHideTabSwitch(@"Hide Explore Tab", @"search", @"interface_hide_explore_tab"),
@@ -134,6 +141,8 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                 s.enabledProvider = ^BOOL {
                     return SPKIsMessagesOnlyMode();
                 };
+                s.helpText = @"Available once Messages is the only visible tab. Sparkle Settings then opens by long-pressing the right navigation button.";
+                s.searchKeywords = @"long press settings access space";
                 s;
             }),
             ({
@@ -143,26 +152,34 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                 s.enabledProvider = ^BOOL {
                     return SPKIsMessagesOnlyMode();
                 };
+                s.helpText = @"Available once Messages is the only visible tab. Puts the feed header shortcut on the left of the navigation bar.";
                 s;
             })
         ],
-                        @"These settings are accessible when only the Messages tab is enabled.\n"
-                        @"1. Hides the tab bar to free up screen space. Sparkle settings can be accessed via long pressing the right navigation bar button.\n"
-                        @"2. Shows the feed header shortcut on the left side of the Messages navigation bar."),
+                        nil),
         SPKTopicSection(@"Explore & Search", @[
-            [SPKSetting switchCellWithTitle:@"Hide Explore Posts Grid"
-                                       icon:SPKSettingsIcon(@"explore_grid")
-                                defaultsKey:@"interface_hide_explore_grid"],
+            ({
+                // Shortened from "Hide Explore Posts Grid" — the section header
+                // already carries "Explore"; the old title stays searchable.
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Posts Grid"
+                                                           icon:SPKSettingsIcon(@"explore_grid")
+                                                    defaultsKey:@"interface_hide_explore_grid"];
+                s.searchKeywords = @"explore suggested grid";
+                s;
+            }),
             [SPKSetting switchCellWithTitle:@"Hide Trending Searches"
                                        icon:SPKSettingsIcon(@"trending")
                                 defaultsKey:@"interface_hide_trending_searches"],
-            [SPKSetting switchCellWithTitle:@"Open Clipboard Link"
-                                       icon:SPKSettingsIcon(@"link")
-                                defaultsKey:@"interface_open_clipboard_link"]
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Open Clipboard Link"
+                                                           icon:SPKSettingsIcon(@"link")
+                                                    defaultsKey:@"interface_open_clipboard_link"];
+                s.helpText = @"Long-press the Explore tab to open the Instagram link in your clipboard.";
+                s.searchKeywords = @"url paste long press";
+                s;
+            })
         ],
-                        @"1. Hide the grid of suggested posts on the explore tab.\n"
-                        @"2. Hide the trending searches under the explore search bar.\n"
-                        @"3. Long press the Explore tab to open the Instagram URL in your clipboard."),
+                        nil),
         SPKTopicSection(@"Capture", @[
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide UI on Capture"
@@ -172,10 +189,12 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                     [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"interface_hide_ui_on_capture"];
                     [[NSNotificationCenter defaultCenter] postNotificationName:SPKHideUIOnCapturePreferenceDidChangeNotification object:nil];
                 };
+                s.helpText = @"Sparkle's interface vanishes from screenshots, screen recordings and mirroring.";
+                s.searchKeywords = @"screenshot recording mirror redact";
                 s;
             })
         ],
-                        @"Redacts Sparkle UI elements from screenshots, screen recordings, and mirroring.")
+                        nil)
     ]];
 
     {
@@ -205,18 +224,19 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                 [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:kSPKPrefInterfaceLiquidGlass];
                 [SPKUtils showRestartConfirmation];
             };
+            liquidGlass.helpText = @"Turns on Instagram's native Liquid Glass interface even where it hasn't rolled out yet.";
+
             SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive Blur"
                                                              defaultsKey:kSPKPrefInterfaceProgressiveBlur
                                                           requiresRestart:YES];
+            progressiveBlur.helpText = @"Restores the navigation bar's gradual blur as you scroll.";
 
             [sections addObject:SPKTopicSection(@"Liquid Glass & Blur", @[
                           liquidGlass,
                           progressiveBlur,
                           tabBarBehaviorCell(),
                       ],
-                                                @"1. Force-enable Instagram's native Liquid Glass UI.\n"
-                                                @"2. Restore the native progressive navigation bar blur on scroll.\n"
-                                                @"3. Configure how the tab bar behaves while scrolling.")];
+                                                nil)];
         } else {
             // Pre-iOS 26 can't render the glass material, but the same tab bar
             // experiment gates still reshape the bar into the floating pill.
@@ -231,14 +251,14 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                 [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:kSPKPrefInterfaceLiquidGlass];
                 [SPKUtils showRestartConfirmation];
             };
+            pillTabBar.helpText = @"Reshapes the bar into the iOS 26 floating pill. The glass material itself needs iOS 26, so only the shape applies on this device.";
+            pillTabBar.searchKeywords = @"liquid glass floating";
 
             [sections addObject:SPKTopicSection(@"Tab Bar", @[
                           pillTabBar,
                           tabBarBehaviorCell(),
                       ],
-                                                @"Reshape the tab bar into the iOS 26-style floating pill. "
-                                                @"The Liquid Glass material itself requires iOS 26, so on this "
-                                                @"device only the pill shape is applied.")];
+                                                nil)];
         }
     }
 

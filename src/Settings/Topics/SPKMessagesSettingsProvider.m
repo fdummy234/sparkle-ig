@@ -1,6 +1,8 @@
 #import "SPKMessagesSettingsProvider.h"
 
+#import "../../Features/Messages/DeletedMessagesLog/SPKDeletedMessagesStorage.h"
 #import "../../Features/Messages/DeletedMessagesLog/SPKDeletedMessagesViewController.h"
+#import "../../Shared/Account/SPKAccountManager.h"
 #import "../../Shared/ActionButton/SPKActionButtonConfiguration.h"
 #import "../../Shared/Messages/SPKDirectSeenContext.h"
 #import "../../Utils.h"
@@ -50,10 +52,43 @@ static SPKSetting *SPKAudioGatedSwitch(NSString *title, UIImage *icon, NSString 
 static NSArray *SPKMessagesSettingsSections(void) {
     BOOL manualSeen = [SPKUtils getBoolPref:@"msgs_manual_seen"];
     SPKSetting *manualSeenList = [SPKSetting navigationCellWithTitle:SPKDirectManualSeenListTitle(manualSeen)
-                                                            subtitle:@""
+                                                            subtitle:nil
                                                                 icon:SPKSettingsIcon(@"users")
                                                       viewController:SPKDirectManualSeenListViewController()];
     manualSeenList.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)SPKDirectManualSeenThreadCount(manualSeen)]};
+    manualSeenList.helpText = @"Excluded chats keep Instagram's normal read receipts; in Included mode only the listed chats are held. Also manageable from the eye button or a long-press in the inbox.";
+
+    // ---- Action Button -------------------------------------------------
+
+    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Messages Action Button"
+                                                                icon:SPKSettingsIcon(@"action")
+                                                         defaultsKey:kSPKMessagesActionButtonEnabledKey];
+    // Same wording as the Feed master toggle — the six action-button pages share
+    // one gesture template, so the sheets must read identically everywhere.
+    masterActionButton.helpText = @"Tap runs the default action. Long-press opens the full action menu.";
+
+    // Extends the action button to the full-screen viewer for permanent chat media
+    // (camera-roll photos/videos, chat-menu media), replacing IG's native Save.
+    // Only meaningful while the master action button toggle is on.
+    SPKSetting *chatMediaActionButton = [SPKSetting switchCellWithTitle:@"Also Show on Chat Media"
+                                                                  icon:SPKSettingsIcon(@"photo")
+                                                           defaultsKey:kSPKMessagesActionButtonChatMediaKey];
+    chatMediaActionButton.enabledProvider = ^BOOL {
+        return [SPKUtils getBoolPref:kSPKMessagesActionButtonEnabledKey];
+    };
+    chatMediaActionButton.helpText = @"Also covers camera-roll photos and videos opened full screen in a chat, where it replaces Instagram's Save button.";
+
+    // ---- Messaging -----------------------------------------------------
+
+    SPKSetting *unlockPreview = [SPKSetting switchCellWithTitle:@"Unlock Message Preview"
+                                                           icon:SPKSettingsIcon(@"story_preview")
+                                                    defaultsKey:@"msgs_unlock_preview"];
+    unlockPreview.helpText = @"The chat long-press menu shows the real messages without marking them seen.";
+
+    SPKSetting *manualSeenSwitch = [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
+                                                              icon:SPKSettingsIcon(@"eye")
+                                                       defaultsKey:@"msgs_manual_seen"];
+    manualSeenSwitch.helpText = @"Chats stop sending read receipts until you tap the eye button. The list below picks which chats are excluded or included.";
 
     // Auto-seen triggers only act while manual seen is on. Keep their stored value
     // but lock the cells when manual seen is off.
@@ -84,12 +119,42 @@ static NSArray *SPKMessagesSettingsSections(void) {
     seenButtonPosition.enabledProvider = ^BOOL {
         return [SPKUtils getBoolPref:@"msgs_manual_seen"];
     };
+    seenButtonPosition.helpText = @"The eye button lives in the top bar, or as a draggable bubble above the composer — scroll to snap the bubble back.";
 
-    // Advancing after a manual seen only applies while visual manual seen is on.
-    SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance After Manual Seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
-    advanceVisual.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
-    };
+    // ---- Deleted Messages ----------------------------------------------
+
+    SPKSetting *keepDeleted = [SPKSetting switchCellWithTitle:@"Keep Deleted Messages"
+                                                         icon:SPKSettingsIcon(@"undo_circle")
+                                                  defaultsKey:@"msgs_keep_deleted"];
+    keepDeleted.helpText = @"Unsent messages stay in the chat with an undo marker until the inbox reloads.";
+
+    SPKSetting *confirmRefresh = [SPKSetting switchCellWithTitle:@"Confirm Inbox Refresh"
+                                                            icon:SPKSettingsIcon(@"arrow_cw")
+                                                     defaultsKey:@"msgs_confirm_refresh"];
+    confirmRefresh.helpText = @"Refreshing reloads every thread and drops the messages kept above.";
+
+    SPKSetting *logDeleted = [SPKSetting switchCellWithTitle:@"Log Deleted Messages"
+                                                        icon:SPKSettingsIcon(@"logs")
+                                                 defaultsKey:@"msgs_deleted_log"];
+    logDeleted.helpText = @"Saves each message before it disappears, including view-once media, until you clear the log.";
+
+    SPKSetting *respectSeenList = [SPKSetting switchCellWithTitle:@"Respect Seen Chat List"
+                                                             icon:SPKSettingsIcon(@"eye")
+                                                      defaultsKey:@"msgs_deleted_log_respect_seen_list"];
+    respectSeenList.helpText = @"Chats in your seen exclude/include list are left out of the log and its notifications.";
+
+    // Counted once per page appearance (the sections are rebuilt in
+    // viewWillAppear), like the manual-seen thread count above — never from an
+    // accessoryTextProvider, which would re-read the log JSON on every cell pass.
+    NSString *ownerPK = SPKAccountManager.currentAccountPK;
+    NSUInteger deletedLogCount = ownerPK.length > 0 ? [SPKDeletedMessagesStorage allMessagesForOwnerPK:ownerPK].count : 0;
+    SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"View Deleted Messages"
+                                                            subtitle:nil
+                                                                icon:SPKSettingsIcon(@"channels")
+                                                      viewController:[SPKDeletedMessagesViewController new]];
+    viewDeletedLog.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)deletedLogCount]};
+
+    // ---- Interface -----------------------------------------------------
 
     // Tri-state control for reformatting the chat-header last-active presence
     // label: Off / Smart / Date & Time.
@@ -97,35 +162,76 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                                                                             icon:SPKSettingsIcon(@"clock")
                                                                                             menu:SPKLastActiveFormatMenu()],
                                                                    SPKSettingsIcon(@"clock"));
+    lastActiveFormat.searchKeywords = @"presence status smart date time exact";
 
-    // Extends the action button to the full-screen viewer for permanent chat media
-    // (camera-roll photos/videos, chat-menu media), replacing IG's native Save.
-    // Only meaningful while the master action button toggle is on.
-    SPKSetting *chatMediaActionButton = [SPKSetting switchCellWithTitle:@"Also Show on Chat Media"
-                                                                  icon:SPKSettingsIcon(@"photo")
-                                                           defaultsKey:kSPKMessagesActionButtonChatMediaKey];
-    chatMediaActionButton.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:kSPKMessagesActionButtonEnabledKey];
+    // Lexicon rename ("No …" → "Hide …"); old phrasing kept searchable.
+    SPKSetting *hideSuggestedChats = [SPKSetting switchCellWithTitle:@"Hide Suggested Chats"
+                                                                icon:SPKSettingsIcon(@"question")
+                                                         defaultsKey:@"msgs_hide_suggested_chats"];
+    hideSuggestedChats.searchKeywords = @"no suggestions inbox";
+
+    // ---- Visual Messages -----------------------------------------------
+
+    // Advancing after a manual seen only applies while visual manual seen is on.
+    SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance After Manual Seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
+    advanceVisual.enabledProvider = ^BOOL {
+        return [SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
     };
+
+    // Lexicon rename ("Stop …" → "Disable …"); old phrasing kept searchable.
+    SPKSetting *disableAutoAdvance = [SPKSetting switchCellWithTitle:@"Disable Auto Advance"
+                                                                icon:SPKSettingsIcon(@"autoscroll")
+                                                         defaultsKey:@"msgs_stop_visual_auto_advance"];
+    disableAutoAdvance.searchKeywords = @"stop next replay end";
+
+    SPKSetting *disableViewOnce = [SPKSetting switchCellWithTitle:@"Disable View-Once Limitations"
+                                                             icon:SPKSettingsIcon(@"view_once")
+                                                      defaultsKey:@"msgs_disable_view_once"];
+    disableViewOnce.searchKeywords = @"replay view twice limit";
+
+    // ---- Audio & Media -------------------------------------------------
+    // The composer entry points used to live in the section footers; they stay
+    // findable through the search keywords below.
+
+    SPKSetting *downloadVoice = SPKAudioGatedSwitch(@"Download Voice Messages", SPKSettingsIcon(@"audio_download"), @"msgs_download_audio_messages");
+    downloadVoice.searchKeywords = @"voice message audio save";
+
+    SPKSetting *uploadAudio = [SPKSetting switchCellWithTitle:@"Upload Audio"
+                                                         icon:SPKSettingsIcon(@"audio_upload")
+                                                  defaultsKey:@"msgs_upload_audio_messages"];
+    uploadAudio.searchKeywords = @"composer plus menu voice video send";
+
+    SPKSetting *trimAudio = [SPKSetting switchCellWithTitle:@"Trim Before Sending"
+                                                       icon:SPKSettingsIcon(@"trim")
+                                                defaultsKey:@"msgs_audio_upload_trim"];
+    trimAudio.searchKeywords = @"cut editor length";
+
+    SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
+                                                                icon:SPKSettingsIcon(@"photo")
+                                                         defaultsKey:@"msgs_upload_gallery_media"];
+    uploadGalleryPhoto.searchKeywords = @"composer plus menu picture send";
+
+    // ---- Notes ---------------------------------------------------------
+
+    SPKSetting *downloadNotesAudio = SPKAudioGatedSwitch(@"Download Notes Audio", SPKSettingsIcon(@"audio"), @"msgs_download_notes_audio");
+    downloadNotesAudio.helpText = @"Long-press a note in the tray — the option appears when the note has audio.";
+
+    SPKSetting *copyNoteText = [SPKSetting switchCellWithTitle:@"Copy Note Text"
+                                                          icon:SPKSettingsIcon(@"copy")
+                                                   defaultsKey:@"msgs_copy_note_text"];
+    copyNoteText.helpText = @"Long-press a note in the tray — the option appears when the note has text.";
 
     return @[
         SPKTopicSection(@"Action Button", @[
-            [SPKSetting switchCellWithTitle:@"Messages Action Button"
-                                       icon:SPKSettingsIcon(@"action")
-                                defaultsKey:kSPKMessagesActionButtonEnabledKey],
+            masterActionButton,
             chatMediaActionButton,
             SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceDirect),
             SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceDirect, @"Messages", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceDirect), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceDirect))
         ],
-                        @"Choose what tapping the action button does. Long press opens the full menu.\n"
-                        @"\"Also Show on Chat Media\" adds it to camera-roll photos and videos opened in a chat."),
+                        nil),
         SPKTopicSection(@"Messaging", @[
-            [SPKSetting switchCellWithTitle:@"Unlock Message Preview"
-                                       icon:SPKSettingsIcon(@"story_preview")
-                                defaultsKey:@"msgs_unlock_preview"],
-            [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
-                                       icon:SPKSettingsIcon(@"eye")
-                                defaultsKey:@"msgs_manual_seen"],
+            unlockPreview,
+            manualSeenSwitch,
             seenButtonPosition,
             seenOnSend,
             seenOnReply,
@@ -133,49 +239,18 @@ static NSArray *SPKMessagesSettingsSections(void) {
             seenOnTyping,
             manualSeenList,
         ],
-                        manualSeen ? @"1. Unlock \"Message Preview\": the chat long-press menu shows the actual chat preview without marking the messages as seen.\n"
-                                     @"2. Prevents automatic seen receipts and adds an eye button to mark chats as seen.\n"
-                                     @"3. Places the seen button in the top nav bar, or as a draggable bubble above the composer within thumb reach (scroll to snap it back).\n"
-                                     @"4. Marks a chat as seen when you send a message.\n"
-                                     @"5. Marks a chat as seen when you reply.\n"
-                                     @"6. Marks a chat as seen when you react.\n"
-                                     @"7. Marks a chat as seen when you start typing a reply.\n\n"
-                                     @"Excluded Chats keep Instagram's normal seen behavior. Manage them from the eye button, an inbox long press, or the list above."
-                                   : @"1. Unlock \"Message Preview\": the chat long-press menu shows the actual chat preview without marking the messages as seen.\n"
-                                     @"2. Prevents automatic seen receipts and adds an eye button to mark chats as seen.\n"
-                                     @"3. Places the seen button in the top nav bar, or as a draggable bubble above the composer within thumb reach (scroll to snap it back).\n"
-                                     @"4. Marks a chat as seen when you send a message.\n"
-                                     @"5. Marks a chat as seen when you reply.\n"
-                                     @"6. Marks a chat as seen when you react.\n"
-                                     @"7. Marks a chat as seen when you start typing a reply.\n\n"
-                                     @"Included Chats require the eye button or the auto-seen triggers above. Manage them from the eye button, an inbox long press, or the list above."),
+                        nil),
         SPKTopicSection(@"Deleted Messages", @[
-            [SPKSetting switchCellWithTitle:@"Keep Deleted Messages"
-                                       icon:SPKSettingsIcon(@"undo_circle")
-                                defaultsKey:@"msgs_keep_deleted"],
-            [SPKSetting switchCellWithTitle:@"Confirm Inbox Refresh"
-                                       icon:SPKSettingsIcon(@"arrow_cw")
-                                defaultsKey:@"msgs_confirm_refresh"],
-            [SPKSetting switchCellWithTitle:@"Log Deleted Messages"
-                                       icon:SPKSettingsIcon(@"logs")
-                                defaultsKey:@"msgs_deleted_log"],
+            keepDeleted,
+            confirmRefresh,
+            logDeleted,
             [SPKSetting switchCellWithTitle:@"Log Removed Reactions"
                                        icon:SPKSettingsIcon(@"reactions")
                                 defaultsKey:@"msgs_deleted_log_reactions"],
-            [SPKSetting switchCellWithTitle:@"Respect Seen Chat List"
-                                       icon:SPKSettingsIcon(@"eye")
-                                defaultsKey:@"msgs_deleted_log_respect_seen_list"],
-            [SPKSetting navigationCellWithTitle:@"View Deleted Messages"
-                                       subtitle:@""
-                                           icon:SPKSettingsIcon(@"channels")
-                                 viewController:[SPKDeletedMessagesViewController new]],
+            respectSeenList,
+            viewDeletedLog,
         ],
-                        @"1. Preserves remotely unsent messages in the chat, marked with an undo-circle indicator.\n"
-                        @"2. Asks before refreshing the inbox, which reloads threads and drops preserved messages.\n"
-                        @"3. Records message content before removal and keeps view-once/view-twice media until cleared.\n"
-                        @"4. Also logs reactions that are removed.\n"
-                        @"5. Skips log capture and unsent notifications for chats in your manual-seen include/exclude list.\n"
-                        @"6. Opens the captured deleted-message logs."),
+                        nil),
         SPKTopicSection(@"Interface", @[
             lastActiveFormat,
             [SPKSetting switchCellWithTitle:@"Hide Typing Status"
@@ -193,38 +268,21 @@ static NSArray *SPKMessagesSettingsSections(void) {
             [SPKSetting switchCellWithTitle:@"Hide Flag Button"
                                        icon:SPKSettingsIcon(@"flag")
                                 defaultsKey:@"msgs_hide_flag_btn"],
-            [SPKSetting switchCellWithTitle:@"No Suggested Chats"
-                                       icon:SPKSettingsIcon(@"question")
-                                defaultsKey:@"msgs_hide_suggested_chats"],
+            hideSuggestedChats,
         ],
-                        @"1. Shows the exact time someone was last active in the chat header (\"Active at 1:15 AM\") instead of a relative label (\"Active 2h ago\"). "
-                        @"\"Smart\" uses the time alone for today and adds the date for older days; \"Date & Time\" always shows both. Only reformats presence Instagram already shows.\n"
-                        @"2. Stops sending your typing indicator to others.\n"
-                        @"3. Removes the Reels Blend button from the inbox.\n"
-                        @"4. Hides the audio call button in the chat header.\n"
-                        @"5. Hides the video call button in the chat header.\n"
-                        @"6. Hides the flag button in the chat header.\n"
-                        @"7. Removes suggested chats from the inbox."),
+                        nil),
         SPKTopicSection(@"Visual Messages", @[
             [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"msgs_manual_visual_seen"],
             advanceVisual,
-            [SPKSetting switchCellWithTitle:@"Stop Auto Advance"
-                                       icon:SPKSettingsIcon(@"autoscroll")
-                                defaultsKey:@"msgs_stop_visual_auto_advance"],
-            [SPKSetting switchCellWithTitle:@"Disable View-Once Limitations"
-                                       icon:SPKSettingsIcon(@"view_once")
-                                defaultsKey:@"msgs_disable_view_once"],
+            disableAutoAdvance,
+            disableViewOnce,
             [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
                                        icon:SPKSettingsIcon(@"warning")
                                 defaultsKey:@"msgs_disable_screenshot_detection"]
         ],
-                        @"1. Prevents automatic seen receipts and adds a button to mark the chat as seen.\n"
-                        @"2. Moves to the next visual item when available or dismisses.\n"
-                        @"3. Keeps the current visual message on screen instead of auto-advancing when it ends.\n"
-                        @"4. View-once messages behave like normal visual messages.\n"
-                        @"5. Allows screen capture of visual messages."),
+                        nil),
         SPKTopicSection(@"Vanish Mode", @[
             [SPKSetting switchCellWithTitle:@"Disable Swipe-Up Gesture"
                                        icon:SPKSettingsIcon(@"arrow_up")
@@ -233,8 +291,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                        icon:SPKSettingsIcon(@"warning")
                                 defaultsKey:@"msgs_hide_vanish_screenshot"],
         ],
-                        @"1. Disable the gesture that enables vanish mode.\n"
-                        @"2. Allows screen capture while vanish mode is active."),
+                        nil),
         SPKTopicSection(@"Notes", @[
             [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
                                        icon:SPKSettingsIcon(@"notes")
@@ -242,30 +299,17 @@ static NSArray *SPKMessagesSettingsSections(void) {
             [SPKSetting switchCellWithTitle:@"Hide Friends Map"
                                        icon:SPKSettingsIcon(@"map")
                                 defaultsKey:@"msgs_hide_friends_map"],
-            SPKAudioGatedSwitch(@"Download Notes Audio", SPKSettingsIcon(@"audio"), @"msgs_download_notes_audio"),
-            [SPKSetting switchCellWithTitle:@"Copy Note Text"
-                                       icon:SPKSettingsIcon(@"copy")
-                                defaultsKey:@"msgs_copy_note_text"]
+            downloadNotesAudio,
+            copyNoteText,
         ],
-                        @"Long-press a note in the tray to download its audio or copy its text. Each action only appears when the note has that content."),
-        SPKTopicSection(@"Audio", @[
-            SPKAudioGatedSwitch(@"Download Voice Messages", SPKSettingsIcon(@"audio_download"), @"msgs_download_audio_messages"),
-            [SPKSetting switchCellWithTitle:@"Upload Audio"
-                                       icon:SPKSettingsIcon(@"audio_upload")
-                                defaultsKey:@"msgs_upload_audio_messages"],
-            [SPKSetting switchCellWithTitle:@"Trim Before Sending"
-                                       icon:SPKSettingsIcon(@"trim")
-                                defaultsKey:@"msgs_audio_upload_trim"]
+                        nil),
+        SPKTopicSection(@"Audio & Media", @[
+            downloadVoice,
+            uploadAudio,
+            trimAudio,
+            uploadGalleryPhoto,
         ],
-                        @"1. Adds audio actions to supported voice/audio message views.\n"
-                        @"2. Adds an option to the composer plus (+) menu that sends the selected audio or video as a voice message.\n"
-                        @"3. When uploading, offers to trim the audio before sending it."),
-        SPKTopicSection(@"Media", @[
-            [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
-                                       icon:SPKSettingsIcon(@"photo")
-                                defaultsKey:@"msgs_upload_gallery_media"]
-        ],
-                        @"Adds an option to the composer plus (+) menu that sends a photo from the Sparkle Gallery into the chat."),
+                        nil),
         SPKTopicSection(@"Confirmation", @[
             [SPKSetting switchCellWithTitle:@"Confirm Audio Call"
                                        icon:SPKSettingsIcon(@"call")
@@ -292,7 +336,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                        icon:SPKSettingsIcon(@"palette")
                                 defaultsKey:@"msgs_confirm_theme_change"]
         ],
-                        @"Shows confirmation alerts before the selected message actions are sent.")
+                        nil)
     ];
 }
 
@@ -300,7 +344,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
 + (SPKSetting *)rootSetting {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Messages"
-                                                     subtitle:@""
+                                                     subtitle:nil
                                                          icon:SPKSettingsIcon(@"messages")
                                                viewController:[[SPKMessagesSettingsViewController alloc] init]];
     setting.searchSectionsProvider = ^NSArray * {
