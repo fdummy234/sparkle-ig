@@ -474,6 +474,22 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
 // MARK: - UITableViewDataSource
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    // Mesure des captures : le pas natif est 44 pt, et nos rangées SANS valeur
+    // y sont déjà — celles avec « N active » gonflent à 52 parce que le sizing
+    // réserve la hauteur empilée du texte secondaire côte à côte. On ne joue
+    // plus au chat : 44 verrouillé pour les rangées standard, automatique
+    // seulement quand le contenu le justifie.
+    SPKSetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
+    if (![row isKindOfClass:[SPKSetting class]])
+        return UITableViewAutomaticDimension;
+    BOOL needsAutomatic = row.subtitle.length > 0 ||
+                          row.avatarPK.length > 0 ||
+                          row.imageUrl != nil ||
+                          [row.userInfo[@"avatarIcon"] boolValue];
+    return needsAutomatic ? UITableViewAutomaticDimension : 44.0;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SPKSetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
     if (!row)
@@ -684,6 +700,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         if (rowEnabled && accessoryText.length > 0) {
             cellContentConfig.secondaryText = accessoryText;
             cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
+            cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
             cellContentConfig.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
                                                                                weight:UIFontWeightRegular];
@@ -745,6 +762,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         if (rowEnabled && accessoryText.length > 0) {
             cellContentConfig.secondaryText = accessoryText;
             cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
+            cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByTruncatingTail;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
@@ -951,7 +969,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     NSMutableArray<NSLayoutConstraint *> *constraints = [@[
         [label.leadingAnchor constraintEqualToAnchor:container.leadingAnchor constant:16.0],
         [label.topAnchor constraintEqualToAnchor:container.topAnchor constant:12.0],
-        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-8.0]
+        [label.bottomAnchor constraintEqualToAnchor:container.bottomAnchor constant:-10.0]
     ] mutableCopy];
 
     if (helpRows.count > 0) {
