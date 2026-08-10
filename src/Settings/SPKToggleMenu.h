@@ -14,7 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 //   · icon on the LEFT (same Instagram glyphs as the cells, template-tinted)
 //   · checkmark on the RIGHT
 //   · item height 44 pt (= SPKUI_RowHeight), width 262 pt, corner radius 13
-//   · the menu STAYS OPEN while toggling — tap outside to dismiss
+//   · the menu STAYS OPEN while toggling — tap outside or the Done
+//     footer to dismiss (v1.4: 6pt content padding, 8pt sectioned gap +
+//     44pt centered semibold "Done", 20pt screen margin)
 //
 // The host row ("gate row") is built with SPKToggleMenuRowSetting(): a button
 // cell that closes its page, carries an "N on" / "Off" accessory (re-read on

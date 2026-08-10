@@ -13,7 +13,9 @@ static CGFloat const kSPKToggleMenuItemHeight = 44.0;  // = SPKUI_RowHeight
 static CGFloat const kSPKToggleMenuCornerRadius = 13.0;
 static CGFloat const kSPKToggleMenuIconSize = 22.0;
 static CGFloat const kSPKToggleMenuHPad = 14.0;
-static CGFloat const kSPKToggleMenuMargin = 16.0;
+static CGFloat const kSPKToggleMenuMargin = 20.0;
+static CGFloat const kSPKToggleMenuContentPadding = 6.0;   // v1.4: breathing room above/below items
+static CGFloat const kSPKToggleMenuFooterGap = 8.0;        // v1.4: sectioned gap before Done
 static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
 #pragma mark - Item
@@ -143,6 +145,11 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
 @implementation SPKToggleMenuOverlay
 
+- (void)spk_dismissFromDone {
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [self dismiss];
+}
+
 - (void)dismiss {
     [UIView animateWithDuration:0.15
         animations:^{
@@ -170,7 +177,9 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         return;
 
     CGFloat hairline = 1.0 / MAX(UIScreen.mainScreen.scale, 1.0);
-    CGFloat menuHeight = items.count * kSPKToggleMenuItemHeight + (items.count - 1) * hairline;
+    CGFloat menuHeight = 2.0 * kSPKToggleMenuContentPadding
+        + items.count * kSPKToggleMenuItemHeight + (items.count - 1) * hairline
+        + kSPKToggleMenuFooterGap + kSPKToggleMenuItemHeight; // v1.4 Done footer
 
     SPKToggleMenuOverlay *overlay = [[SPKToggleMenuOverlay alloc] initWithFrame:window.bounds];
     overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -197,7 +206,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     blurView.clipsToBounds = YES;
     [container addSubview:blurView];
 
-    CGFloat y = 0.0;
+    CGFloat y = kSPKToggleMenuContentPadding;
     for (NSUInteger i = 0; i < items.count; i++) {
         if (i > 0) {
             UIView *separator = [UIView new];
@@ -211,6 +220,31 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         [blurView.contentView addSubview:control];
         y += kSPKToggleMenuItemHeight;
     }
+
+    // v1.4 footer — sectioned gap, then an explicit way out. Same dismissal
+    // path as tapping outside (animation + onDismiss), with a light tick.
+    UIView *gapBand = [[UIView alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterGap)];
+    gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.5];
+    UIView *gapTop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSPKToggleMenuWidth, hairline)];
+    gapTop.backgroundColor = UIColor.separatorColor;
+    UIView *gapBottom = [[UIView alloc] initWithFrame:CGRectMake(0, kSPKToggleMenuFooterGap - hairline, kSPKToggleMenuWidth, hairline)];
+    gapBottom.backgroundColor = UIColor.separatorColor;
+    [gapBand addSubview:gapTop];
+    [gapBand addSubview:gapBottom];
+    [blurView.contentView addSubview:gapBand];
+    y += kSPKToggleMenuFooterGap;
+
+    UIControl *doneControl = [[UIControl alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight)];
+    UILabel *doneLabel = [[UILabel alloc] initWithFrame:doneControl.bounds];
+    doneLabel.text = @"Done";
+    doneLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
+    doneLabel.textColor = UIColor.labelColor;
+    doneLabel.textAlignment = NSTextAlignmentCenter;
+    doneLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [doneControl addSubview:doneLabel];
+    [doneControl addTarget:overlay action:@selector(spk_dismissFromDone) forControlEvents:UIControlEventTouchUpInside];
+    [blurView.contentView addSubview:doneControl];
+    y += kSPKToggleMenuItemHeight;
 
     // Placement: below the anchor when it fits, otherwise above — then clamp
     // both axes into the safe area so the menu can never leave the screen.

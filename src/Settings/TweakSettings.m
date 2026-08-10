@@ -73,7 +73,7 @@ static SPKSetting *SPKRootRow(SPKSetting *topic) {
 + (NSArray *)sections {
     return @[
         @{
-            @"header" : @"",
+            @"header" : @"Your Sparkle",
             @"rows" : @[
                 SPKRootRow([SPKGeneralSettingsProvider rootSetting])
             ]
