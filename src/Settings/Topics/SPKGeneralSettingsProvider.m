@@ -19,54 +19,6 @@
 //
 // Spec keys: @"title" (required), @"key" (required), @"help" (optional).
 
-static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralAdsToggles(void) {
-    return @[
-        @{@"title" : @"Hide in Feed", @"key" : @"general_hide_ads_feed"},
-        @{@"title" : @"Hide in Stories", @"key" : @"general_hide_ads_stories"},
-        @{@"title" : @"Hide in Reels", @"key" : @"general_hide_ads_reels"},
-        @{@"title" : @"Hide in Explore", @"key" : @"general_hide_ads_explore"},
-        @{@"title" : @"Hide Reels Shopping CTA", @"key" : @"general_hide_reels_shopping_cta"}
-    ];
-}
-
-static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralMetaAIToggles(void) {
-    return @[
-        @{@"title" : @"Hide in Direct",
-          @"key" : @"general_hide_meta_ai_msgs",
-          @"help" : @"Includes inbox, composer, recipients, themes and message menus."},
-        @{@"title" : @"Hide in Explore & Search", @"key" : @"general_hide_meta_ai_explore"},
-        @{@"title" : @"Hide in Comments", @"key" : @"general_hide_meta_ai_comments"},
-        @{@"title" : @"Hide in Creation Tools", @"key" : @"general_hide_meta_ai_creation"},
-        @{@"title" : @"Hide Global AI Chrome",
-          @"key" : @"general_hide_meta_ai_global",
-          @"help" : @"Generic Meta AI buttons, placeholders and branded entry points."}
-    ];
-}
-
-static NSArray<NSDictionary<NSString *, NSString *> *> *SPKGeneralSuggestedUserToggles(void) {
-    return @[
-        @{@"title" : @"Hide in Feed", @"key" : @"general_hide_suggested_users_feed"},
-        @{@"title" : @"Hide in Reels", @"key" : @"general_hide_suggested_users_reels"},
-        @{@"title" : @"Hide in Direct", @"key" : @"general_hide_suggested_users_msgs"},
-        @{@"title" : @"Hide in Search", @"key" : @"general_hide_suggested_users_search"},
-        @{@"title" : @"Hide in Profile", @"key" : @"general_hide_suggested_users_profile"},
-        @{@"title" : @"Hide in Activity", @"key" : @"general_hide_suggested_users_activity"},
-        @{@"title" : @"Hide in Follow Lists", @"key" : @"general_hide_suggested_users_follow_lists"},
-        @{@"title" : @"Hide in Subscriptions", @"key" : @"general_hide_suggested_users_subscriptions"}
-    ];
-}
-
-static NSArray<SPKSetting *> *SPKGeneralSwitchRowsFromSpecs(NSArray<NSDictionary<NSString *, NSString *> *> *specs) {
-    NSMutableArray<SPKSetting *> *rows = [NSMutableArray arrayWithCapacity:specs.count];
-    for (NSDictionary<NSString *, NSString *> *spec in specs) {
-        SPKSetting *row = [SPKSetting switchCellWithTitle:spec[@"title"]
-                                              defaultsKey:spec[@"key"]];
-        row.helpText = spec[@"help"];
-        [rows addObject:row];
-    }
-    return [rows copy];
-}
-
 /// State for a page of "Hide …" toggles, shown on the row that leads to it:
 /// `Off`, `N hidden`, or `All hidden`. Re-read on every `viewWillAppear`, so it
 /// refreshes on the way back from the sub-page with no extra plumbing.
@@ -83,27 +35,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     if (on == specs.count)
         return @"All hidden";
     return [NSString stringWithFormat:@"%lu hidden", (unsigned long)on];
-}
-
-static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
-                                                          NSString *iconName,
-                                                          NSString *sectionHeader,
-                                                          NSString *_Nullable sectionFooter,
-                                                          NSArray<NSDictionary<NSString *, NSString *> *> *specs,
-                                                          NSString *_Nullable searchKeywords) {
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:title
-                                                     subtitle:nil
-                                                         icon:SPKSettingsIcon(iconName)
-                                                  navSections:@[
-                                                      SPKTopicSection(sectionHeader,
-                                                                      SPKGeneralSwitchRowsFromSpecs(specs),
-                                                                      sectionFooter)
-                                                  ]];
-    setting.accessoryTextProvider = ^NSString * {
-        return SPKGeneralHiddenCountAccessory(specs);
-    };
-    setting.searchKeywords = searchKeywords;
-    return setting;
 }
 
 #pragma mark -
@@ -233,56 +164,7 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
                                                      defaultsKey:@"general_action_btn_show_date"];
     showDateInMenu.searchKeywords = @"timestamp posted exact time";
 
-    // ---- Comments (one section, was three) -----------------------------
-    //
-    // The split into three cards — one titled, two anonymous — encoded exactly
-    // one real fact: Swipe Direction depends on Swipe to Close Comments. That's
-    // `enabledProvider`'s job, not a silent card break, so the eight rows are
-    // one card now and the dependency is visible as a greyed row.
 
-    SPKSetting *copyComment = [SPKSetting switchCellWithTitle:@"Copy Comment"
-                                                         icon:SPKSettingsIcon(@"copy")
-                                                  defaultsKey:@"general_comments_copy_text"];
-    copyComment.searchKeywords = @"clipboard comment menu";
-
-    SPKSetting *commentMediaActions = [SPKSetting switchCellWithTitle:@"Media Actions"
-                                                                 icon:SPKSettingsIcon(@"action")
-                                                          defaultsKey:@"general_comments_media_actions"];
-    commentMediaActions.helpText = @"Adds Photos, Share, Gallery and link actions to GIF and photo comments.";
-    commentMediaActions.searchKeywords = @"comment gif photos share gallery link";
-
-    SPKSetting *commentGalleryUpload = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
-                                                                  icon:SPKSettingsIcon(@"photo")
-                                                           defaultsKey:@"general_comments_gallery_upload"];
-    commentGalleryUpload.helpText = @"Long-press the composer's photo button to attach from your Sparkle Gallery.";
-    commentGalleryUpload.searchKeywords = @"attach composer sparkle gallery";
-
-    SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close"
-                                                                icon:SPKSettingsIcon(@"left_right")
-                                                         defaultsKey:@"general_comments_swipe_close"];
-    swipeCloseComments.searchKeywords = @"comments gesture horizontal dismiss";
-    // Greys Swipe Direction out immediately instead of after leaving the page.
-    swipeCloseComments.reloadsTableOnSwitchChange = YES;
-
-    SPKSetting *swipeDirection = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Swipe Direction"
-                                                                                          icon:SPKSettingsIcon(@"left_right")
-                                                                                          menu:SPKSwipeCloseCommentsDirectionMenu()],
-                                                                 SPKSettingsIcon(@"left_right"));
-    swipeDirection.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"general_comments_swipe_close"];
-    };
-
-    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping"
-                                                                 icon:SPKSettingsIcon(@"shopping_bag")
-                                                          defaultsKey:@"general_comments_hide_shopping"];
-    hideCommentShopping.helpText = @"Removes commerce carousels from comment threads.";
-    hideCommentShopping.searchKeywords = @"comment commerce carousel shop";
-
-    SPKSetting *hideGiftsButton = [SPKSetting switchCellWithTitle:@"Hide Gifts Button"
-                                                             icon:SPKSettingsIcon(@"gift")
-                                                      defaultsKey:@"general_comments_hide_gifts_button"];
-    hideGiftsButton.helpText = @"Removes the gift shortcut from the composer.";
-    hideGiftsButton.searchKeywords = @"gift composer shortcut";
 
     // ---- Storage -------------------------------------------------------
 
@@ -314,31 +196,90 @@ static SPKSetting *SPKGeneralToggleGroupNavigationSetting(NSString *title,
                         nil),
         // Kept as a footer: it describes the section, not any one row, so it has
         // no row to hang off and no ⓘ to open.
+        // Three homogeneous "Hide in X" sub-pages become three gates — the
+        // state reads at a glance ("Hide Ads · 4 on") and General loses all
+        // its depth. Meta AI's two per-item helps live in its gate's ⓘ.
         SPKTopicSection(@"Recommendations", @[
-            SPKGeneralToggleGroupNavigationSetting(@"Ads", @"ads", @"Ads", nil,
-                                                   SPKGeneralAdsToggles(),
-                                                   @"ads advertising sponsored promoted"),
-            SPKGeneralToggleGroupNavigationSetting(@"Meta AI", @"meta_ai", @"Meta AI", nil,
-                                                   SPKGeneralMetaAIToggles(),
-                                                   @"ai assistant llama"),
-            SPKGeneralToggleGroupNavigationSetting(@"Suggested Users", @"users", @"Suggested Users", nil,
-                                                   SPKGeneralSuggestedUserToggles(),
-                                                   @"suggestions recommended accounts")
+            ({
+                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Ads", @"ads", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Feed"
+                                            iconName:@"feed"
+                                         defaultsKey:@"general_hide_ads_feed"],
+                    [SPKToggleMenuItem itemWithTitle:@"Stories"
+                                            iconName:@"story"
+                                         defaultsKey:@"general_hide_ads_stories"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reels"
+                                            iconName:@"reels"
+                                         defaultsKey:@"general_hide_ads_reels"],
+                    [SPKToggleMenuItem itemWithTitle:@"Explore"
+                                            iconName:@"explore_grid"
+                                         defaultsKey:@"general_hide_ads_explore"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reels Shopping CTA"
+                                            iconName:@"shopping_bag"
+                                         defaultsKey:@"general_hide_reels_shopping_cta"],
+                ]);
+                gate.searchKeywords = @"ads advertising sponsored promoted";
+                gate;
+            }),
+            ({
+                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Meta AI", @"meta_ai", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Direct"
+                                            iconName:@"messages"
+                                         defaultsKey:@"general_hide_meta_ai_msgs"],
+                    [SPKToggleMenuItem itemWithTitle:@"Explore & Search"
+                                            iconName:@"search"
+                                         defaultsKey:@"general_hide_meta_ai_explore"],
+                    [SPKToggleMenuItem itemWithTitle:@"Comments"
+                                            iconName:@"comment"
+                                         defaultsKey:@"general_hide_meta_ai_comments"],
+                    [SPKToggleMenuItem itemWithTitle:@"Creation Tools"
+                                            iconName:@"camera"
+                                         defaultsKey:@"general_hide_meta_ai_creation"],
+                    [SPKToggleMenuItem itemWithTitle:@"Global AI Chrome"
+                                            iconName:@"app"
+                                         defaultsKey:@"general_hide_meta_ai_global"],
+                ]);
+                // Was the two per-item helps of the old sub-page.
+                gate.helpText = @"Direct covers the inbox, composer, recipients, themes and message menus.\n"
+                                @"Global AI Chrome removes generic Meta AI buttons, placeholders and branded entry points.";
+                gate.searchKeywords = @"ai assistant llama";
+                gate;
+            }),
+            ({
+                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Suggested Users", @"users", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Feed"
+                                            iconName:@"feed"
+                                         defaultsKey:@"general_hide_suggested_users_feed"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reels"
+                                            iconName:@"reels"
+                                         defaultsKey:@"general_hide_suggested_users_reels"],
+                    [SPKToggleMenuItem itemWithTitle:@"Direct"
+                                            iconName:@"messages"
+                                         defaultsKey:@"general_hide_suggested_users_msgs"],
+                    [SPKToggleMenuItem itemWithTitle:@"Search"
+                                            iconName:@"search"
+                                         defaultsKey:@"general_hide_suggested_users_search"],
+                    [SPKToggleMenuItem itemWithTitle:@"Profile"
+                                            iconName:@"user_circle"
+                                         defaultsKey:@"general_hide_suggested_users_profile"],
+                    [SPKToggleMenuItem itemWithTitle:@"Activity"
+                                            iconName:@"notification"
+                                         defaultsKey:@"general_hide_suggested_users_activity"],
+                    [SPKToggleMenuItem itemWithTitle:@"Follow Lists"
+                                            iconName:@"users"
+                                         defaultsKey:@"general_hide_suggested_users_follow_lists"],
+                    [SPKToggleMenuItem itemWithTitle:@"Subscriptions"
+                                            iconName:@"channels"
+                                         defaultsKey:@"general_hide_suggested_users_subscriptions"],
+                ]);
+                gate.searchKeywords = @"suggestions recommended accounts";
+                gate;
+            }),
         ],
                         nil),
         SPKTopicSection(@"Media Preview & Menu", @[
             showMediaInfo,
             showDateInMenu
-        ],
-                        nil),
-        SPKTopicSection(@"Comments", @[
-            copyComment,
-            commentMediaActions,
-            commentGalleryUpload,
-            swipeCloseComments,
-            swipeDirection,
-            hideCommentShopping,
-            hideGiftsButton
         ],
                         nil),
         SPKTopicSection(@"Accounts", @[

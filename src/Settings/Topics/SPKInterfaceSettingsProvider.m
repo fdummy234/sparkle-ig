@@ -87,6 +87,16 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
     swipeBetweenTabs.helpText = @"For Instagram's old layout, pick the Classic order and turn swiping off.";
     swipeBetweenTabs.searchKeywords = @"old layout gesture";
 
+    // Everything that shapes the tab bar, one section. The iOS 26 rows
+    // (pill shape, scroll behavior) join it below when available.
+    NSMutableArray *tabBarRows = [@[
+        [SPKSetting menuCellWithTitle:@"Launch Tab"
+                                 icon:SPKSettingsIcon(@"home")
+                                 menu:SPKLaunchTabMenu()],
+        tabIconOrder,
+        swipeBetweenTabs,
+    ] mutableCopy];
+
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Notifications", @[
             [SPKSetting navigationCellWithTitle:@"Notifications"
@@ -95,15 +105,10 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                                     navSections:[SPKNotificationSettingsProvider sections]]
         ],
                         nil),
-        SPKTopicSection(@"Tabs", @[
-            [SPKSetting menuCellWithTitle:@"Launch Tab"
-                                     icon:SPKSettingsIcon(@"home")
-                                     menu:SPKLaunchTabMenu()],
-            tabIconOrder,
-            swipeBetweenTabs,
-        ],
-                        nil),
-        SPKTopicSection(@"", @[
+        // Was the untitled section — six homogeneous rows deserve their name.
+        // No gate here (doctrine R4): Create requires a restart and two rows
+        // have conditional visibility.
+        SPKTopicSection(@"Hidden Tabs", @[
             SPKHideTabSwitch(@"Hide Feed Tab", @"home", @"interface_hide_feed_tab"),
             SPKHideTabSwitch(@"Hide Explore Tab", @"search", @"interface_hide_explore_tab"),
             ({
@@ -264,13 +269,12 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
             pillTabBar.helpText = @"Reshapes the bar into the iOS 26 floating pill. The glass material itself needs iOS 26, so only the shape applies on this device.";
             pillTabBar.searchKeywords = @"liquid glass floating";
 
-            [sections addObject:SPKTopicSection(@"Tab Bar", @[
-                          pillTabBar,
-                          tabBarBehaviorCell(),
-                      ],
-                                                nil)];
+            [tabBarRows addObject:pillTabBar];
+            [tabBarRows addObject:tabBarBehaviorCell()];
         }
     }
+
+    [sections insertObject:SPKTopicSection(@"Tab Bar", tabBarRows, nil) atIndex:1];
 
     return SPKTopicNavigationSetting(@"Interface", @"interface", 24.0, sections);
 }

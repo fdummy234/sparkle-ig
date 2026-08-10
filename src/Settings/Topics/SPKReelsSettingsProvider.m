@@ -73,25 +73,28 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             [SPKSetting switchCellWithTitle:@"Hide Repost Button"
                                        icon:SPKSettingsIcon(@"repost")
                                 defaultsKey:@"reels_hide_repost_btn"
-                            requiresRestart:YES]
-        ],
-                        nil),
-        SPKTopicSection(@"Metrics", @[
-            [SPKSetting switchCellWithTitle:@"Hide Like Count"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"reels_hide_like_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Comment Count"
-                                       icon:SPKSettingsIcon(@"comment")
-                                defaultsKey:@"reels_hide_comment_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Repost Count"
-                                       icon:SPKSettingsIcon(@"repost")
-                                defaultsKey:@"reels_hide_repost_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Reshare Count"
-                                       icon:SPKSettingsIcon(@"messages")
-                                defaultsKey:@"reels_hide_reshare_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Save Count"
-                                       icon:SPKSettingsIcon(@"save")
-                                defaultsKey:@"reels_hide_save_count"]
+                            requiresRestart:YES],
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Counts", @"heart", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Likes"
+                                            iconName:@"heart"
+                                         defaultsKey:@"reels_hide_like_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Comments"
+                                            iconName:@"comment"
+                                         defaultsKey:@"reels_hide_comment_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reposts"
+                                            iconName:@"repost"
+                                         defaultsKey:@"reels_hide_repost_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reshares"
+                                            iconName:@"messages"
+                                         defaultsKey:@"reels_hide_reshare_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Saves"
+                                            iconName:@"save"
+                                         defaultsKey:@"reels_hide_save_count"],
+                ]);
+                g.searchKeywords = @"hide like comment repost reshare save count metrics";
+                g;
+            }),
         ],
                         nil),
         // Convention v1.2 gate row — see SPKToggleMenu.h. "Reel Refresh" keeps

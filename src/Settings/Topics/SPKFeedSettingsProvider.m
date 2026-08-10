@@ -9,6 +9,65 @@ static NSString *const kSPKFeedActionButtonEnabledKey = @"feed_action_btn";
 
 @implementation SPKFeedSettingsProvider
 
+static NSArray *SPKFeedCommentsSections(void) {
+    SPKSetting *copyComment = [SPKSetting switchCellWithTitle:@"Copy Comment"
+                                                         icon:SPKSettingsIcon(@"copy")
+                                                  defaultsKey:@"general_comments_copy_text"];
+    copyComment.searchKeywords = @"clipboard comment menu";
+
+    SPKSetting *commentMediaActions = [SPKSetting switchCellWithTitle:@"Media Actions"
+                                                                 icon:SPKSettingsIcon(@"action")
+                                                          defaultsKey:@"general_comments_media_actions"];
+    commentMediaActions.helpText = @"Adds Photos, Share, Gallery and link actions to GIF and photo comments.";
+    commentMediaActions.searchKeywords = @"comment gif photos share gallery link";
+
+    SPKSetting *commentGalleryUpload = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
+                                                                  icon:SPKSettingsIcon(@"photo")
+                                                           defaultsKey:@"general_comments_gallery_upload"];
+    commentGalleryUpload.helpText = @"Long-press the composer's photo button to attach from your Sparkle Gallery.";
+    commentGalleryUpload.searchKeywords = @"attach composer sparkle gallery";
+
+    SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close"
+                                                                icon:SPKSettingsIcon(@"left_right")
+                                                         defaultsKey:@"general_comments_swipe_close"];
+    swipeCloseComments.searchKeywords = @"comments gesture horizontal dismiss";
+    // Greys Swipe Direction out immediately instead of after leaving the page.
+    swipeCloseComments.reloadsTableOnSwitchChange = YES;
+
+    SPKSetting *swipeDirection = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Swipe Direction"
+                                                                                          icon:SPKSettingsIcon(@"left_right")
+                                                                                          menu:SPKSwipeCloseCommentsDirectionMenu()],
+                                                                 SPKSettingsIcon(@"left_right"));
+    swipeDirection.enabledProvider = ^BOOL {
+        return [SPKUtils getBoolPref:@"general_comments_swipe_close"];
+    };
+
+    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping"
+                                                                 icon:SPKSettingsIcon(@"shopping_bag")
+                                                          defaultsKey:@"general_comments_hide_shopping"];
+    hideCommentShopping.helpText = @"Removes commerce carousels from comment threads.";
+    hideCommentShopping.searchKeywords = @"comment commerce carousel shop";
+
+    SPKSetting *hideGiftsButton = [SPKSetting switchCellWithTitle:@"Hide Gifts Button"
+                                                             icon:SPKSettingsIcon(@"gift")
+                                                      defaultsKey:@"general_comments_hide_gifts_button"];
+    hideGiftsButton.helpText = @"Removes the gift shortcut from the composer.";
+    hideGiftsButton.searchKeywords = @"gift composer shortcut";
+
+    return @[
+        SPKTopicSection(@"Comments", @[
+            copyComment,
+            commentMediaActions,
+            commentGalleryUpload,
+            swipeCloseComments,
+            swipeDirection,
+            hideCommentShopping,
+            hideGiftsButton
+        ],
+                        nil)
+    ];
+}
+
 + (SPKSetting *)rootSetting {
     // ---- Action Button -------------------------------------------------
 
@@ -99,38 +158,49 @@ static NSString *const kSPKFeedActionButtonEnabledKey = @"feed_action_btn";
         SPKTopicSection(@"Layout", @[
             mainFeedMode,
             disableAppIconGesture,
-            [SPKSetting switchCellWithTitle:@"Hide Stories Tray"
-                                       icon:SPKSettingsIcon(@"story")
-                                defaultsKey:@"feed_hide_stories_tray"],
             hideEntireFeed,
-            [SPKSetting switchCellWithTitle:@"Hide Suggested Posts"
-                                       icon:SPKSettingsIcon(@"carousel")
-                                defaultsKey:@"feed_hide_suggested_posts"],
-            [SPKSetting switchCellWithTitle:@"Hide Suggested Reels"
-                                       icon:SPKSettingsIcon(@"reels_gallery")
-                                defaultsKey:@"feed_hide_suggested_reels"],
-            [SPKSetting switchCellWithTitle:@"Hide Suggested Threads"
-                                       icon:SPKSettingsIcon(@"threads")
-                                defaultsKey:@"feed_hide_suggested_threads"],
+            // Stays a full row: requiresRestart disqualifies it from a gate
+            // (doctrine R4) — the restart prompt needs the regular switch path.
             [SPKSetting switchCellWithTitle:@"Hide Repost Button"
                                        icon:SPKSettingsIcon(@"repost")
                                 defaultsKey:@"feed_hide_repost_btn"
-                            requiresRestart:YES]
-        ],
-                        nil),
-        SPKTopicSection(@"Metrics", @[
-            [SPKSetting switchCellWithTitle:@"Hide Like Count"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"feed_hide_like_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Comment Count"
-                                       icon:SPKSettingsIcon(@"comment")
-                                defaultsKey:@"feed_hide_comment_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Repost Count"
-                                       icon:SPKSettingsIcon(@"repost")
-                                defaultsKey:@"feed_hide_repost_count"],
-            [SPKSetting switchCellWithTitle:@"Hide Reshare Count"
-                                       icon:SPKSettingsIcon(@"messages")
-                                defaultsKey:@"feed_hide_reshare_count"]
+                            requiresRestart:YES],
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Feed Elements", @"eye", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Stories Tray"
+                                            iconName:@"story"
+                                         defaultsKey:@"feed_hide_stories_tray"],
+                    [SPKToggleMenuItem itemWithTitle:@"Suggested Posts"
+                                            iconName:@"carousel"
+                                         defaultsKey:@"feed_hide_suggested_posts"],
+                    [SPKToggleMenuItem itemWithTitle:@"Suggested Reels"
+                                            iconName:@"reels_gallery"
+                                         defaultsKey:@"feed_hide_suggested_reels"],
+                    [SPKToggleMenuItem itemWithTitle:@"Suggested Threads"
+                                            iconName:@"threads"
+                                         defaultsKey:@"feed_hide_suggested_threads"],
+                ]);
+                g.searchKeywords = @"hide stories tray suggested posts reels threads";
+                g;
+            }),
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Counts", @"heart", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Likes"
+                                            iconName:@"heart"
+                                         defaultsKey:@"feed_hide_like_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Comments"
+                                            iconName:@"comment"
+                                         defaultsKey:@"feed_hide_comment_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reposts"
+                                            iconName:@"repost"
+                                         defaultsKey:@"feed_hide_repost_count"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reshares"
+                                            iconName:@"messages"
+                                         defaultsKey:@"feed_hide_reshare_count"],
+                ]);
+                g.searchKeywords = @"hide like comment repost reshare count metrics";
+                g;
+            }),
         ],
                         nil),
         SPKTopicSection(@"Media", @[
@@ -149,6 +219,16 @@ static NSString *const kSPKFeedActionButtonEnabledKey = @"feed_action_btn";
             [SPKSetting switchCellWithTitle:@"Disable Background Refresh"
                                        icon:SPKSettingsIcon(@"arrow_cw")
                                 defaultsKey:@"feed_disable_bg_refresh"]
+        ],
+                        nil),
+
+        // Comments moved in from General — a new user looks for comments where
+        // they see them. Seven rows, keys untouched, arrives as a sub-page.
+        SPKTopicSection(@"Comments", @[
+            [SPKSetting navigationCellWithTitle:@"Comments"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"comment")
+                                    navSections:SPKFeedCommentsSections()]
         ],
                         nil),
         // Convention v1.2 gate row — see SPKToggleMenu.h.

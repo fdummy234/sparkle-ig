@@ -93,22 +93,30 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
     // Auto-seen triggers only act while manual seen is on. Keep their stored value
     // but lock the cells when manual seen is off.
-    SPKSetting *seenOnSend = [SPKSetting switchCellWithTitle:@"Mark Seen on Message Send" icon:SPKSettingsIcon(@"messages") defaultsKey:@"msgs_seen_on_send"];
-    SPKSetting *seenOnReply = [SPKSetting switchCellWithTitle:@"Mark Seen on Message Reply" icon:SPKSettingsIcon(@"reply") defaultsKey:@"msgs_seen_on_reply"];
-    SPKSetting *seenOnReaction = [SPKSetting switchCellWithTitle:@"Mark Seen on Reaction" icon:SPKSettingsIcon(@"reactions") defaultsKey:@"msgs_seen_on_reaction"];
-    SPKSetting *seenOnTyping = [SPKSetting switchCellWithTitle:@"Mark Seen on Typing" icon:SPKSettingsIcon(@"keyboard") defaultsKey:@"msgs_seen_on_typing"];
-    seenOnSend.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_seen"];
-    };
-    seenOnReply.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_seen"];
-    };
-    seenOnReaction.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_seen"];
-    };
-    seenOnTyping.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_seen"];
-    };
+    // Convention v1.3 gate: the four auto-seen triggers, one row. Their shared
+    // guard moves onto the gate itself — the family greys out together when
+    // Manually Mark Seen is off.
+    SPKSetting *markSeenGate = ({
+        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark Seen On…", @"eye", @[
+            [SPKToggleMenuItem itemWithTitle:@"Message Send"
+                                    iconName:@"messages"
+                                 defaultsKey:@"msgs_seen_on_send"],
+            [SPKToggleMenuItem itemWithTitle:@"Message Reply"
+                                    iconName:@"reply"
+                                 defaultsKey:@"msgs_seen_on_reply"],
+            [SPKToggleMenuItem itemWithTitle:@"Reaction"
+                                    iconName:@"reactions"
+                                 defaultsKey:@"msgs_seen_on_reaction"],
+            [SPKToggleMenuItem itemWithTitle:@"Typing"
+                                    iconName:@"keyboard"
+                                 defaultsKey:@"msgs_seen_on_typing"],
+        ]);
+        g.enabledProvider = ^BOOL {
+            return [SPKUtils getBoolPref:@"msgs_manual_seen"];
+        };
+        g.searchKeywords = @"mark seen send reply reaction typing auto";
+        g;
+    });
 
     // Chooses where the manual-seen eye button lives: the top nav bar, or a
     // draggable bubble above the composer. Only meaningful while manual seen is on.
@@ -166,10 +174,6 @@ static NSArray *SPKMessagesSettingsSections(void) {
     lastActiveFormat.searchKeywords = @"presence status smart date time exact";
 
     // Lexicon rename ("No …" → "Hide …"); old phrasing kept searchable.
-    SPKSetting *hideSuggestedChats = [SPKSetting switchCellWithTitle:@"Hide Suggested Chats"
-                                                                icon:SPKSettingsIcon(@"question")
-                                                         defaultsKey:@"msgs_hide_suggested_chats"];
-    hideSuggestedChats.searchKeywords = @"no suggestions inbox";
 
     // ---- Visual Messages -----------------------------------------------
 
@@ -234,10 +238,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
             unlockPreview,
             manualSeenSwitch,
             seenButtonPosition,
-            seenOnSend,
-            seenOnReply,
-            seenOnReaction,
-            seenOnTyping,
+            markSeenGate,
             manualSeenList,
         ],
                         nil),
@@ -254,43 +255,65 @@ static NSArray *SPKMessagesSettingsSections(void) {
                         nil),
         SPKTopicSection(@"Interface", @[
             lastActiveFormat,
-            [SPKSetting switchCellWithTitle:@"Hide Typing Status"
-                                       icon:SPKSettingsIcon(@"keyboard")
-                                defaultsKey:@"msgs_disable_typing"],
-            [SPKSetting switchCellWithTitle:@"Hide Reels Blend Button"
-                                       icon:SPKSettingsIcon(@"blend")
-                                defaultsKey:@"msgs_hide_reels_blend"],
-            [SPKSetting switchCellWithTitle:@"Hide Audio Call Button"
-                                       icon:SPKSettingsIcon(@"call")
-                                defaultsKey:@"msgs_hide_audio_call_btn"],
-            [SPKSetting switchCellWithTitle:@"Hide Video Call Button"
-                                       icon:SPKSettingsIcon(@"video")
-                                defaultsKey:@"msgs_hide_video_call_btn"],
-            [SPKSetting switchCellWithTitle:@"Hide Flag Button"
-                                       icon:SPKSettingsIcon(@"flag")
-                                defaultsKey:@"msgs_hide_flag_btn"],
-            hideSuggestedChats,
+            // Six hides of the same screen, one gate — the verb lives on the
+            // row; Typing Status keeps its noun (it is not a button).
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Chat Elements", @"eye", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Typing Status"
+                                            iconName:@"keyboard"
+                                         defaultsKey:@"msgs_disable_typing"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reels Blend"
+                                            iconName:@"blend"
+                                         defaultsKey:@"msgs_hide_reels_blend"],
+                    [SPKToggleMenuItem itemWithTitle:@"Audio Call"
+                                            iconName:@"call"
+                                         defaultsKey:@"msgs_hide_audio_call_btn"],
+                    [SPKToggleMenuItem itemWithTitle:@"Video Call"
+                                            iconName:@"video"
+                                         defaultsKey:@"msgs_hide_video_call_btn"],
+                    [SPKToggleMenuItem itemWithTitle:@"Flag"
+                                            iconName:@"flag"
+                                         defaultsKey:@"msgs_hide_flag_btn"],
+                    [SPKToggleMenuItem itemWithTitle:@"Suggested Chats"
+                                            iconName:@"question"
+                                         defaultsKey:@"msgs_hide_suggested_chats"],
+                ]);
+                g.searchKeywords = @"hide typing status reels blend audio video call flag suggested chats button no suggestions inbox";
+                g;
+            }),
         ],
                         nil),
-        SPKTopicSection(@"Visual Messages", @[
+        // Visual Messages ∪ Vanish Mode: same territory (messages that
+        // disappear) — and it resolves the duplicated "Disable Screenshot
+        // Detection" row: one gate, two context-named items.
+        SPKTopicSection(@"Ephemeral Messages", @[
             [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"msgs_manual_visual_seen"],
             advanceVisual,
             disableAutoAdvance,
             disableViewOnce,
-            [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
-                                       icon:SPKSettingsIcon(@"warning")
-                                defaultsKey:@"msgs_disable_screenshot_detection"]
-        ],
-                        nil),
-        SPKTopicSection(@"Vanish Mode", @[
-            [SPKSetting switchCellWithTitle:@"Disable Swipe-Up Gesture"
-                                       icon:SPKSettingsIcon(@"arrow_up")
-                                defaultsKey:@"msgs_disable_vanish_swipe_up"],
-            [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
-                                       icon:SPKSettingsIcon(@"warning")
-                                defaultsKey:@"msgs_hide_vanish_screenshot"],
+            ({
+                // Renamed from "Disable Swipe-Up Gesture" — the word "vanish"
+                // no longer comes from a section header.
+                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Vanish Swipe-Up"
+                                                            icon:SPKSettingsIcon(@"arrow_up")
+                                                     defaultsKey:@"msgs_disable_vanish_swipe_up"];
+                sw.searchKeywords = @"gesture vanish mode";
+                sw;
+            }),
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Disable Screenshot Detection", @"warning", @[
+                    [SPKToggleMenuItem itemWithTitle:@"View-Once Media"
+                                            iconName:@"view_once"
+                                         defaultsKey:@"msgs_disable_screenshot_detection"],
+                    [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
+                                            iconName:@"warning"
+                                         defaultsKey:@"msgs_hide_vanish_screenshot"],
+                ]);
+                g.searchKeywords = @"screenshot detection vanish view once";
+                g;
+            }),
         ],
                         nil),
         SPKTopicSection(@"Notes", @[

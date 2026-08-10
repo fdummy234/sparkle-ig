@@ -52,21 +52,30 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
 
     // The auto-seen triggers only do anything while manual seen is on. Keep their
     // stored value but lock the cells when manual seen is off.
-    SPKSetting *markSeenOnLike = [SPKSetting switchCellWithTitle:@"Mark Seen on Like" icon:SPKSettingsIcon(@"heart") defaultsKey:@"stories_mark_seen_on_like"];
-    SPKSetting *markSeenOnReply = [SPKSetting switchCellWithTitle:@"Mark Seen on Reply" icon:SPKSettingsIcon(@"reply") defaultsKey:@"stories_mark_seen_on_reply"];
-    markSeenOnLike.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"stories_manual_seen"];
-    };
-    markSeenOnReply.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"stories_manual_seen"];
-    };
+    // Convention v1.3 gate — two items only, but the family is already gated
+    // in Messages: transversal uniformity wins over the size threshold. The
+    // shared guard moves onto the gate.
+    SPKSetting *markSeenGate = ({
+        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark Seen On…", @"eye", @[
+            [SPKToggleMenuItem itemWithTitle:@"Like"
+                                    iconName:@"heart"
+                                 defaultsKey:@"stories_mark_seen_on_like"],
+            [SPKToggleMenuItem itemWithTitle:@"Reply"
+                                    iconName:@"reply"
+                                 defaultsKey:@"stories_mark_seen_on_reply"],
+        ]);
+        g.enabledProvider = ^BOOL {
+            return [SPKUtils getBoolPref:@"stories_manual_seen"];
+        };
+        g.searchKeywords = @"mark seen like reply auto";
+        g;
+    });
 
     return SPKTopicSection(@"Seen Receipts", @[
         [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
                                    icon:SPKSettingsIcon(@"eye")
                             defaultsKey:@"stories_manual_seen"],
-        markSeenOnLike,
-        markSeenOnReply,
+        markSeenGate,
         manualSeenList,
     ],
                            footer);
@@ -133,7 +142,9 @@ static NSArray *SPKStoriesSettingsSections(void) {
                         @"2. Use media from Sparkle Gallery as stickers.\n"
                         @"3. Long press on the eyedropper tool in stories to customize text color more precisely."),
 
-        SPKTopicSection(@"Other", @[
+        // "Other" was the confession that no subject had been found — these four
+        // all act while viewing a story.
+        SPKTopicSection(@"While Viewing", @[
             [SPKSetting switchCellWithTitle:@"Search Viewer List"
                                        icon:SPKSettingsIcon(@"search")
                                 defaultsKey:@"stories_search_viewer_list"],
