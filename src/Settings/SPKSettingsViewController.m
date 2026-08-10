@@ -556,7 +556,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     rowMargins.leading = SPKUI_RowLeading;
     rowMargins.trailing = SPKUI_RowTrailing;
     cellContentConfig.directionalLayoutMargins = rowMargins;
-    cellContentConfig.axesPreservingSuperviewLayoutMargins = UIAxisNone;
+    cellContentConfig.axesPreservingSuperviewLayoutMargins = UIAxisNeither;  // « aucun axe » — pas UIAxisBoth, qui re-préserverait les marges
     cellContentConfig.imageToTextPadding = SPKUI_IconTextGap;
     // Les glyphes du bundle IG sortent à ~34 pt et gonflaient la rangée à 52
     // (34 + 9 + 9). Plafond 26 → rangée 44, le pas natif mesuré. Les cas
