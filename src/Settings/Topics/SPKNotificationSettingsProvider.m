@@ -16,7 +16,7 @@
             NSString *title = item[@"title"] ?: @"Feature";
             NSString *iconName = item[@"iconName"] ?: @"info";
             SPKSetting *setting = [SPKSetting switchCellWithTitle:title
-                                                         subtitle:nil
+                                                         subtitle:@""
                                                              icon:SPKSettingsIcon(iconName)
                                                       defaultsKey:haptics ? SPKNotificationHapticDefaultsKey(identifier) : SPKNotificationDefaultsKey(identifier)];
             setting.userInfo = @{@"defaultValue" : @YES};
