@@ -272,7 +272,10 @@ SPKSetting *SPKToggleMenuRowSetting(NSString *title,
     SPKSetting *row = [SPKSetting buttonCellWithTitle:title
                                              subtitle:nil
                                                  icon:SPKSettingsIcon(iconName)
-                                               action:nil];
+                                               action:^{
+                                                   // No-op — `action` is nonnull. The settings VC
+                                                   // routes spk_toggleMenuItems before ever calling it.
+                                               }];
     row.userInfo = @{@"spk_toggleMenuItems" : [items copy]};
 
     // "Off" / "N on" — re-read on every reloadData, like the root counters.
