@@ -28,8 +28,9 @@ static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de 
 static CGFloat const SPKUI_HeaderTop          = 14.0;
 static CGFloat const SPKUI_HeaderBottom       = 14.0;
 static CGFloat const SPKUI_HeaderLeading      = 16.5;  // rend ~18 à l'écran
+static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // mesuré pleine hauteur de glyphe : 38 px natif vs 44 px à 16 pt
 static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
-static CGFloat const SPKUI_ValueFontSize      = 15.0;  // « 11 active », valeurs de menus — le natif les écrit plus petites que le titre (31 px vs 36)
+static CGFloat const SPKUI_ValueFontSize      = 14.0;  // « 11 active », valeurs de menus — natif mesuré 31 px vs 34 à 15 pt : encore un cran plus petit que le titre
 
 
 static char rowStaticRef[] = "row";
@@ -986,7 +987,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     UILabel *label = [UILabel new];
     label.translatesAutoresizingMaskIntoConstraints = NO;
     label.text = title;
-    UIFont *base = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
+    UIFont *base = [UIFont systemFontOfSize:SPKUI_HeaderFontSize weight:UIFontWeightSemibold];
     label.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:base];
     label.adjustsFontForContentSizeCategory = YES;
     label.textColor = [UIColor colorWithRed:0.396 green:0.404 blue:0.420 alpha:1.0];  // #65676B
