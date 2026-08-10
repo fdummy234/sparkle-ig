@@ -19,7 +19,7 @@
 // TOUTE retouche de mise en page se fait ICI, nulle part ailleurs.
 static CGFloat const SPKUI_RowHeight          = 44.0;  // pas de rangée standard
 static CGFloat const SPKUI_RowVMargin         = 9.0;   // marge verticale du contenu
-static CGFloat const SPKUI_RowLeading         = 17.0;  // gauche des icônes
+static CGFloat const SPKUI_RowLeading         = 15.0;  // gauche des icônes (rend ~17 à l'écran : les glyphes portent ~2 pt d'encart interne)
 static CGFloat const SPKUI_RowTrailing        = 16.0;
 static CGFloat const SPKUI_IconMax            = 26.0;  // plafond des glyphes
 static CGFloat const SPKUI_IconTextGap        = 14.0;
@@ -27,8 +27,9 @@ static CGFloat const SPKUI_BandHeight         = 6.0;   // bande entre groupes
 static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de page
 static CGFloat const SPKUI_HeaderTop          = 14.0;
 static CGFloat const SPKUI_HeaderBottom       = 14.0;
-static CGFloat const SPKUI_HeaderLeading      = 18.0;
+static CGFloat const SPKUI_HeaderLeading      = 16.5;  // rend ~18 à l'écran
 static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
+static CGFloat const SPKUI_ValueFontSize      = 15.0;  // « 11 active », valeurs de menus — le natif les écrit plus petites que le titre (31 px vs 36)
 
 
 static char rowStaticRef[] = "row";
@@ -723,8 +724,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
             cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
-            cellContentConfig.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
-                                                                               weight:UIFontWeightRegular];
+            cellContentConfig.secondaryTextProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
+                                                                                                                     weight:UIFontWeightRegular]];
         }
         // Avatar rows read as flat list entries (like Profile Analyzer), not
         // settings nav rows — no disclosure chevron.
@@ -745,8 +747,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         menuButton.showsMenuAsPrimaryAction = YES;
         menuButton.enabled = rowEnabled;
         // Même graisse que les autres valeurs d'état (Regular, comme IG).
-        menuButton.titleLabel.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
-                                                       weight:UIFontWeightMedium];
+        menuButton.titleLabel.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
+                                                                                                                                          weight:UIFontWeightRegular]];
         menuButton.titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         [menuButton setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
         [menuButton setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
@@ -787,8 +789,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             cellContentConfig.secondaryTextProperties.numberOfLines = 1;
             cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByTruncatingTail;
             cellContentConfig.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
-            cellContentConfig.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize
-                                                                               weight:UIFontWeightRegular];
+            cellContentConfig.secondaryTextProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
+                                                                                                                     weight:UIFontWeightRegular]];
         }
         cell.accessoryType = rowEnabled ? UITableViewCellAccessoryDisclosureIndicator : UITableViewCellAccessoryNone;
         if (!rowEnabled) {
