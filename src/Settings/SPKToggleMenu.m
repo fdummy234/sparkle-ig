@@ -11,7 +11,8 @@
 static CGFloat const kSPKToggleMenuWidth = 262.0;
 static CGFloat const kSPKToggleMenuItemHeight = 44.0;  // = SPKUI_RowHeight
 static CGFloat const kSPKToggleMenuCornerRadius = 13.0;
-static CGFloat const kSPKToggleMenuIconPointSize = 22.0;
+static CGFloat const kSPKToggleMenuIconSize = 22.0;
+static CGFloat const kSPKToggleMenuHPad = 14.0;
 static CGFloat const kSPKToggleMenuMargin = 16.0;
 static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
@@ -35,10 +36,12 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
 @end
 
-#pragma mark - Item control
+#pragma mark - Item control (manual frame layout — fully deterministic)
 
 @interface SPKToggleMenuItemControl : UIControl
 @property (nonatomic, strong) SPKToggleMenuItem *item;
+@property (nonatomic, strong) UIImageView *iconView;
+@property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIImageView *checkView;
 @end
 
@@ -48,45 +51,25 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     if ((self = [super initWithFrame:CGRectZero])) {
         _item = item;
 
-        UIImageView *iconView = [[UIImageView alloc] initWithImage:
+        _iconView = [[UIImageView alloc] initWithImage:
             [SPKSettingsIcon(item.iconName) imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
-        iconView.tintColor = UIColor.labelColor;
-        iconView.contentMode = UIViewContentModeScaleAspectFit;
-        iconView.translatesAutoresizingMaskIntoConstraints = NO;
+        _iconView.tintColor = UIColor.labelColor;
+        _iconView.contentMode = UIViewContentModeScaleAspectFit;
+        [self addSubview:_iconView];
 
-        UILabel *titleLabel = [UILabel new];
-        titleLabel.text = item.title;
-        titleLabel.font = [UIFont systemFontOfSize:16.0];
-        titleLabel.textColor = UIColor.labelColor;
-        titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        _titleLabel = [UILabel new];
+        _titleLabel.text = item.title;
+        _titleLabel.font = [UIFont systemFontOfSize:16.0];
+        _titleLabel.textColor = UIColor.labelColor;
+        [self addSubview:_titleLabel];
 
-        UIImageConfiguration *checkConfig =
-            [UIImageSymbolConfiguration configurationWithPointSize:14.0 weight:UIImageSymbolWeightSemibold];
-        UIImageView *checkView = [[UIImageView alloc] initWithImage:
-            [UIImage systemImageNamed:@"checkmark" withConfiguration:checkConfig]];
-        checkView.tintColor = UIColor.labelColor;
-        checkView.translatesAutoresizingMaskIntoConstraints = NO;
-        _checkView = checkView;
-
-        [self addSubview:iconView];
-        [self addSubview:titleLabel];
-        [self addSubview:checkView];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [self.heightAnchor constraintEqualToConstant:kSPKToggleMenuItemHeight],
-
-            [iconView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:14.0],
-            [iconView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-            [iconView.widthAnchor constraintEqualToConstant:kSPKToggleMenuIconPointSize],
-            [iconView.heightAnchor constraintEqualToConstant:kSPKToggleMenuIconPointSize],
-
-            [titleLabel.leadingAnchor constraintEqualToAnchor:iconView.trailingAnchor constant:12.0],
-            [titleLabel.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-            [titleLabel.trailingAnchor constraintLessThanOrEqualToAnchor:checkView.leadingAnchor constant:-8.0],
-
-            [checkView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-14.0],
-            [checkView.centerYAnchor constraintEqualToAnchor:self.centerYAnchor],
-        ]];
+        _checkView = [[UIImageView alloc] initWithImage:
+            [UIImage systemImageNamed:@"checkmark"
+                    withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:14.0
+                                                                                      weight:UIImageSymbolWeightSemibold]]];
+        _checkView.tintColor = UIColor.labelColor;
+        _checkView.contentMode = UIViewContentModeScaleAspectFit;
+        [self addSubview:_checkView];
 
         [self refreshAnimated:NO];
         [self addTarget:self action:@selector(didTap) forControlEvents:UIControlEventTouchUpInside];
@@ -96,6 +79,21 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         self.accessibilityTraits = UIAccessibilityTraitButton;
     }
     return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGFloat h = self.bounds.size.height;
+    CGFloat w = self.bounds.size.width;
+    self.iconView.frame = CGRectMake(kSPKToggleMenuHPad,
+                                     (h - kSPKToggleMenuIconSize) / 2.0,
+                                     kSPKToggleMenuIconSize, kSPKToggleMenuIconSize);
+    CGFloat checkW = 18.0;
+    self.checkView.frame = CGRectMake(w - kSPKToggleMenuHPad - checkW,
+                                      (h - checkW) / 2.0, checkW, checkW);
+    CGFloat titleX = CGRectGetMaxX(self.iconView.frame) + 12.0;
+    self.titleLabel.frame = CGRectMake(titleX, 0,
+                                       CGRectGetMinX(self.checkView.frame) - 8.0 - titleX, h);
 }
 
 - (void)refreshAnimated:(BOOL)animated {
@@ -110,13 +108,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
                                       : CGAffineTransformMakeScale(0.6, 0.6);
     };
     if (animated) {
-        [UIView animateWithDuration:0.2
-                              delay:0
-             usingSpringWithDamping:0.8
-              initialSpringVelocity:0.4
-                            options:UIViewAnimationOptionBeginFromCurrentState
-                         animations:apply
-                         completion:nil];
+        [UIView animateWithDuration:0.2 animations:apply];
     } else {
         apply();
     }
@@ -155,7 +147,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     [UIView animateWithDuration:0.15
         animations:^{
             self.menuContainer.alpha = 0.0;
-            self.menuContainer.transform = CGAffineTransformMakeScale(0.96, 0.96);
+            self.menuContainer.transform = CGAffineTransformMakeScale(0.94, 0.94);
             self.backgroundColor = UIColor.clearColor;
         }
         completion:^(__unused BOOL finished) {
@@ -177,6 +169,9 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     if (window == nil || items.count == 0)
         return;
 
+    CGFloat hairline = 1.0 / MAX(UIScreen.mainScreen.scale, 1.0);
+    CGFloat menuHeight = items.count * kSPKToggleMenuItemHeight + (items.count - 1) * hairline;
+
     SPKToggleMenuOverlay *overlay = [[SPKToggleMenuOverlay alloc] initWithFrame:window.bounds];
     overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     overlay.backgroundColor = UIColor.clearColor;
@@ -184,7 +179,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     [overlay addTarget:overlay action:@selector(dismiss) forControlEvents:UIControlEventTouchUpInside];
 
     // Container: system-material blur, menu-style rounding and shadow.
-    CGFloat menuHeight = items.count * kSPKToggleMenuItemHeight;
+    // Everything below is plain frame math — no Auto Layout in this tree.
     UIView *container = [UIView new];
     container.layer.cornerRadius = kSPKToggleMenuCornerRadius;
     container.layer.cornerCurve = kCACornerCurveContinuous;
@@ -197,63 +192,53 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     UIVisualEffectView *blurView = [[UIVisualEffectView alloc]
         initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
     blurView.frame = CGRectMake(0, 0, kSPKToggleMenuWidth, menuHeight);
-    blurView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     blurView.layer.cornerRadius = kSPKToggleMenuCornerRadius;
     blurView.layer.cornerCurve = kCACornerCurveContinuous;
     blurView.clipsToBounds = YES;
     [container addSubview:blurView];
 
-    UIStackView *stack = [UIStackView new];
-    stack.axis = UILayoutConstraintAxisVertical;
-    stack.translatesAutoresizingMaskIntoConstraints = NO;
-    [blurView.contentView addSubview:stack];
-    [NSLayoutConstraint activateConstraints:@[
-        [stack.topAnchor constraintEqualToAnchor:blurView.contentView.topAnchor],
-        [stack.leadingAnchor constraintEqualToAnchor:blurView.contentView.leadingAnchor],
-        [stack.trailingAnchor constraintEqualToAnchor:blurView.contentView.trailingAnchor],
-        [stack.bottomAnchor constraintEqualToAnchor:blurView.contentView.bottomAnchor],
-    ]];
-
+    CGFloat y = 0.0;
     for (NSUInteger i = 0; i < items.count; i++) {
         if (i > 0) {
             UIView *separator = [UIView new];
             separator.backgroundColor = UIColor.separatorColor;
-            [separator.heightAnchor constraintEqualToConstant:(1.0 / UIScreen.mainScreen.scale)].active = YES;
-            [stack addArrangedSubview:separator];
+            separator.frame = CGRectMake(0, y, kSPKToggleMenuWidth, hairline);
+            [blurView.contentView addSubview:separator];
+            y += hairline;
         }
-        [stack addArrangedSubview:[[SPKToggleMenuItemControl alloc] initWithItem:items[i]]];
+        SPKToggleMenuItemControl *control = [[SPKToggleMenuItemControl alloc] initWithItem:items[i]];
+        control.frame = CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight);
+        [blurView.contentView addSubview:control];
+        y += kSPKToggleMenuItemHeight;
     }
 
-    // Placement: below the anchor when it fits, otherwise above; trailing-aligned
-    // to the anchor, clamped inside the safe area.
-    CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:window];
+    // Placement: below the anchor when it fits, otherwise above — then clamp
+    // both axes into the safe area so the menu can never leave the screen.
+    CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:overlay];
     UIEdgeInsets safe = window.safeAreaInsets;
+    CGFloat minX = safe.left + kSPKToggleMenuMargin;
+    CGFloat maxX = window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth;
+    CGFloat minY = safe.top + kSPKToggleMenuMargin;
+    CGFloat maxY = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin - menuHeight;
+
     CGFloat x = CGRectGetMaxX(anchorFrame) - kSPKToggleMenuWidth - kSPKToggleMenuMargin;
-    x = MAX(safe.left + kSPKToggleMenuMargin,
-            MIN(x, window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth));
+    x = MAX(minX, MIN(x, maxX));
 
     CGFloat belowY = CGRectGetMaxY(anchorFrame) + kSPKToggleMenuAnchorGap;
-    CGFloat bottomLimit = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin;
-    BOOL fitsBelow = belowY + menuHeight <= bottomLimit;
-    CGFloat y = fitsBelow ? belowY
-                          : MAX(safe.top + kSPKToggleMenuMargin,
-                                CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight);
+    BOOL fitsBelow = belowY <= maxY;
+    CGFloat menuY = fitsBelow ? belowY
+                              : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
+    menuY = MAX(minY, MIN(menuY, maxY));
 
-    container.frame = CGRectMake(x, y, kSPKToggleMenuWidth, menuHeight);
+    container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
     [overlay addSubview:container];
     [window addSubview:overlay];
 
-    // Entrance: grow from the anchor-side corner, like the system menu.
-    CGPoint anchorPoint = fitsBelow ? CGPointMake(0.85, 0.0) : CGPointMake(0.85, 1.0);
-    container.layer.anchorPoint = anchorPoint;
-    container.frame = CGRectMake(x, y, kSPKToggleMenuWidth, menuHeight);
     container.alpha = 0.0;
-    container.transform = CGAffineTransformMakeScale(0.85, 0.85);
-    [UIView animateWithDuration:0.24
+    container.transform = CGAffineTransformMakeScale(0.92, 0.92);
+    [UIView animateWithDuration:0.2
                           delay:0
-         usingSpringWithDamping:0.86
-          initialSpringVelocity:0.3
-                        options:0
+                        options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
                          overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
                          container.alpha = 1.0;
@@ -289,7 +274,9 @@ SPKSetting *SPKToggleMenuRowSetting(NSString *title,
     };
 
     // Search index: expose each item as a real switch row so it stays findable
-    // and togglable from search results. Never shown as a page.
+    // and togglable from search results. Never shown as a page. Items inherit
+    // the gate's searchKeywords so family terms ("mark seen", "confirm") match.
+    __weak SPKSetting *weakRow = row;
     row.searchSectionsProvider = ^NSArray * {
         NSMutableArray<SPKSetting *> *rows = [NSMutableArray arrayWithCapacity:items.count];
         for (SPKToggleMenuItem *item in items) {
@@ -297,6 +284,7 @@ SPKSetting *SPKToggleMenuRowSetting(NSString *title,
                                                                icon:SPKSettingsIcon(item.iconName)
                                                         defaultsKey:item.defaultsKey];
             searchRow.enabledProvider = item.enabledProvider;
+            searchRow.searchKeywords = weakRow.searchKeywords;
             [rows addObject:searchRow];
         }
         return @[ SPKTopicSection(title, [rows copy], nil) ];
