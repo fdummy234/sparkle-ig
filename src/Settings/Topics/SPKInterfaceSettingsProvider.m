@@ -240,7 +240,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                 ]);
                 g.searchKeywords = @"hide tab bar feed explore messages reels create profile";
                 g;
-            })
+            }),
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Tab Bar"
                                                            icon:nil
