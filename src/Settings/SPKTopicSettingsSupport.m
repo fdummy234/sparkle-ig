@@ -127,6 +127,18 @@ SPKSetting *SPKTopicNavigationSetting(NSString *title, NSString *iconName, CGFlo
                                    [SPKUtils SPKColor_InstagramPrimaryText]);
 }
 
+SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable footer, NSArray<SPKSetting *> *rows) {
+    SPKSetting *row = [SPKSetting navigationCellWithTitle:@"Action Button"
+                                                 subtitle:nil
+                                                     icon:SPKSettingsIcon(@"action")
+                                              navSections:@[ SPKTopicSection(@"", rows, footer) ]];
+    row.accessoryTextProvider = ^NSString * {
+        return [SPKUtils getBoolPref:enabledKey] ? @"On" : @"Off";
+    };
+    row.searchKeywords = @"action button shortcut long press";
+    return row;
+}
+
 SPKSetting *SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSource source) {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Default Tap Action"
                                                      subtitle:@""

@@ -38,6 +38,18 @@ NS_ASSUME_NONNULL_BEGIN
 /// mirroring `enabledProvider` on regular rows.
 @property (nonatomic, copy, nullable) BOOL (^enabledProvider)(void);
 
+/// nil = always visible. A hidden item is absent from the menu, from the "N on"
+/// count and from search — the item-level twin of `hiddenProvider` on rows.
+@property (nonatomic, copy, nullable) BOOL (^hiddenProvider)(void);
+
+/// Toggling this item prompts for a restart, exactly like a switch row that
+/// declares `requiresRestart`.
+@property (nonatomic, assign) BOOL requiresRestart;
+
+/// Runs right after the preference is written, mirroring `switchChangeHandler`
+/// on a switch row — for families whose rows do more than store a bool.
+@property (nonatomic, copy, nullable) void (^changeHandler)(BOOL isOn);
+
 @end
 
 @interface SPKToggleMenu : NSObject

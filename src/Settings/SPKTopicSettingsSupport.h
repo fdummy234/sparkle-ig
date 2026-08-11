@@ -13,6 +13,12 @@ UIImage *SPKSettingsSystemIcon(NSString *name, CGFloat pointSize, UIImageSymbolW
 SPKSetting *SPKSettingApplyIconTint(SPKSetting *setting, UIColor *_Nullable tintColor);
 SPKSetting *SPKSettingApplySelectedMenuIcon(SPKSetting *setting, UIImage *_Nullable fallbackIcon);
 SPKSetting *SPKTopicNavigationSetting(NSString *title, NSString *iconName, CGFloat iconSize, NSArray *sections);
+/// Wraps a screen's Action Button controls into one navigation row that carries
+/// the state in its accessory ("On" / "Off"). Six screens shipped the same
+/// three-row section at the top; this puts it behind one row at the bottom.
+/// `rows` is whatever that screen had — nothing about the controls changes.
+SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable footer, NSArray<SPKSetting *> *rows);
+
 SPKSetting *SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSource source);
 SPKSetting *SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSource source, NSString *topicTitle, NSArray<NSString *> *supportedActions, NSArray<SPKActionMenuSection *> *defaultSections);
 UIMenu *SPKReelsTapControlMenu(void);

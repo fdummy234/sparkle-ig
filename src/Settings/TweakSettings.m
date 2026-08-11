@@ -75,7 +75,10 @@ static SPKSetting *SPKRootRow(SPKSetting *topic) {
         @{
             @"header" : @"Your Sparkle",
             @"rows" : @[
-                SPKRootRow([SPKGeneralSettingsProvider rootSetting])
+                SPKRootRow([SPKGeneralSettingsProvider rootSetting]),
+                // D6: "Appearance" held Interface alone. Both are settings that
+                // apply to the whole app, so they share one group.
+                SPKRootRow([SPKInterfaceSettingsProvider rootSetting])
             ]
         },
         @{
@@ -94,13 +97,7 @@ static SPKSetting *SPKRootRow(SPKSetting *topic) {
                 SPKRootRow([SPKProfileSettingsProvider rootSetting])
             ]
         },
-        @{
-            @"header" : @"Appearance",
-            @"rows" : @[
-                SPKRootRow([SPKInterfaceSettingsProvider rootSetting])
-            ]
-        },
-        @{
+        @        @{
             @"header" : @"Library",
             @"rows" : @[
                 SPKRootRow([SPKGallerySettingsProvider rootSetting]),

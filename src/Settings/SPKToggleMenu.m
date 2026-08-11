@@ -36,12 +36,26 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
     return self.enabledProvider == nil || self.enabledProvider();
 }
 
+- (BOOL)isHidden {
+    return self.hiddenProvider != nil && self.hiddenProvider();
+}
+
 @end
+
+static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggleMenuItem *> *items) {
+    NSMutableArray<SPKToggleMenuItem *> *visible = [NSMutableArray arrayWithCapacity:items.count];
+    for (SPKToggleMenuItem *item in items) {
+        if (![item isHidden])
+            [visible addObject:item];
+    }
+    return [visible copy];
+}
 
 #pragma mark - Item control (manual frame layout — fully deterministic)
 
 @interface SPKToggleMenuItemControl : UIControl
 @property (nonatomic, strong) SPKToggleMenuItem *item;
+- (void)refreshAnimated:(BOOL)animated;
 @property (nonatomic, strong) UIImageView *iconView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIImageView *checkView;
@@ -121,8 +135,19 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         return;
     BOOL next = ![SPKUtils getBoolPref:self.item.defaultsKey];
     SPKPreferenceSetObject(@(next), self.item.defaultsKey);
+    if (self.item.changeHandler)
+        self.item.changeHandler(next);
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    [self refreshAnimated:YES];
+
+    // One item can decide whether its siblings stay enabled (the "last visible
+    // tab" guard), so refresh the whole menu, not just the row that was hit.
+    for (UIView *sibling in self.superview.subviews) {
+        if ([sibling isKindOfClass:[SPKToggleMenuItemControl class]])
+            [(SPKToggleMenuItemControl *)sibling refreshAnimated:(sibling == self)];
+    }
+
+    if (self.item.requiresRestart)
+        [SPKUtils showRestartConfirmation];
 }
 
 - (void)setHighlighted:(BOOL)highlighted {
@@ -173,6 +198,7 @@ static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
         inViewController:(UIViewController *)viewController
                onDismiss:(void (^)(void))onDismiss {
     UIWindow *window = viewController.view.window ?: anchorView.window;
+    items = SPKToggleMenuVisibleItems(items);
     if (window == nil || items.count == 0)
         return;
 
@@ -300,7 +326,7 @@ SPKSetting *SPKToggleMenuRowSetting(NSString *title,
     // "Off" / "N on" — re-read on every reloadData, like the root counters.
     row.accessoryTextProvider = ^NSString * {
         NSUInteger on = 0;
-        for (SPKToggleMenuItem *item in items) {
+        for (SPKToggleMenuItem *item in SPKToggleMenuVisibleItems(items)) {
             if ([SPKUtils getBoolPref:item.defaultsKey])
                 on++;
         }
@@ -312,11 +338,17 @@ SPKSetting *SPKToggleMenuRowSetting(NSString *title,
     // the gate's searchKeywords so family terms ("mark seen", "confirm") match.
     __weak SPKSetting *weakRow = row;
     row.searchSectionsProvider = ^NSArray * {
-        NSMutableArray<SPKSetting *> *rows = [NSMutableArray arrayWithCapacity:items.count];
-        for (SPKToggleMenuItem *item in items) {
-            SPKSetting *searchRow = [SPKSetting switchCellWithTitle:item.title
-                                                               icon:SPKSettingsIcon(item.iconName)
-                                                        defaultsKey:item.defaultsKey];
+        NSArray<SPKToggleMenuItem *> *visible = SPKToggleMenuVisibleItems(items);
+        NSMutableArray<SPKSetting *> *rows = [NSMutableArray arrayWithCapacity:visible.count];
+        for (SPKToggleMenuItem *item in visible) {
+            SPKSetting *searchRow = item.requiresRestart
+                ? [SPKSetting switchCellWithTitle:item.title
+                                             icon:SPKSettingsIcon(item.iconName)
+                                      defaultsKey:item.defaultsKey
+                                  requiresRestart:YES]
+                : [SPKSetting switchCellWithTitle:item.title
+                                             icon:SPKSettingsIcon(item.iconName)
+                                      defaultsKey:item.defaultsKey];
             searchRow.enabledProvider = item.enabledProvider;
             searchRow.searchKeywords = weakRow.searchKeywords;
             [rows addObject:searchRow];
