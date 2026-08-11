@@ -75,7 +75,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                                                           [currentManager removePasscode];
                                                                                           SPKSettingsLockReloadPresenter(presenter);
                                                                                       }],
-                                                        ]];
+]];
         }
     };
 
@@ -183,6 +183,19 @@ static NSDictionary *SPKSettingsLockSection(void) {
 
         // "Recovery" — was the untitled section. Disable All Settings moved in
         // from Tweak: its own footer said "Use to isolate crashes."
+SPKTopicSection(@"", @[
+            [SPKSetting navigationCellWithTitle:@"FLEX"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"toolbox")
+                                    navSections:@[
+                SPKTopicSection(@"", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter)
+                                    ]],
+        ], nil),
+#if SPK_DEV
+        SPKTopicSection(@"Diagnostics",
+                        @[ [SPKHookBisectSettingsProvider rootSetting] ],
+                        @"Skip individual hook installers at launch to isolate a crash or a slowdown to one feature."),
+#endif
         SPKTopicSection(@"Recovery", @[
             [SPKSetting switchCellWithTitle:@"Turn Off All Features"
                            icon:SPKSettingsIcon(@"circle_off")
@@ -210,13 +223,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
 #endif
         ],
                         @"1. Suppress every Sparkle feature hook, leaving only the shortcut to reach this screen. Use to isolate crashes.\n"
-                        @"2. Clears failed-launch counters and temporary hook suppression. Tap this button if it appears as if features aren't enabled."),
-        SPKTopicSection(@"FLEX", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter),
-#if SPK_DEV
-        SPKTopicSection(@"Diagnostics",
-                        @[ [SPKHookBisectSettingsProvider rootSetting] ],
-                        @"Skip individual hook installers at launch to isolate a crash or a slowdown to one feature."),
-#endif
+                        @"2. Clears failed-launch counters and temporary hook suppression. Tap this button if it appears as if features aren't enabled.")
     ]];
 
     return SPKTopicNavigationSetting(@"Tools", @"toolbox", 24.0, sections);

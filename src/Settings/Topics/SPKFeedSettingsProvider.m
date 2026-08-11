@@ -31,6 +31,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close"
                                                                 icon:SPKSettingsIcon(@"left_right")
                                                          defaultsKey:@"general_comments_swipe_close"];
+    swipeCloseComments.helpText = @"Close comments with a swipe. Turning this on reveals the direction picker.";
     swipeCloseComments.searchKeywords = @"comments gesture horizontal dismiss";
     // Greys Swipe Direction out immediately instead of after leaving the page.
     swipeCloseComments.reloadsTableOnSwitchChange = YES;
@@ -55,17 +56,18 @@ static NSArray *SPKFeedCommentsSections(void) {
     hideGiftsButton.helpText = @"Removes the gift shortcut from the composer.";
     hideGiftsButton.searchKeywords = @"gift composer shortcut";
 
+    // Comment settings relocated from General; keys unchanged.
     return @[
-        SPKTopicSection(@"Comments", @[
-            copyComment,
-            commentMediaActions,
-            commentGalleryUpload,
-            swipeCloseComments,
-            swipeDirection,
-            hideCommentShopping,
-            hideGiftsButton
-        ],
-                        nil)
+    SPKTopicSection(@"Comments", @[
+                copyComment,
+                commentMediaActions,
+                commentGalleryUpload,
+                swipeCloseComments,
+                swipeDirection,
+                hideCommentShopping,
+                hideGiftsButton
+            ],
+                            nil)
     ];
 }
 
@@ -216,7 +218,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                          defaultsKey:@"feed_header_button_dest_settings"],
                 ]);
                 g.searchKeywords = @"destinations shortcut gallery analyzer downloads deleted settings";
-                // R5 : les destinations n'existent que si le bouton est affiché.
+                // R5: hidden while Show Header Button is off.
                 g.hiddenProvider = ^BOOL {
                     return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
                 };
@@ -227,8 +229,6 @@ static NSArray *SPKFeedCommentsSections(void) {
         ],
                         nil),
 
-        // Comments moved in from General — a new user looks for comments where
-        // they see them. Seven rows, keys untouched, arrives as a sub-page.
 SPKTopicSection(@"", @[
             [SPKSetting navigationCellWithTitle:@"Comments"
                                        subtitle:nil

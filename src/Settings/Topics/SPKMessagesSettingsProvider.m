@@ -221,6 +221,13 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     return @[
         // Everything about the chat screen itself. Was split across "Messaging"
         // and a section literally called "Interface".
+        SPKTopicSection(@"Seen Receipts", @[
+            manualSeenSwitch,
+            markSeenGate,
+            seenButtonPosition,
+            manualSeenList
+        ],
+                        nil),
         SPKTopicSection(@"Chat Screen", @[
             unlockPreview,
             // Six hides of the same screen, one gate — the verb lives on the
@@ -251,13 +258,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
             lastActiveFormat],
                         nil),
-        SPKTopicSection(@"Seen Receipts", @[
-            manualSeenSwitch,
-            markSeenGate,
-            seenButtonPosition,
-            manualSeenList
-        ],
-                        nil),
         SPKTopicSection(@"Deleted Messages", @[
             keepDeleted,
             ({
@@ -272,11 +272,11 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                                             iconName:@"eye"
                                          defaultsKey:@"msgs_deleted_log_respect_seen_list"],
                 ]);
-                // The two per-row helps the rows carried before they became items.
+                // Per-item help text for the menu items above.
                 g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
                              @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
                 g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
-                // R5 : le journal n'existe que si l'on garde les messages supprimés.
+                // R5: hidden while Keep Deleted Messages is off.
                 g.hiddenProvider = ^BOOL {
                     return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
                 };
@@ -292,15 +292,14 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
                                            icon:SPKSettingsIcon(@"eye")
                                     defaultsKey:@"msgs_manual_visual_seen"];
-                row.reloadsTableOnSwitchChange = YES;  // R5 : déplie « Advance After Manual Seen » en place
+                row.reloadsTableOnSwitchChange = YES;  // R5: reveals Advance After Manual Seen in place.
+                row.helpText = @"Photos and videos stop sending read receipts until the eye is tapped. Turning this on reveals Advance After Manual Seen.";
                 row;
             }),
             advanceVisual,
             disableAutoAdvance,
             disableViewOnce,
             ({
-                // Renamed from "Disable Swipe-Up Gesture" — the word "vanish"
-                // no longer comes from a section header.
                 SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Vanish Swipe-Up"
                                                             icon:SPKSettingsIcon(@"arrow_up")
                                                      defaultsKey:@"msgs_disable_vanish_swipe_up"];
@@ -321,17 +320,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
         ],
                         nil),
-        // Convention v1.2: the "Confirmations" gate row closes every page — one
-        // tap opens the multi-toggle menu (icon left, checkmark right, stays
-        // open while toggling). Items keep the old switches' keys and icons.
-        SPKTopicSection(@"", @[
-            // Eight rows we set once at install: they keep their two sections,
-            // one level down. Search still reaches every one of them.
-            [SPKSetting navigationCellWithTitle:@"Notes & Media"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"notes")
-                                    navSections:@[
-
         SPKTopicSection(@"Notes", @[
             [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
                                        icon:SPKSettingsIcon(@"notes")
@@ -349,8 +337,11 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             trimAudio,
             uploadGalleryPhoto,
         ],
-                        nil)
-                                    ]],
+                        nil),
+        // Convention v1.2: the "Confirmations" gate row closes every page — one
+        // tap opens the multi-toggle menu (icon left, checkmark right, stays
+        // open while toggling). Items keep the old switches' keys and icons.
+        SPKTopicSection(@"", @[
             SPKActionButtonRowSetting(kSPKMessagesActionButtonEnabledKey,
                                       nil,
                                       @[

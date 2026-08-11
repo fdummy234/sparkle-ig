@@ -72,8 +72,9 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                                            icon:SPKSettingsIcon(@"arrow_down")
                                                     defaultsKey:@"reels_prevent_doom_scroll"];
                 s.searchKeywords = @"doom scrolling doom scrolling limit";
-                // R5 : le plafond en dessous n'apparaît que tant que ceci est allumé.
+                // R5: reveals the per-session counter below while on.
                 s.reloadsTableOnSwitchChange = YES;
+                s.helpText = @"Stops loading new reels once the limit is hit. Turning this on reveals the per-session counter.";
                 s;
             }),
             ({
@@ -86,7 +87,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                         step:1
                                        label:@"reels"
                                singularLabel:@"reel"];
-                // R5 : le plafond n'existe que si la limite est active.
+                // R5: hidden while Limit Reels per Session is off.
                 s.hiddenProvider = ^BOOL {
                     return ![SPKUtils getBoolPref:@"reels_prevent_doom_scroll"];
                 };

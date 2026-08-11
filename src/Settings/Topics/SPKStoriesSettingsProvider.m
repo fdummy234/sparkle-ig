@@ -76,11 +76,12 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
             SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"stories_manual_seen"];
-            row.reloadsTableOnSwitchChange = YES;  // R5 : déplie « Mark Seen On… » en place
+            row.reloadsTableOnSwitchChange = YES;  // R5: reveals the dependent seen-receipt rows in place.
+            row.helpText = @"Stories stop sending read receipts until the eye button is tapped. Turning this on reveals Mark Seen On\u2026 and the viewer tools.";
             row;
         }),
-            // Moved in from "While Viewing": it acts on the viewer list, which
-            // lives here. Its numbered footer note becomes its own ⓘ.
+            // Acts on the story viewer list; help text replaces the former
+            // numbered footer note.
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Search Viewer List"
                                                            icon:SPKSettingsIcon(@"search")
