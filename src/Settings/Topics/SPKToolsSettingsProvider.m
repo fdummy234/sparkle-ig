@@ -103,12 +103,15 @@ static NSDictionary *SPKSettingsLockSection(void) {
     NSString *flexFooter = flexInstalled
                                ? @"The first time FLEX is opened in a session it can take a moment to initialize."
                                : @"FLEX is not installed. Rebuild with \"--flex\" flag or install \"libFLEX.dylib\" to enable these options.";
-                                                                              icon:SPKSettingsIcon(@"pinch")
-    SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger Hold" defaultsKey:@"tools_flex_instagram"];
-                                                                              icon:SPKSettingsIcon(@"play")
-    SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch" defaultsKey:@"tools_flex_app_launch"];
-                                                                            icon:SPKSettingsIcon(@"arrow_up_right")
-    SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on App Focus" defaultsKey:@"tools_flex_app_start"];
+    SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger Hold"
+                                                        icon:SPKSettingsIcon(@"pinch")
+                                                 defaultsKey:@"tools_flex_instagram"];
+    SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch"
+                                                        icon:SPKSettingsIcon(@"play")
+                                                 defaultsKey:@"tools_flex_app_launch"];
+    SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on App Focus"
+                                                        icon:SPKSettingsIcon(@"arrow_up_right")
+                                                 defaultsKey:@"tools_flex_app_start"];
     SPKSetting *flexOpen = [SPKSetting buttonCellWithTitle:@"Open FLEX Now"
                                                   subtitle:nil
                                                       icon:SPKSettingsIcon(@"toolbox")
