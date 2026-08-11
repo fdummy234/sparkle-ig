@@ -503,7 +503,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         self.navigationItem.preferredSearchBarPlacement = UINavigationItemSearchBarPlacementStacked;
     }
     self.navigationItem.searchController = self.searchController;
-    self.navigationItem.hidesSearchBarWhenScrolling = YES;
+    // The root searches every setting: keep its field pinned like Instagram's own
+    // "Settings and activity". Sub-pages still hide it — there, you already know
+    // where you are.
+    self.navigationItem.hidesSearchBarWhenScrolling = !self.searchesAllSettings;
     self.definesPresentationContext = YES;
 }
 
