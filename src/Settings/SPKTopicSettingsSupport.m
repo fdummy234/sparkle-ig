@@ -128,8 +128,8 @@ SPKSetting *SPKTopicNavigationSetting(NSString *title, NSString *iconName, CGFlo
 }
 
 SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable footer, NSArray<SPKSetting *> *rows) {
-    // R5 : la première rangée est l'interrupteur maître ; les suivantes ne
-    // s'appliquent que s'il est allumé, donc elles n'existent que dans ce cas.
+    // R5: the first row is the master switch; the rows after it only apply
+    // while the master is on, so they stay hidden otherwise.
     [rows enumerateObjectsUsingBlock:^(SPKSetting *row, NSUInteger idx, BOOL *stop) {
         if (idx == 0) {
             row.reloadsTableOnSwitchChange = YES;

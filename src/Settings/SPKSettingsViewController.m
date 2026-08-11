@@ -16,23 +16,23 @@
 #import "SPKSettingsHelpSheetViewController.h"
 
 #pragma mark - Convention UI — métriques mesurées (une ligne = un réglage)
-// Relevées sur les réglages natifs d'Instagram par mesure de captures.
+// Measured from Instagram's native settings via screenshot comparison.
 // TOUTE retouche de mise en page se fait ICI, nulle part ailleurs.
-static CGFloat const SPKUI_RowHeight          = 44.0;  // pas de rangée standard
+static CGFloat const SPKUI_RowHeight          = 44.0;  // standard row pitch
 static CGFloat const SPKUI_RowVMargin         = 9.0;   // marge verticale du contenu
-static CGFloat const SPKUI_RowLeading         = 15.0;  // gauche des icônes (rend ~17 à l'écran : les glyphes portent ~2 pt d'encart interne)
+static CGFloat const SPKUI_RowLeading         = 15.0;  // icon leading (renders ~17 on screen: glyphs carry ~2 pt of internal inset)
 static CGFloat const SPKUI_RowTrailing        = 16.0;
-static CGFloat const SPKUI_IconMax            = 26.0;  // plafond des glyphes
-static CGFloat const SPKUI_SubtitleIconRise   = 8.0;   // rangées à sous-titre : glyphe et accessoire remontent vers le titre (natif « Accounts Center » mesuré)
+static CGFloat const SPKUI_IconMax            = 26.0;  // glyph size cap
+static CGFloat const SPKUI_SubtitleIconRise   = 8.0;   // subtitle rows: glyph and accessory rise toward the title (matches the native Accounts Center)
 static CGFloat const SPKUI_IconTextGap        = 14.0;
-static CGFloat const SPKUI_BandHeight         = 6.0;   // bande entre groupes
+static CGFloat const SPKUI_BandHeight         = 6.0;   // band between groups
 static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de page
 static CGFloat const SPKUI_HeaderTop          = 14.0;
 static CGFloat const SPKUI_HeaderBottom       = 14.0;
-static CGFloat const SPKUI_HeaderLeading      = 16.5;  // rend ~18 à l'écran
-static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // mesuré pleine hauteur de glyphe : 38 px natif vs 44 px à 16 pt
+static CGFloat const SPKUI_HeaderLeading      = 16.5;  // renders ~18 on screen
+static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // full glyph height measured: 38 px native vs 44 px at 16 pt
 static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
-static CGFloat const SPKUI_ValueFontSize      = 14.0;  // « 11 active », valeurs de menus — natif mesuré 31 px vs 34 à 15 pt : encore un cran plus petit que le titre
+static CGFloat const SPKUI_ValueFontSize      = 14.0;  // "11 active", menu values — native measures 31 px vs 34 at 15 pt: one step smaller than the title
 
 
 static char rowStaticRef[] = "row";
@@ -350,19 +350,19 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 }
 
 - (UITableViewStyle)preferredTableViewStyle {
-    // Convention v1 (GO gate 0) : habillage natif Instagram — rangées pleine
-    // largeur, pas de cartes. Le reste du VC branche déjà sur ce style.
-    // Grouped (pas inset) : mêmes rangées pleine largeur que plain, mais les
-    // en-têtes de section DÉFILENT avec le contenu au lieu de s'épingler en
-    // haut — la « barre blanche flottante » de la vidéo. Comportement IG.
+    // Convention v1 (GO gate 0): native Instagram styling — full-width rows,
+    // no cards. The rest of the controller already keys off this style.
+    // Grouped (not inset): the same full-width rows as plain, but section
+    // headers SCROLL with the content instead of pinning to the top —
+    // the floating white bar artifact. Matches Instagram's behavior.
     return UITableViewStyleGrouped;
 }
 
 - (void)setSections:(NSMutableArray *)sections {
     _sections = sections;
-    // Les vues de pied sont indexées par numéro de section : dès que la liste
-    // change (recherche, hiddenProvider, replaceSections:), les index ne
-    // désignent plus les mêmes sections.
+    // Footer views are indexed by section number: as soon as the list
+    // changes (search, hiddenProvider, replaceSections:), the indexes no
+    // longer point at the same sections.
     [_footerViewCache removeAllObjects];
 }
 
@@ -405,7 +405,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     self.tableView.estimatedSectionFooterHeight = 0.0;
 
     self.footerViewCache = [NSMutableDictionary dictionary];
-    // Natif IG : aucune hairline entre les rangées (les bandes de groupe suffisent).
+    // Native IG: no hairline between rows (the group bands are enough).
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
 
     [self.view addSubview:self.tableView];
@@ -496,17 +496,27 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                                         state:UIControlStateNormal];
     self.searchController.searchBar.placeholder = self.searchesAllSettings ? @"Search All Settings" : [NSString stringWithFormat:@"Search %@", self.title ?: @"settings"];
     if (@available(iOS 16.0, *)) {
-        // Sans ceci, l'iOS récent docke la recherche en pilule flottante au bas
-        // de l'écran — et notre table pleine largeur défile derrière (le
-        // « Gallery » fantôme de la vidéo). Stacked = sous le titre, comme les
-        // réglages natifs d'Instagram.
+        // Without this, recent iOS docks the search as a floating pill at the
+        // bottom of the screen — and the full-width table scrolls behind it
+        // (the ghost "Gallery" artifact). Stacked = under the title, matching
+        // Instagram's native settings.
         self.navigationItem.preferredSearchBarPlacement = UINavigationItemSearchBarPlacementStacked;
     }
+    // Flat grey field, like Instagram's own search. Without this, iOS 26 renders
+    // the bar as a floating glass pill that does not match the rest of the screen.
+    self.searchController.searchBar.searchBarStyle = UISearchBarStyleMinimal;
+    self.searchController.searchBar.backgroundImage = [UIImage new];
+    UITextField *searchField = self.searchController.searchBar.searchTextField;
+    searchField.backgroundColor = [SPKUtils SPKColor_InstagramSecondaryBackground];
+    searchField.layer.cornerRadius = 10.0;
+    searchField.layer.cornerCurve = kCACornerCurveContinuous;
+    searchField.layer.borderWidth = 0.0;
+    searchField.clipsToBounds = YES;
+
     self.navigationItem.searchController = self.searchController;
-    // The root searches every setting: keep its field pinned like Instagram's own
-    // "Settings and activity". Sub-pages still hide it — there, you already know
-    // where you are.
-    self.navigationItem.hidesSearchBarWhenScrolling = !self.searchesAllSettings;
+    // Hidden until the list is pulled down, matching Instagram's "Settings
+    // and activity" screen.
+    self.navigationItem.hidesSearchBarWhenScrolling = YES;
     self.definesPresentationContext = YES;
 }
 
@@ -517,10 +527,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 // MARK: - UITableViewDataSource
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    // Mesure des captures : le pas natif est 44 pt, et nos rangées SANS valeur
-    // y sont déjà — celles avec « N active » gonflent à 52 parce que le sizing
-    // réserve la hauteur empilée du texte secondaire côte à côte. On ne joue
-    // plus au chat : 44 verrouillé pour les rangées standard, automatique
+    // Screenshot measurements: the native pitch is 44 pt, and rows WITHOUT a
+    // value already sit there — rows with "N active" inflate to 52 because
+    // sizing reserves the stacked height of the side-by-side secondary text.
+    // 44 is locked for standard rows, automatic
     // seulement quand le contenu le justifie.
     SPKSetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
     if (![row isKindOfClass:[SPKSetting class]])
@@ -537,19 +547,19 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     if (!row)
         return nil;
 
-    // Phase 0.2 — recyclage des cellules. Un identifiant PAR TYPE : une cellule
-    // Switch ne renaît jamais en Navigation, chaque branche du switch retrouve
-    // donc la famille d'accessoires qu'elle attend. Tout le reste de la méthode
-    // reconfigure déjà chaque propriété à chaque passage (contentConfiguration
-    // repart d'une config par défaut, accessoires réassignés) — le recyclage
-    // change le coût du défilement, pas l'état des rangées.
+    // Phase 0.2 — cell recycling. One identifier PER TYPE: a cell
+    // Switch never comes back as Navigation — each branch of the pool keeps its type,
+    // hence the accessory family it expects. The rest of the method already
+    // reconfigures every property on each pass (contentConfiguration
+    // restarts from a default config, accessories reassigned) — recycling
+    // changes the cost of scrolling, not the state of the rows.
     NSString *reuseIdentifier = [NSString stringWithFormat:@"SPKSettingsCell.%ld", (long)row.type];
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:reuseIdentifier];
     if (cell == nil) {
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier];
     }
-    // Un recyclé du même type peut porter l'accessoire de sa vie d'avant :
-    // on repart neutre, chaque branche pose le sien.
+    // A recycled cell of the same type can carry an accessory from its previous life:
+    // a chevron, a switch or a value label left over from a previous row.
     cell.accessoryView = nil;
     cell.editingAccessoryView = nil;
     cell.accessoryType = UITableViewCellAccessoryNone;
@@ -566,26 +576,26 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     cellContentConfig.textProperties.numberOfLines = 0;
     cellContentConfig.secondaryTextProperties.numberOfLines = 0;
     cellContentConfig.secondaryTextProperties.lineBreakMode = NSLineBreakByWordWrapping;
-    // Calibration native, 2e passe (mesures des captures côte à côte) :
-    // IG = grand texte DENSE — titre 17 pt mais pas de rangée ~43-44 pt
-    // (centre à centre), pas 60. Marges 9/9 : icône 26 + 18 = 44.
+    // Native calibration, 2nd pass (side-by-side screenshot measurements):
+    // IG = large DENSE text — 17 pt title with a ~43-44 pt row pitch
+    // (center to center), not 60. Margins 9/9: icon 26 + 18 = 44.
     cellContentConfig.textProperties.font =
         [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
     NSDirectionalEdgeInsets rowMargins = cellContentConfig.directionalLayoutMargins;
     rowMargins.top = SPKUI_RowVMargin;
     rowMargins.bottom = SPKUI_RowVMargin;
-    // Mesuré sur le natif : icônes à 17 pt du bord. La config PRÉSERVE par
-    // défaut les marges du conteneur quand elles sont plus grandes
-    // (axesPreservingSuperviewLayoutMargins) — c'est pour ça que 16 ne
-    // s'appliquait pas : il perdait contre les ~22 de la cellule.
+    // Measured on native: icons sit 17 pt from the edge. The config PRESERVES
+    // container margins by default when they are larger
+    // (axesPreservingSuperviewLayoutMargins) — which is why 16 does not
+    // did not apply: it lost against the cell's ~22.
     rowMargins.leading = SPKUI_RowLeading;
     rowMargins.trailing = SPKUI_RowTrailing;
     cellContentConfig.directionalLayoutMargins = rowMargins;
-    cellContentConfig.axesPreservingSuperviewLayoutMargins = UIAxisNeither;  // « aucun axe » — pas UIAxisBoth, qui re-préserverait les marges
+    cellContentConfig.axesPreservingSuperviewLayoutMargins = UIAxisNeither;  // "no axis" — not UIAxisBoth, which would re-preserve the margins
     cellContentConfig.imageToTextPadding = SPKUI_IconTextGap;
-    // Les glyphes du bundle IG sortent à ~34 pt et gonflaient la rangée à 52
-    // (34 + 9 + 9). Plafond 26 → rangée 44, le pas natif mesuré. Les cas
-    // spéciaux (avatars, images distantes) reposent leur propre taille après.
+    // IG bundle glyphs come out at ~34 pt and inflated the row to 52
+    // (34 + 9 + 9). A 26 pt cap → 44 pt row, the measured native pitch. Special
+    // cases (avatars, remote images) restore their own size afterwards.
     cellContentConfig.imageProperties.maximumSize = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax);
     cellContentConfig.imageProperties.reservedLayoutSize = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax);
     BOOL rowEnabled = (row.userInfo[@"enabled"] ? [row.userInfo[@"enabled"] boolValue] : YES) &&
@@ -617,7 +627,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
                 if (raised != rowIcon) {
                     CGSize box = CGSizeMake(SPKUI_IconMax, SPKUI_IconMax + 2.0 * SPKUI_SubtitleIconRise);
                     cellContentConfig.image = raised;
-                    cellContentConfig.imageProperties.maximumSize = box;       // déjà à sa taille finale : aucun redimensionnement
+                    cellContentConfig.imageProperties.maximumSize = box;       // already at its final size: no resizing
                     cellContentConfig.imageProperties.reservedLayoutSize = box;
                 }
             }
@@ -779,7 +789,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         menuButton.menu = [row menuForButton:menuButton];
         menuButton.showsMenuAsPrimaryAction = YES;
         menuButton.enabled = rowEnabled;
-        // Même graisse que les autres valeurs d'état (Regular, comme IG).
+        // Same weight as the other value labels (Regular, like IG).
         menuButton.titleLabel.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
                                                                                                                                           weight:UIFontWeightRegular]];
         menuButton.titleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
@@ -984,16 +994,16 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     NSString *header = self.sections[section][@"header"];
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
     if ([self preferredTableViewStyle] != UITableViewStyleInsetGrouped && header.length == 0 && helpRows.count == 0) {
-        // Première section sans titre (la racine, les pages plates) : une
-        // respiration sous la barre de titre au lieu de coller le contenu.
+        // First untitled section (the root, flat pages): a
+        // touch of breathing room under the title bar instead of hugging the content.
         return (section == 0) ? SPKUI_FirstSectionTop : CGFLOAT_MIN;
     }
     UIView *native = [self spk_nativeHeaderForSection:section forSizing:YES];
     if (native == nil) {
         return UITableViewAutomaticDimension;
     }
-    // estimatedSectionHeaderHeight est à 0 : sans mesure explicite, la vue custom
-    // se rend écrasée. Même patron que les footers — le cache rend l'appel gratuit.
+    // estimatedSectionHeaderHeight is 0: without an explicit measure, the custom
+    // view renders collapsed. Same pattern as the footers — the cache makes the call free.
     CGFloat width = CGRectGetWidth(tableView.bounds);
     if (width <= 0.0) {
         width = CGRectGetWidth(UIScreen.mainScreen.bounds);
@@ -1009,15 +1019,15 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
-    // Convention : aucun pied de texte. Une bande pleine largeur sépare les
-    // groupes, comme dans les réglages natifs d'Instagram.
+    // Convention: no footer text. A full-width band separates the groups,
+    // matching Instagram's native settings.
     UIView *band = [UIView new];
     band.backgroundColor = [UIColor colorWithRed:0.937 green:0.937 blue:0.945 alpha:1.0];  // #EFEFF1
     return band;
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
-    // Bande native mesurée : 6 pt (18 px), pas 8.
+    // Native band measured: 6 pt (18 px), not 8.
     return (section == (NSInteger)self.sections.count - 1) ? SPKUI_BandLast : SPKUI_BandHeight;
 }
 
@@ -1029,9 +1039,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     }
 
     // Le cache ne sert QUE de gabarit de mesure (heightForHeader). Jamais
-    // affiché : rendre à UIKit une instance qu'il possède déjà — toléré en
+    // displayed: handing UIKit an instance it already owns — tolerated in
     // plain par chance — devient dangereux en grouped, dont le cycle de vie
-    // des en-têtes diffère. L'affichage reçoit toujours une vue fraîche.
+    // headers differ. Display always receives a fresh view.
     NSNumber *cacheKey = @(section);
     if (forSizing) {
         UIView *cached = self.footerViewCache[cacheKey];
@@ -1042,10 +1052,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
     // Un UIView nu, PAS un UITableViewHeaderFooterView : quand
     // titleForHeaderInSection: fournit aussi le titre, UIKit remplit le
-    // textLabel intégré du HeaderFooterView par-dessus notre label — c'était
-    // le texte dédoublé de la capture. Un UIView n'a rien à remplir.
+    // the HeaderFooterView's built-in textLabel over the custom label —
+    // the doubled-text artifact. A plain UIView has nothing to fill.
     UIView *container = [UIView new];
-    // Opaque : au pinning du style plain, rien ne transparaît derrière.
+    // Opaque: with plain-style pinning, nothing shows through behind.
     container.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
 
     UILabel *label = [UILabel new];
@@ -1098,7 +1108,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         return;
 
     NSArray<SPKSetting *> *helpRows = SPKSettingsHelpRowsInSection(self.sections[section]);
-    // Les sections sans titre (Meta AI, par ex.) empruntent le titre de la page.
+    // Untitled sections (Meta AI, for example) borrow the page title.
     NSString *header = self.sections[section][@"header"];
     [SPKSettingsHelpSheetViewController presentForSectionTitle:header.length > 0 ? header : self.title
                                                           rows:helpRows

@@ -5,31 +5,37 @@
 #import "SPKSetting.h"
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  CONVENTION D'ORDRE DES RANGÉES (v2.1)
+//  ROW ORDER CONVENTION (v2.2)
 //
-//  Une rangée se place selon la distance que le geste fait parcourir :
+//  A row is placed by the distance its gesture travels:
 //
-//     1. interrupteur ......... rien ne s'ouvre, effet immédiat
-//     2. porte ................ un paquet d'interrupteurs répondant à UNE même
-//                               question ; le menu s'ouvre sur la rangée
-//     3. sélecteur de valeur .. menu ou compteur, une seule réponse
-//     4. sous-page ............ on quitte l'écran et on y revient
-//     5. action ............... quelque chose se produit ; destructif en dernier
+//     1. switch ............ nothing opens, the effect is immediate
+//     2. gate .............. a pack of switches answering ONE question;
+//                            the menu opens on the row itself
+//     3. value picker ...... menu or stepper, a single answer
+//     4. sub-page .......... leaves the screen and comes back
+//     5. action ............ something happens now; destructive goes last
 //
-//  R1 (prioritaire) Ce qui commande précède ce qui obéit. Une rangée dépendante
-//                   suit immédiatement son maître, quel que soit son type.
-//  R2               À niveau égal, l'échelle ci-dessus.
-//  R3 (exception)   La rangée qui EST le sujet de sa section l'ouvre
-//                   (Open FLEX Now, Default Feed). Bornée à ce cas.
-//  R4 (invariant)   Le bloc final — Action Button puis Confirmations, sans titre
-//                   — ne bouge jamais : il s'apprend par répétition.
-//  R5               Ce qui ne s'applique pas ne s'affiche pas : une rangée
-//                   dépendante porte un `hiddenProvider` qui la retire tant que
-//                   son maître est éteint, et son maître porte
-//                   `reloadsTableOnSwitchChange` pour qu'elle se déplie en place.
+//  R1 (overrides all) A dependent row sits directly under the row that
+//                     controls it, whatever its type.
+//  R2                 At equal footing, the scale above.
+//  R3 (exception)     A row that IS the subject of its section opens it
+//                     (Open FLEX Now, Default Feed). Limited to that case.
+//  R4 (invariant)     The closing block — Action Button, then Confirmations,
+//                     untitled — never moves: repetition teaches it.
+//  R5                 What does not apply does not appear: a dependent row
+//                     carries a `hiddenProvider` that removes it while its
+//                     master is off, and the master carries
+//                     `reloadsTableOnSwitchChange` so the reveal happens in
+//                     place. A master that reveals rows announces them in its
+//                     help text.
+//  R6                 Section order: the page's signature section opens,
+//                     destructive sections close, a single-row navigation
+//                     section joins the closing block.
 //
-//  Une porte n'existe que si l'on peut nommer sa question (« confirmer quoi ? »,
-//  « masquer où ? »). Sinon c'est une section, pas un menu.
+//  A gate exists only when its question can be named ("confirm what?",
+//  "hide where?"). Otherwise the rows form a section, not a menu.
+//  Gate rows read "Off" at zero enabled items; the counter starts at 1.
 // ─────────────────────────────────────────────────────────────────────────────
 
 NS_ASSUME_NONNULL_BEGIN
