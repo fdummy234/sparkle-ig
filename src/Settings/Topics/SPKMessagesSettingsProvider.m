@@ -223,7 +223,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
         // and a section literally called "Interface".
         SPKTopicSection(@"Chat Screen", @[
             unlockPreview,
-            lastActiveFormat,
             // Six hides of the same screen, one gate — the verb lives on the
             // row; Typing Status keeps its noun (it is not a button).
             ({
@@ -249,8 +248,8 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 ]);
                 g.searchKeywords = @"hide typing status reels blend audio video call flag suggested chats button no suggestions inbox flag";
                 g;
-            })
-        ],
+            }),
+            lastActiveFormat],
                         nil),
         SPKTopicSection(@"Seen Receipts", @[
             manualSeenSwitch,
@@ -289,9 +288,13 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
         // disappear) — and it resolves the duplicated "Disable Screenshot
         // Detection" row: one gate, two context-named items.
         SPKTopicSection(@"Disappearing Messages", @[
-            [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
-                                       icon:SPKSettingsIcon(@"eye")
-                                defaultsKey:@"msgs_manual_visual_seen"],
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
+                                           icon:SPKSettingsIcon(@"eye")
+                                    defaultsKey:@"msgs_manual_visual_seen"];
+                row.reloadsTableOnSwitchChange = YES;  // R5 : déplie « Advance After Manual Seen » en place
+                row;
+            }),
             advanceVisual,
             disableAutoAdvance,
             disableViewOnce,

@@ -128,6 +128,12 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
             [SPKSetting switchCellWithTitle:@"Long Press to Expand"
                                        icon:SPKSettingsIcon(@"expand")
                                 defaultsKey:@"profile_photo_zoom"],
+            [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
+                                       icon:SPKSettingsIcon(@"notes")
+                                defaultsKey:@"profile_hide_notes_bubble"],
+            [SPKSetting switchCellWithTitle:@"Hide Threads Button"
+                                       icon:SPKSettingsIcon(@"threads")
+                                defaultsKey:@"profile_hide_threads_btn"],
             ({
                 SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following Indicator"
                                                             icon:SPKSettingsIcon(@"user_check")
@@ -163,14 +169,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                     return [SPKFollowIndicatorEffectiveMode() isEqualToString:kSPKFollowIndicatorModeOff];
                 };
                 colorful;
-            }),
-            [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
-                                       icon:SPKSettingsIcon(@"notes")
-                                defaultsKey:@"profile_hide_notes_bubble"],
-            [SPKSetting switchCellWithTitle:@"Hide Threads Button"
-                                       icon:SPKSettingsIcon(@"threads")
-                                defaultsKey:@"profile_hide_threads_btn"]
-        ],
+            })],
                         @"1. Long press a profile picture to open it expanded.\n"
                         @"2. Following Indicator shows whether a profile follows you back, under their stats. Text or Icon; it's Instagram's native gray unless you turn on Colorful Indicator for green/red."),
         // Convention v1.2 gate row — see SPKToggleMenu.h.

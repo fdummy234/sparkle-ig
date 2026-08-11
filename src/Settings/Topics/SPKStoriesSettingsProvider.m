@@ -72,11 +72,13 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
     });
 
     return SPKTopicSection(@"Seen Receipts", @[
-        [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
-                                   icon:SPKSettingsIcon(@"eye")
-                            defaultsKey:@"stories_manual_seen"],
-        markSeenGate,
-        manualSeenList,
+        ({
+            SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
+                                       icon:SPKSettingsIcon(@"eye")
+                                defaultsKey:@"stories_manual_seen"];
+            row.reloadsTableOnSwitchChange = YES;  // R5 : déplie « Mark Seen On… » en place
+            row;
+        }),
             // Moved in from "While Viewing": it acts on the viewer list, which
             // lives here. Its numbered footer note becomes its own ⓘ.
             ({
@@ -85,7 +87,9 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
                                                     defaultsKey:@"stories_search_viewer_list"];
                 s.helpText = @"Add a search button to your story's viewer list to search and filter any viewer.";
                 s;
-            })],
+            }),
+        markSeenGate,
+        manualSeenList],
                            footer);
 }
 

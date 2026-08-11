@@ -280,8 +280,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         ],
                         nil),
         SPKTopicSection(@"App", @[
-            [self appIconSetting],
-            [self defaultMenuIconSetting],
             // Moved in from Feed: the gesture opens Instagram's icon picker and
             // Sparkle's own picker is two rows up — they belong side by side.
             ({
@@ -294,9 +292,10 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
             }),
             disableHaptics,
             [self perAccountSetting],
-            clearCacheSetting,
-            autoClearCache
-        ],
+            autoClearCache,
+            [self appIconSetting],
+            [self defaultMenuIconSetting],
+            clearCacheSetting],
                         nil),
 
         // Convention v1.2 gate row — see SPKToggleMenu.h. The three Confirm
