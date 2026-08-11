@@ -139,11 +139,11 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     stripTracking.helpText = @"The copied link loses the IDs Instagram uses to track who shared it.";
     stripTracking.searchKeywords = @"igshid utm referrer identifiers url";
 
-    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Hold Send to Copy Link"
+    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Long-Press Send to Copy Link"
                                                               icon:SPKSettingsIcon(@"link")
                                                        defaultsKey:@"general_hold_send_copy_link"];
     holdSendCopyLink.helpText = @"Long-press the send or share button to get the post link.";
-    holdSendCopyLink.searchKeywords = @"long press share button post link";
+    holdSendCopyLink.searchKeywords = @"long press share button post link hold send";
 
     // ---- Sharing -------------------------------------------------------
 
@@ -216,16 +216,16 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Explore"
                                             iconName:@"explore_grid"
                                          defaultsKey:@"general_hide_ads_explore"],
-                    [SPKToggleMenuItem itemWithTitle:@"Reels Shopping CTA"
+                    [SPKToggleMenuItem itemWithTitle:@"Reels Shopping Button"
                                             iconName:@"shopping_bag"
                                          defaultsKey:@"general_hide_reels_shopping_cta"],
                 ]);
-                gate.searchKeywords = @"ads advertising sponsored promoted";
+                gate.searchKeywords = @"ads advertising sponsored promoted cta";
                 gate;
             }),
             ({
                 SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Meta AI", @"meta_ai", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Direct"
+                    [SPKToggleMenuItem itemWithTitle:@"Messages"
                                             iconName:@"messages"
                                          defaultsKey:@"general_hide_meta_ai_msgs"],
                     [SPKToggleMenuItem itemWithTitle:@"Explore & Search"
@@ -235,16 +235,16 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                             iconName:@"comment"
                                          defaultsKey:@"general_hide_meta_ai_comments"],
                     [SPKToggleMenuItem itemWithTitle:@"Creation Tools"
-                                            iconName:@"camera"
+                                            iconName:@"photo"
                                          defaultsKey:@"general_hide_meta_ai_creation"],
-                    [SPKToggleMenuItem itemWithTitle:@"Global AI Chrome"
+                    [SPKToggleMenuItem itemWithTitle:@"Everywhere Else"
                                             iconName:@"app"
                                          defaultsKey:@"general_hide_meta_ai_global"],
                 ]);
                 // Was the two per-item helps of the old sub-page.
                 gate.helpText = @"Direct covers the inbox, composer, recipients, themes and message menus.\n"
                                 @"Global AI Chrome removes generic Meta AI buttons, placeholders and branded entry points.";
-                gate.searchKeywords = @"ai assistant llama";
+                gate.searchKeywords = @"ai assistant llama global ai chrome direct";
                 gate;
             }),
             ({
@@ -255,7 +255,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Reels"
                                             iconName:@"reels"
                                          defaultsKey:@"general_hide_suggested_users_reels"],
-                    [SPKToggleMenuItem itemWithTitle:@"Direct"
+                    [SPKToggleMenuItem itemWithTitle:@"Messages"
                                             iconName:@"messages"
                                          defaultsKey:@"general_hide_suggested_users_msgs"],
                     [SPKToggleMenuItem itemWithTitle:@"Search"
@@ -267,14 +267,14 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Activity"
                                             iconName:@"notification"
                                          defaultsKey:@"general_hide_suggested_users_activity"],
-                    [SPKToggleMenuItem itemWithTitle:@"Follow Lists"
+                    [SPKToggleMenuItem itemWithTitle:@"Followers & Following"
                                             iconName:@"users"
                                          defaultsKey:@"general_hide_suggested_users_follow_lists"],
                     [SPKToggleMenuItem itemWithTitle:@"Subscriptions"
-                                            iconName:@"channels"
+                                            iconName:@"users"
                                          defaultsKey:@"general_hide_suggested_users_subscriptions"],
                 ]);
-                gate.searchKeywords = @"suggestions recommended accounts";
+                gate.searchKeywords = @"suggestions recommended accounts follow lists";
                 gate;
             }),
         ],
@@ -307,7 +307,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                 [SPKToggleMenuItem itemWithTitle:@"Create Group"
                                         iconName:@"group"
                                      defaultsKey:@"general_confirm_create_group"],
-                [SPKToggleMenuItem itemWithTitle:@"Sending Post"
+                [SPKToggleMenuItem itemWithTitle:@"New Post"
                                         iconName:@"messages"
                                      defaultsKey:@"general_confirm_send"],
                 [SPKToggleMenuItem itemWithTitle:@"Comment Like"

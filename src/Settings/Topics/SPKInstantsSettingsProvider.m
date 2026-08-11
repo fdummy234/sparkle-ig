@@ -37,18 +37,19 @@ static NSArray *SPKInstantsSettingsSections(void) {
                                 defaultsKey:@"instants_allow_screenshot"],
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants Creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
+    s.searchKeywords = @"disable camera control";
                 s.switchChangeHandler = ^(BOOL isOn) {
                     SPKPreferenceSetObject(@(isOn), @"instants_disable_creation");
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"SPKQuickSnapCreationPrefChangedNotification" object:nil];
                 };
                 s;
             }),
-            [SPKSetting switchCellWithTitle:@"Skip Camera After Instants"
-                                       icon:SPKSettingsIcon(@"camera")
+            [SPKSetting switchCellWithTitle:@"Skip Camera After Sending"
+                                       icon:SPKSettingsIcon(@"photo")
                                 defaultsKey:@"instants_skip_camera_after_viewing"],
             ({
                 BOOL cameraControlAvailable = SPKPrefIsAvailable(@"instants_disable_camera_control");
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Camera Control"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Ignore Camera Button"
                                                        subtitle:cameraControlAvailable ? @"" : @"Requires an iPhone with Camera Control"
                                                            icon:SPKSettingsSystemIcon(@"button.vertical.right.press", SPKSettingsCellIconPointSize, UIImageSymbolWeightSemibold)
                                                     defaultsKey:@"instants_disable_camera_control"];
@@ -73,7 +74,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             SPKActionButtonRowSetting(kSPKInstantsActionButtonEnabledKey,
                                       @"Choose what tapping the action button does. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Instants Action Button"
+                [SPKSetting switchCellWithTitle:@"Show Action Button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKInstantsActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceInstants),

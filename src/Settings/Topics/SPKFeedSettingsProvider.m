@@ -43,11 +43,11 @@ static NSArray *SPKFeedCommentsSections(void) {
         return [SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
-    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping"
+    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Button"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
                                                           defaultsKey:@"general_comments_hide_shopping"];
     hideCommentShopping.helpText = @"Removes commerce carousels from comment threads.";
-    hideCommentShopping.searchKeywords = @"comment commerce carousel shop";
+    hideCommentShopping.searchKeywords = @"comment commerce carousel shop shopping";
 
     SPKSetting *hideGiftsButton = [SPKSetting switchCellWithTitle:@"Hide Gifts Button"
                                                              icon:SPKSettingsIcon(@"gift")
@@ -72,7 +72,7 @@ static NSArray *SPKFeedCommentsSections(void) {
 + (SPKSetting *)rootSetting {
     // ---- Action Button -------------------------------------------------
 
-    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Feed Action Button"
+    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Show Action Button"
                                                                 icon:SPKSettingsIcon(@"action")
                                                          defaultsKey:kSPKFeedActionButtonEnabledKey];
     // Same wording as the Messages master toggle — the six action-button pages
@@ -81,21 +81,27 @@ static NSArray *SPKFeedCommentsSections(void) {
 
     // ---- Header Shortcut -----------------------------------------------
 
-    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Feed Header Button"
+    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show Header Button"
                                                           icon:SPKSettingsIcon(@"action")
                                                    defaultsKey:kSPKHeaderButtonEnabledKey];
+    headerButton.searchKeywords = @"feed header button";
     headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
 
-    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure Destinations"
+    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Reorder Destinations"
                                                                    subtitle:nil
-                                                                       icon:SPKSettingsIcon(@"sliders")
+                                                                       icon:SPKSettingsIcon(@"slider")
                                                                 navSections:@[
                                                                 ]];
+    configureDestinations.searchKeywords = @"configure";
     configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
 
     // ---- Layout --------------------------------------------------------
 
-    SPKSetting *mainFeedMode = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Main Feed" icon:SPKSettingsIcon(@"feed") menu:SPKMainFeedModeMenu()], SPKSettingsIcon(@"feed"));
+    SPKSetting *mainFeedMode = SPKSettingApplySelectedMenuIcon(({
+                                                                   SPKSetting *row = [SPKSetting menuCellWithTitle:@"Default Feed" icon:SPKSettingsIcon(@"feed") menu:SPKMainFeedModeMenu()];
+                                                                   row.searchKeywords = @"main feed";
+                                                                   row;
+                                                               }), SPKSettingsIcon(@"feed"));
     mainFeedMode.helpText = @"Following is the chronological feed of accounts you follow — Instagram keeps labelling the tab \"For you\".";
     mainFeedMode.searchKeywords = @"following chronological algorithm for you";
 
@@ -131,7 +137,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                 defaultsKey:@"feed_hide_repost_btn"
                             requiresRestart:YES],
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Feed Elements", @"eye", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Feed Elements", @"eye_off", @[
                     [SPKToggleMenuItem itemWithTitle:@"Stories Tray"
                                             iconName:@"story"
                                          defaultsKey:@"feed_hide_stories_tray"],
@@ -139,7 +145,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                             iconName:@"carousel"
                                          defaultsKey:@"feed_hide_suggested_posts"],
                     [SPKToggleMenuItem itemWithTitle:@"Suggested Reels"
-                                            iconName:@"reels_gallery"
+                                            iconName:@"reels"
                                          defaultsKey:@"feed_hide_suggested_reels"],
                     [SPKToggleMenuItem itemWithTitle:@"Suggested Threads"
                                             iconName:@"threads"
@@ -151,7 +157,7 @@ static NSArray *SPKFeedCommentsSections(void) {
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Counts", @"heart", @[
                     [SPKToggleMenuItem itemWithTitle:@"Likes"
-                                            iconName:@"heart"
+                                            iconName:@"poll"
                                          defaultsKey:@"feed_hide_like_count"],
                     [SPKToggleMenuItem itemWithTitle:@"Comments"
                                             iconName:@"comment"
@@ -160,7 +166,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                             iconName:@"repost"
                                          defaultsKey:@"feed_hide_repost_count"],
                     [SPKToggleMenuItem itemWithTitle:@"Reshares"
-                                            iconName:@"messages"
+                                            iconName:@"shares"
                                          defaultsKey:@"feed_hide_reshare_count"],
                 ]);
                 g.searchKeywords = @"hide like comment repost reshare count metrics";
@@ -174,7 +180,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                        icon:SPKSettingsIcon(@"autoplay_off")
                                 defaultsKey:@"feed_disable_autoplay"
                             requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Start Expanded Videos Muted"
+            [SPKSetting switchCellWithTitle:@"Expand Videos Muted"
                                        icon:SPKSettingsIcon(@"volume_off")
                                 defaultsKey:@"feed_expanded_vid_start_muted"],
             disableHomeRefresh,
@@ -188,7 +194,7 @@ static NSArray *SPKFeedCommentsSections(void) {
             // Was its own five-row section: the destinations of the header
             // shortcut belong to the shortcut, not to a list of their own.
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Destinations", @"link", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Destinations", @"compass", @[
                     [SPKToggleMenuItem itemWithTitle:@"Gallery"
                                             iconName:@"sparkle_gallery"
                                          defaultsKey:@"feed_header_button_dest_gallery"],
@@ -196,7 +202,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                             iconName:@"profile_analyzer"
                                          defaultsKey:@"feed_header_button_dest_analyzer"],
                     [SPKToggleMenuItem itemWithTitle:@"Deleted Messages"
-                                            iconName:@"channels"
+                                            iconName:@"trash"
                                          defaultsKey:@"feed_header_button_dest_deleted"],
                     [SPKToggleMenuItem itemWithTitle:@"Downloads"
                                             iconName:@"download"
@@ -237,7 +243,7 @@ SPKTopicSection(@"", @[
                 [SPKToggleMenuItem itemWithTitle:@"Repost"
                                         iconName:@"repost"
                                      defaultsKey:@"feed_confirm_repost"],
-                [SPKToggleMenuItem itemWithTitle:@"Posting Comment"
+                [SPKToggleMenuItem itemWithTitle:@"Comment"
                                         iconName:@"comment"
                                      defaultsKey:@"feed_confirm_post_comment"],
             ])

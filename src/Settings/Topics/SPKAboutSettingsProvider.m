@@ -9,14 +9,6 @@
 
 + (SPKSetting *)rootSetting {
     // Larger, bolder title so it reads in balance with the 45pt Ko-fi icon.
-    SPKSetting *donate = [SPKSetting linkCellWithTitle:@"Donate to waffle"
-                                              subtitle:@""
-                                              imageUrl:@"https://cdn.prod.website-files.com/5c14e387dab576fe667689cf/670f5a01229bf8a18f97a3c1_favion.png"
-                                                   url:@"https://ko-fi.com/sparkle_ig"];
-    donate.userInfo = @{
-        @"titleFont" : [UIFont systemFontOfSize:20.0 weight:UIFontWeightSemibold],
-        @"remoteImageCircular" : @NO
-    };
 
     return SPKTopicNavigationSetting(@"About", @"info", 24.0, @[
         SPKTopicSection(@"Information", @[
@@ -31,21 +23,11 @@
                                        icon:SPKSettingsIcon(@"key")]
         ],
                         nil),
-        SPKTopicSection(@"Links", @[
+        SPKTopicSection(@"Credits", @[
             [SPKSetting linkCellWithTitle:@"waffle"
                                  subtitle:@"Sparkle developer"
                                  imageUrl:@"https://avatars.githubusercontent.com/u/117626247?v=4"
                                       url:@"https://github.com/efibalogh"],
-            [SPKSetting linkCellWithTitle:@"View Source Code"
-                                 subtitle:@"Tap to open on GitHub"
-                                 imageUrl:@"https://i.imgur.com/BBUNzeP.png"
-                                      url:@"https://github.com/efibalogh/sparkle-ig"],
-            [SPKSetting linkCellWithTitle:@"Telegram Channel"
-                                 subtitle:@"Join the community for updates and support"
-                                 imageUrl:@"https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/960px-Telegram_logo.svg.png"
-                                      url:@"https://t.me/sparkle_ig"]],
-                        nil),
-        SPKTopicSection(@"Credits", @[
             [SPKSetting linkCellWithTitle:@"SoCuul • SCInsta"
                                  subtitle:@"Base project Sparkle is built on"
                                  imageUrl:@"https://i.imgur.com/c9CbytZ.png"
@@ -64,10 +46,6 @@
                                       url:@"https://github.com/asdfzxcvbn/zxPluginsInject"]
         ],
                         nil),
-        SPKTopicSection(@"", @[
-            donate
-        ],
-                        @"Consider donating to support the tweak's development.")
     ]);
 }
 

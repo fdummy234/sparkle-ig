@@ -61,7 +61,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
     // ---- Action Button -------------------------------------------------
 
-    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Messages Action Button"
+    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Show Action Button"
                                                                 icon:SPKSettingsIcon(@"action")
                                                          defaultsKey:kSPKMessagesActionButtonEnabledKey];
     // Same wording as the Feed master toggle — the six action-button pages share
@@ -81,9 +81,10 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
     // ---- Messaging -----------------------------------------------------
 
-    SPKSetting *unlockPreview = [SPKSetting switchCellWithTitle:@"Unlock Message Preview"
-                                                           icon:SPKSettingsIcon(@"story_preview")
+    SPKSetting *unlockPreview = [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
+                                                           icon:SPKSettingsIcon(@"story")
                                                     defaultsKey:@"msgs_unlock_preview"];
+    unlockPreview.searchKeywords = @"unlock preview";
     unlockPreview.helpText = @"The chat long-press menu shows the real messages without marking them seen.";
 
     SPKSetting *manualSeenSwitch = [SPKSetting switchCellWithTitle:@"Manually Mark Chats Seen"
@@ -122,7 +123,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
     // draggable bubble above the composer. Only meaningful while manual seen is on.
     // Up/Down arrows mirror the placement on both the menu items and the cell.
     SPKSetting *seenButtonPosition = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Seen Button Position"
-                                                                                              icon:SPKSettingsIcon(@"arrow_up")
+                                                                                              icon:SPKSettingsIcon(@"pin")
                                                                                               menu:SPKSeenButtonPositionMenu()],
                                                                      SPKSettingsIcon(@"arrow_up"));
     seenButtonPosition.enabledProvider = ^BOOL {
@@ -145,7 +146,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
     NSUInteger deletedLogCount = ownerPK.length > 0 ? [SPKDeletedMessagesStorage allMessagesForOwnerPK:ownerPK].count : 0;
     SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"View Deleted Messages"
                                                             subtitle:nil
-                                                                icon:SPKSettingsIcon(@"channels")
+                                                                icon:SPKSettingsIcon(@"trash")
                                                       viewController:[SPKDeletedMessagesViewController new]];
     viewDeletedLog.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)deletedLogCount]};
 
@@ -171,7 +172,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
     // Lexicon rename ("Stop …" → "Disable …"); old phrasing kept searchable.
     SPKSetting *disableAutoAdvance = [SPKSetting switchCellWithTitle:@"Stay on Current Message"
-                                                                icon:SPKSettingsIcon(@"autoscroll")
+                                                                icon:SPKSettingsIcon(@"autoplay_off")
                                                          defaultsKey:@"msgs_stop_visual_auto_advance"];
     disableAutoAdvance.searchKeywords = @"stop next replay end";
 
@@ -221,7 +222,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
             // Six hides of the same screen, one gate — the verb lives on the
             // row; Typing Status keeps its noun (it is not a button).
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Chat Elements", @"eye", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Chat Elements", @"eye_off", @[
                     [SPKToggleMenuItem itemWithTitle:@"Typing Status"
                                             iconName:@"keyboard"
                                          defaultsKey:@"msgs_disable_typing"],
@@ -234,14 +235,14 @@ static NSArray *SPKMessagesSettingsSections(void) {
                     [SPKToggleMenuItem itemWithTitle:@"Video Call"
                                             iconName:@"video"
                                          defaultsKey:@"msgs_hide_video_call_btn"],
-                    [SPKToggleMenuItem itemWithTitle:@"Flag"
+                    [SPKToggleMenuItem itemWithTitle:@"Flag Button"
                                             iconName:@"flag"
                                          defaultsKey:@"msgs_hide_flag_btn"],
                     [SPKToggleMenuItem itemWithTitle:@"Suggested Chats"
                                             iconName:@"question"
                                          defaultsKey:@"msgs_hide_suggested_chats"],
                 ]);
-                g.searchKeywords = @"hide typing status reels blend audio video call flag suggested chats button no suggestions inbox";
+                g.searchKeywords = @"hide typing status reels blend audio video call flag suggested chats button no suggestions inbox flag";
                 g;
             })
         ],
@@ -256,21 +257,21 @@ static NSArray *SPKMessagesSettingsSections(void) {
         SPKTopicSection(@"Deleted Messages", @[
             keepDeleted,
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"log", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
                     [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
                                             iconName:@"logs"
                                          defaultsKey:@"msgs_deleted_log"],
                     [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
                                             iconName:@"reactions"
                                          defaultsKey:@"msgs_deleted_log_reactions"],
-                    [SPKToggleMenuItem itemWithTitle:@"Respect Seen Chat List"
+                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
                                             iconName:@"eye"
                                          defaultsKey:@"msgs_deleted_log_respect_seen_list"],
                 ]);
                 // The two per-row helps the rows carried before they became items.
                 g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
                              @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
-                g.searchKeywords = @"log deleted removed reactions seen chat list";
+                g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
                 g;
             }),
             viewDeletedLog],
@@ -278,7 +279,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
         // Visual Messages ∪ Vanish Mode: same territory (messages that
         // disappear) — and it resolves the duplicated "Disable Screenshot
         // Detection" row: one gate, two context-named items.
-        SPKTopicSection(@"Ephemeral Messages", @[
+        SPKTopicSection(@"Disappearing Messages", @[
             [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"msgs_manual_visual_seen"],
@@ -300,7 +301,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                             iconName:@"view_once"
                                          defaultsKey:@"msgs_disable_screenshot_detection"],
                     [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
-                                            iconName:@"warning"
+                                            iconName:@"vanish"
                                          defaultsKey:@"msgs_hide_vanish_screenshot"],
                 ]);
                 g.searchKeywords = @"screenshot detection vanish view once";
@@ -367,7 +368,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
                 [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
                                         iconName:@"vanish"
                                      defaultsKey:@"msgs_confirm_vanish_mode"],
-                [SPKToggleMenuItem itemWithTitle:@"Changing Theme"
+                [SPKToggleMenuItem itemWithTitle:@"Theme Change"
                                         iconName:@"palette"
                                      defaultsKey:@"msgs_confirm_theme_change"],
             ]);

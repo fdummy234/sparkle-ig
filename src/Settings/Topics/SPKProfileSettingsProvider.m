@@ -178,12 +178,12 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
             SPKActionButtonRowSetting(@"profile_action_btn",
                                       @"Choose what tapping the action button does. Copy Info Default controls what gets copied when Default Tap Action is Copy Info.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Profile Action Button"
+                [SPKSetting switchCellWithTitle:@"Show Action Button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:@"profile_action_btn"],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceProfile),
                 SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceProfile, @"Profile", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceProfile), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceProfile)),
-                SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Copy Info Default" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
+                SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"What Copy Info Copies" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
         
                                       ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[

@@ -103,12 +103,15 @@ static NSDictionary *SPKSettingsLockSection(void) {
     NSString *flexFooter = flexInstalled
                                ? @"The first time FLEX is opened in a session it can take a moment to initialize."
                                : @"FLEX is not installed. Rebuild with \"--flex\" flag or install \"libFLEX.dylib\" to enable these options.";
+                                                                              icon:SPKSettingsIcon(@"pinch")
     SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger Hold" defaultsKey:@"tools_flex_instagram"];
+                                                                              icon:SPKSettingsIcon(@"play")
     SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch" defaultsKey:@"tools_flex_app_launch"];
+                                                                            icon:SPKSettingsIcon(@"arrow_up_right")
     SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on App Focus" defaultsKey:@"tools_flex_app_start"];
     SPKSetting *flexOpen = [SPKSetting buttonCellWithTitle:@"Open FLEX Now"
                                                   subtitle:nil
-                                                      icon:nil
+                                                      icon:SPKSettingsIcon(@"toolbox")
                                                     action:^(void) {
                                                         SPKFlexShowExplorer(@"settings");
                                                     }];
@@ -147,21 +150,24 @@ static NSDictionary *SPKSettingsLockSection(void) {
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Tweak", @[
             [SPKSetting switchCellWithTitle:@"Quick Settings Access"
+                           icon:SPKSettingsIcon(@"settings")
                                 defaultsKey:@"tools_settings_shortcut"
                             requiresRestart:YES],
             [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
+                           icon:SPKSettingsIcon(@"haptics")
                                 defaultsKey:@"tools_shortcut_haptics"],
             [SPKSetting switchCellWithTitle:@"Show Settings on App Launch"
+                           icon:SPKSettingsIcon(@"play")
                                 defaultsKey:@"tools_open_settings_on_launch"],
             [SPKSetting buttonCellWithTitle:@"Show Onboarding"
                                    subtitle:nil
-                                       icon:nil
+                                       icon:SPKSettingsIcon(@"compass")
                                      action:^(void) {
                                          [SPKOnboardingViewController presentFromViewController:nil onFinish:nil];
                                      }],
             [SPKSetting buttonCellWithTitle:@"Show What's New"
                                    subtitle:nil
-                                       icon:nil
+                                       icon:SPKSettingsIcon(@"notes")
                                      action:^(void) {
                                          [SPKWhatsNewViewController presentFromViewController:nil onFinish:nil];
                                      }],
@@ -175,12 +181,13 @@ static NSDictionary *SPKSettingsLockSection(void) {
         // "Recovery" — was the untitled section. Disable All Settings moved in
         // from Tweak: its own footer said "Use to isolate crashes."
         SPKTopicSection(@"Recovery", @[
-            [SPKSetting switchCellWithTitle:@"Disable All Settings"
+            [SPKSetting switchCellWithTitle:@"Turn Off All Features"
+                           icon:SPKSettingsIcon(@"circle_off")
                                 defaultsKey:@"tools_disable_all"
                             requiresRestart:YES],
-            [SPKSetting buttonCellWithTitle:@"Reset Safe Startup Mode"
+            [SPKSetting buttonCellWithTitle:@"Clear Safe Mode"
                                    subtitle:nil
-                                       icon:nil
+                                       icon:SPKSettingsIcon(@"undo_circle")
                                      action:^(void) {
                                          SPKStabilityGuardReset();
                                          [SPKUtils showRestartConfirmation];
@@ -190,7 +197,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
             // What's New gating fires from scratch on the next launch.
             [SPKSetting buttonCellWithTitle:@"[DEV] Reset Intro State"
                                    subtitle:nil
-                                       icon:nil
+                                       icon:SPKSettingsIcon(@"beaker")
                                      action:^(void) {
                                          NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                                          [defaults removeObjectForKey:@"app_first_run"];

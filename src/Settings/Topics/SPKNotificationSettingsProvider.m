@@ -67,22 +67,27 @@
 + (NSArray *)sections {
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Appearance", @[
-            [SPKSetting switchCellWithTitle:@"Glow"
+            [SPKSetting switchCellWithTitle:@"Glow Effect"
                                    subtitle:@"Show glow effect around notifications"
+                           icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:kSPKNotificationPillGlowEnabledKey],
             [SPKSetting switchCellWithTitle:@"Liquid Glass"
                                    subtitle:(SPKPrefIsAvailable(kSPKNotificationPillLiquidGlassEnabledKey)
                                                  ? @"Render notifications with iOS 26 Liquid Glass"
                                                  : @"Requires iOS 26 or later")
+                              icon:SPKSettingsIcon(@"mirror")
                                    defaultsKey:kSPKNotificationPillLiquidGlassEnabledKey],
             [SPKSetting menuCellWithTitle:@"Download Progress"
                                  subtitle:nil
+                                icon:SPKSettingsIcon(@"download")
                                      menu:SPKNotificationProgressSubtitleStyleMenu()],
             [SPKSetting menuCellWithTitle:@"Position"
                                  subtitle:nil
+                                icon:SPKSettingsIcon(@"pin")
                                      menu:SPKNotificationPillPositionMenu()],
             [SPKSetting stepperCellWithTitle:@"Duration"
                                     subtitle:@"Dismiss after %@%@"
+                            icon:SPKSettingsIcon(@"clock")
                                  defaultsKey:kSPKNotificationPillDurationKey
                                          min:0.5
                                          max:5.0
@@ -94,7 +99,7 @@
         SPKTopicSection(@"", @[
             [SPKSetting buttonCellWithTitle:@"Test Notification"
                                    subtitle:nil
-                                       icon:nil
+                                       icon:SPKSettingsIcon(@"notification")
                                      action:^{
                                          [self spk_showNextNotificationPreview];
                                      }],

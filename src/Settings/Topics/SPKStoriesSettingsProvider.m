@@ -92,7 +92,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
                 // Renamed from "Stop Auto Advance" — aligned with the Messages
                 // twin (lot 1) and the Disable lexicon; "stop" stays searchable.
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Stay on Current Story"
-                                                           icon:SPKSettingsIcon(@"autoscroll")
+                                                           icon:SPKSettingsIcon(@"autoplay_off")
                                                     defaultsKey:@"stories_stop_auto_advance"];
                 s.searchKeywords = @"stop next skip";
                 s;
@@ -118,7 +118,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
             [SPKSetting switchCellWithTitle:@"Search Viewer List"
                                        icon:SPKSettingsIcon(@"search")
                                 defaultsKey:@"stories_search_viewer_list"],
-            [SPKSetting switchCellWithTitle:@"Hide Join Trending"
+            [SPKSetting switchCellWithTitle:@"Hide Trending Prompts"
                                        icon:SPKSettingsIcon(@"arrow_up_right")
                                 defaultsKey:@"stories_hide_join_trending"],
             [SPKSetting switchCellWithTitle:@"Show Story Mentions"
@@ -127,8 +127,8 @@ static NSArray *SPKStoriesSettingsSections(void) {
             [SPKSetting switchCellWithTitle:@"Show Poll Vote Counts"
                                        icon:SPKSettingsIcon(@"poll")
                                 defaultsKey:@"stories_poll_vote_counts"],
-            [SPKSetting switchCellWithTitle:@"Unlock Story Preview"
-                                       icon:SPKSettingsIcon(@"story_preview")
+            [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
+                                       icon:SPKSettingsIcon(@"story")
                                 defaultsKey:@"stories_unlock_preview"],
             [SPKSetting switchCellWithTitle:@"Hide Instagram Plus Button"
                                        icon:SPKSettingsIcon(@"aura")
@@ -164,7 +164,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                       @"1. Add an action button above the bottom story bar.\n"
                                       @"2. Choose the default action. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Stories Action Button"
+                [SPKSetting switchCellWithTitle:@"Show Action Button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKStoriesActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceStories),

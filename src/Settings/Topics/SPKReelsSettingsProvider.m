@@ -22,7 +22,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Counts", @"heart", @[
                     [SPKToggleMenuItem itemWithTitle:@"Likes"
-                                            iconName:@"heart"
+                                            iconName:@"poll"
                                          defaultsKey:@"reels_hide_like_count"],
                     [SPKToggleMenuItem itemWithTitle:@"Comments"
                                             iconName:@"comment"
@@ -31,7 +31,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                             iconName:@"repost"
                                          defaultsKey:@"reels_hide_repost_count"],
                     [SPKToggleMenuItem itemWithTitle:@"Reshares"
-                                            iconName:@"messages"
+                                            iconName:@"shares"
                                          defaultsKey:@"reels_hide_reshare_count"],
                     [SPKToggleMenuItem itemWithTitle:@"Saves"
                                             iconName:@"save"
@@ -43,11 +43,15 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
         ],
                         nil),
         SPKTopicSection(@"Playback", @[
-            [SPKSetting menuCellWithTitle:@"Tap Controls"
-                                     icon:SPKSettingsIcon(@"play")
-                                     menu:SPKReelsTapControlMenu()],
+            ({
+                SPKSetting *row = [SPKSetting menuCellWithTitle:@"Tap Action"
+                                         icon:SPKSettingsIcon(@"play")
+                                         menu:SPKReelsTapControlMenu()];
+                row.searchKeywords = @"tap controls";
+                row;
+            }),
             [SPKSetting switchCellWithTitle:@"Show Progress Scrubber"
-                                       icon:SPKSettingsIcon(@"clock")
+                                       icon:SPKSettingsIcon(@"slider")
                                 defaultsKey:@"reels_show_scrubber"],
             [SPKSetting switchCellWithTitle:@"Keep Reels Muted"
                                        icon:SPKSettingsIcon(@"volume_off")
@@ -64,16 +68,18 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                                 defaultsKey:@"reels_disable_scrolling"
                             requiresRestart:YES],
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Prevent Doom Scrolling"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Limit Reels per Session"
                                                            icon:SPKSettingsIcon(@"arrow_down")
                                                     defaultsKey:@"reels_prevent_doom_scroll"];
+    s.searchKeywords = @"doom scrolling doom scrolling limit";
                 // The limit below only matters while this is on — grey it live.
                 s.reloadsTableOnSwitchChange = YES;
                 s;
             }),
             ({
-                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Doom Scrolling Limit"
+                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Reels per Session"
                                     subtitle:@"Only loads %@ %@"
+                            icon:SPKSettingsIcon(@"chest")
                                  defaultsKey:@"reels_doom_scroll_limit"
                                          min:1
                                          max:100
@@ -95,7 +101,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             SPKActionButtonRowSetting(kSPKReelsActionButtonEnabledKey,
                                       @"Choose what tapping the action button does. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Reels Action Button"
+                [SPKSetting switchCellWithTitle:@"Show Action Button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKReelsActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceReels),

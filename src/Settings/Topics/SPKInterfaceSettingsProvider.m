@@ -53,17 +53,17 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     // The order glossary used to live in the section footer; it moves onto the
     // two rows it explains.
 
-    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab Icon Order"
+    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab Order"
                                                         icon:SPKSettingsIcon(@"sort")
                                                         menu:SPKNavigationIconOrderingMenu()];
     tabIconOrder.helpText = @"Standard: Home, Reels, Messages, Explore, Profile. Classic puts Messages top-right; Alternate swaps Home and Reels.";
-    tabIconOrder.searchKeywords = @"standard classic alternate layout order";
+    tabIconOrder.searchKeywords = @"standard classic alternate layout order tab icon order";
 
     SPKSetting *swipeBetweenTabs = [SPKSetting menuCellWithTitle:@"Swipe Between Tabs"
                                                             icon:SPKSettingsIcon(@"left_right")
                                                             menu:SPKSwipeBetweenTabsMenu()];
     swipeBetweenTabs.helpText = @"For Instagram's old layout, pick the Classic order and turn swiping off.";
-    swipeBetweenTabs.searchKeywords = @"old layout gesture";
+    swipeBetweenTabs.searchKeywords = @"old layout gesture disable recent searches";
 
     // Everything that shapes the tab bar, one section. The iOS 26 rows
     // (pill shape, scroll behavior) join it below when available.
@@ -72,7 +72,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     NSMutableArray *screenRows = [@[
         ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide UI on Capture"
-                                                           icon:nil
+                                                           icon:SPKSettingsIcon(@"eye_off")
                                                     defaultsKey:@"interface_hide_ui_on_capture"];
                 s.switchChangeHandler = ^(BOOL isOn) {
                     [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"interface_hide_ui_on_capture"];
@@ -113,7 +113,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                 // Moved from General (was "No Recent Searches") — it belongs
                 // with the rest of the search screen. The hook gates logging,
                 // hence "Disable"; the key is unchanged, so nothing migrates.
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Recent Searches"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Recent Searches"
                                                            icon:SPKSettingsIcon(@"search")
                                                     defaultsKey:@"general_no_recent_searches"];
                 s.searchKeywords = @"no history log recent";
@@ -136,9 +136,10 @@ static BOOL SPKIsMessagesOnlyMode(void) {
         // scroll behavior of the (pill/glass) tab bar and is enabled whenever
         // the Liquid Glass pref is on.
         SPKSetting *(^tabBarBehaviorCell)(void) = ^SPKSetting * {
-            SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Tab Bar Behavior"
-                                                                  icon:nil
+            SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Hide on Scroll"
+                                                                  icon:SPKSettingsIcon(@"arrow_down")
                                                                   menu:SPKLiquidGlassTabBarStateMenu()];
+    tabBarBehavior.searchKeywords = @"tab bar behavior";
             tabBarBehavior.defaultsKey = kSPKPrefInterfaceLiquidGlassTabBarMode;
             tabBarBehavior.enabledProvider = ^BOOL {
                 return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
@@ -149,6 +150,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"26.0")) {
             // Full Liquid Glass: real glass material, progressive blur, tab bar.
             SPKSetting *liquidGlass = [SPKSetting switchCellWithTitle:@"Liquid Glass"
+                                                     icon:SPKSettingsIcon(@"aura")
                                                           defaultsKey:kSPKPrefInterfaceLiquidGlass
                                                       requiresRestart:YES];
             liquidGlass.switchValueProvider = ^BOOL {
@@ -161,6 +163,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             liquidGlass.helpText = @"Turns on Instagram's native Liquid Glass interface even where it hasn't rolled out yet.";
 
             SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive Blur"
+                                                        icon:SPKSettingsIcon(@"blend")
                                                              defaultsKey:kSPKPrefInterfaceProgressiveBlur
                                                           requiresRestart:YES];
             progressiveBlur.helpText = @"Restores the navigation bar's gradual blur as you scroll.";
@@ -173,6 +176,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             // experiment gates still reshape the bar into the floating pill.
             // Expose that as a focused toggle sharing the Liquid Glass pref.
             SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-Shaped Tab Bar"
+                                                   icon:SPKSettingsIcon(@"circle")
                                                         defaultsKey:kSPKPrefInterfaceLiquidGlass
                                                     requiresRestart:YES];
             pillTabBar.switchValueProvider = ^BOOL {
@@ -230,7 +234,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                     return ![[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
                 };
 
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Tabs", @"eye", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Tabs", @"eye_off", @[
                     tabItem(@"Feed", @"home", @"interface_hide_feed_tab"),
                     tabItem(@"Explore", @"search", @"interface_hide_explore_tab"),
                     messagesItem,
@@ -243,7 +247,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             }),
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Tab Bar"
-                                                           icon:nil
+                                                           icon:SPKSettingsIcon(@"eye_off")
                                                     defaultsKey:@"interface_hide_tab_bar_in_messages_only"];
                 s.enabledProvider = ^BOOL {
                     return SPKIsMessagesOnlyMode();
@@ -254,7 +258,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             }),
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Header Shortcut Button"
-                                                           icon:nil
+                                                           icon:SPKSettingsIcon(@"action")
                                                     defaultsKey:@"interface_show_header_button_in_messages_only"];
                 s.enabledProvider = ^BOOL {
                     return SPKIsMessagesOnlyMode();
