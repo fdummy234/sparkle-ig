@@ -187,11 +187,13 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // Behavior + Sharing merged: four rows, one subject — copying and
         // sharing. (No Recent Searches moved to Interface › Explore & Search;
         // the two Confirm rows live in the Confirmations gate row below.)
-        SPKTopicSection(@"Sharing & Copying", @[
+        SPKTopicSection(@"Sharing & Media", @[
             copyText,
             stripTracking,
             holdSendCopyLink,
-            hideCreateGroup
+            hideCreateGroup,
+            showMediaInfo,
+            showDateInMenu
         ],
                         nil),
         // Kept as a footer: it describes the section, not any one row, so it has
@@ -277,24 +279,23 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
             }),
         ],
                         nil),
-        SPKTopicSection(@"Media Preview & Menu", @[
-            showMediaInfo,
-            showDateInMenu
-        ],
-                        nil),
-        SPKTopicSection(@"Accounts", @[
-            [self perAccountSetting]
-        ],
-                        nil),
-        SPKTopicSection(@"Storage", @[
-            clearCacheSetting,
-            autoClearCache
-        ],
-                        nil),
         SPKTopicSection(@"App", @[
             [self appIconSetting],
             [self defaultMenuIconSetting],
-            disableHaptics
+            // Moved in from Feed: the gesture opens Instagram's icon picker and
+            // Sparkle's own picker is two rows up — they belong side by side.
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable App Icon Gesture"
+                                                             icon:SPKSettingsIcon(@"app")
+                                                      defaultsKey:@"feed_disable_appicon_gesture"];
+                row.helpText = @"Stops the header-logo long-press from opening Instagram's icon picker. Sparkle's own picker is App Icon, above.";
+                row.searchKeywords = @"logo long press picker";
+                row;
+            }),
+            disableHaptics,
+            [self perAccountSetting],
+            clearCacheSetting,
+            autoClearCache
         ],
                         nil),
 

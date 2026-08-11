@@ -3,6 +3,7 @@
 #import "../../Utils.h"
 #import "../SPKPreferenceAvailability.h"
 #import "../SPKPreferences.h"
+#import "../SPKToggleMenu.h"
 #import "../SPKTopicSettingsSupport.h"
 #import "SPKNotificationSettingsProvider.h"
 
@@ -45,29 +46,6 @@ static BOOL SPKIsMessagesOnlyMode(void) {
 // A "Hide … Tab" switch that can't hide the last remaining navigable tab: when
 // this is the only tab still visible its switch is greyed out and can't be
 // turned on, while any already-hidden tab can always be turned back on.
-static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSString *key) {
-    SPKSetting *row = [SPKSetting switchCellWithTitle:title
-                                                 icon:SPKSettingsIcon(iconName)
-                                          defaultsKey:key
-                                      requiresRestart:YES];
-    row.switchValueProvider = ^BOOL {
-        return [SPKUtils getBoolPref:key];
-    };
-    row.enabledProvider = ^BOOL {
-        if ([SPKUtils getBoolPref:key])
-            return YES;
-        return !SPKEnablingKeyHidesEveryTab(key);
-    };
-    // Toggling one tab decides whether its siblings become the "last" visible
-    // one, so reload to refresh their greyed state.
-    row.reloadsTableOnSwitchChange = YES;
-    row.switchChangeHandler = ^(BOOL isOn) {
-        [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:SPKEffectivePreferenceKey(key)];
-        [SPKUtils showRestartConfirmation];
-    };
-    return row;
-}
-
 @implementation SPKInterfaceSettingsProvider
 
 + (SPKSetting *)rootSetting {
@@ -89,6 +67,23 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
 
     // Everything that shapes the tab bar, one section. The iOS 26 rows
     // (pill shape, scroll behavior) join it below when available.
+    // Everything about how the screen renders. The iOS 26 glass rows join it
+    // below when available — same pattern as the tab bar.
+    NSMutableArray *screenRows = [@[
+        ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide UI on Capture"
+                                                           icon:nil
+                                                    defaultsKey:@"interface_hide_ui_on_capture"];
+                s.switchChangeHandler = ^(BOOL isOn) {
+                    [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"interface_hide_ui_on_capture"];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:SPKHideUIOnCapturePreferenceDidChangeNotification object:nil];
+                };
+                s.helpText = @"Sparkle's interface vanishes from screenshots, screen recordings and mirroring.";
+                s.searchKeywords = @"screenshot recording mirror redact";
+                s;
+            }),
+    ] mutableCopy];
+
     NSMutableArray *tabBarRows = [@[
         [SPKSetting menuCellWithTitle:@"Launch Tab"
                                  icon:SPKSettingsIcon(@"home")
@@ -98,70 +93,9 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
     ] mutableCopy];
 
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
-        SPKTopicSection(@"Notifications", @[
-            [SPKSetting navigationCellWithTitle:@"Notifications"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"notification")
-                                    navSections:[SPKNotificationSettingsProvider sections]]
-        ],
-                        nil),
         // Was the untitled section — six homogeneous rows deserve their name.
         // No gate here (doctrine R4): Create requires a restart and two rows
         // have conditional visibility.
-        SPKTopicSection(@"Hidden Tabs", @[
-            SPKHideTabSwitch(@"Hide Feed Tab", @"home", @"interface_hide_feed_tab"),
-            SPKHideTabSwitch(@"Hide Explore Tab", @"search", @"interface_hide_explore_tab"),
-            ({
-                // Classic puts Messages back in the top-right corner instead of the
-                // bottom bar (that layout is where the Create "+" becomes a tab), so
-                // the "tab" toggle doesn't apply — hide it whenever Create's does show.
-                SPKSetting *hideMessagesTab = SPKHideTabSwitch(@"Hide Messages Tab", @"messages", @"interface_hide_msgs_tab");
-                hideMessagesTab.hiddenProvider = ^BOOL {
-                    return [[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
-                };
-                hideMessagesTab;
-            }),
-            SPKHideTabSwitch(@"Hide Reels Tab", @"reels", @"interface_hide_reels_tab"),
-            ({
-                // The create button is only a dedicated tab in the Classic tab
-                // order; the other layouts fold it into the composer, so the
-                // toggle is meaningless there and is hidden.
-                SPKSetting *hideCreateTab = [SPKSetting switchCellWithTitle:@"Hide Create Tab"
-                                                                       icon:SPKSettingsIcon(@"plus")
-                                                                defaultsKey:@"interface_hide_create_tab"
-                                                            requiresRestart:YES];
-                hideCreateTab.hiddenProvider = ^BOOL {
-                    return ![[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
-                };
-                hideCreateTab;
-            }),
-            SPKHideTabSwitch(@"Hide Profile Tab", @"user_circle", @"interface_hide_profile_tab")
-        ],
-                        nil),
-        SPKTopicSection(@"Messages Only Mode", @[
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Tab Bar"
-                                                           icon:nil
-                                                    defaultsKey:@"interface_hide_tab_bar_in_messages_only"];
-                s.enabledProvider = ^BOOL {
-                    return SPKIsMessagesOnlyMode();
-                };
-                s.helpText = @"Available once Messages is the only visible tab. Sparkle Settings then opens by long-pressing the right navigation button.";
-                s.searchKeywords = @"long press settings access space";
-                s;
-            }),
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Header Shortcut Button"
-                                                           icon:nil
-                                                    defaultsKey:@"interface_show_header_button_in_messages_only"];
-                s.enabledProvider = ^BOOL {
-                    return SPKIsMessagesOnlyMode();
-                };
-                s.helpText = @"Available once Messages is the only visible tab. Puts the feed header shortcut on the left of the navigation bar.";
-                s;
-            })
-        ],
-                        nil),
         SPKTopicSection(@"Explore & Search", @[
             ({
                 // Shortened from "Hide Explore Posts Grid" — the section header
@@ -195,21 +129,6 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
             })
         ],
                         nil),
-        SPKTopicSection(@"Capture", @[
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide UI on Capture"
-                                                           icon:nil
-                                                    defaultsKey:@"interface_hide_ui_on_capture"];
-                s.switchChangeHandler = ^(BOOL isOn) {
-                    [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:@"interface_hide_ui_on_capture"];
-                    [[NSNotificationCenter defaultCenter] postNotificationName:SPKHideUIOnCapturePreferenceDidChangeNotification object:nil];
-                };
-                s.helpText = @"Sparkle's interface vanishes from screenshots, screen recordings and mirroring.";
-                s.searchKeywords = @"screenshot recording mirror redact";
-                s;
-            })
-        ],
-                        nil)
     ]];
 
     {
@@ -246,12 +165,9 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
                                                           requiresRestart:YES];
             progressiveBlur.helpText = @"Restores the navigation bar's gradual blur as you scroll.";
 
-            [sections addObject:SPKTopicSection(@"Liquid Glass & Blur", @[
-                          liquidGlass,
-                          progressiveBlur,
-                          tabBarBehaviorCell(),
-                      ],
-                                                nil)];
+            [screenRows addObjectsFromArray:@[ liquidGlass, progressiveBlur ]];
+            // The bar's scroll behavior belongs to the tab bar on every iOS.
+            [tabBarRows addObject:tabBarBehaviorCell()];
         } else {
             // Pre-iOS 26 can't render the glass material, but the same tab bar
             // experiment gates still reshape the bar into the floating pill.
@@ -274,7 +190,91 @@ static SPKSetting *SPKHideTabSwitch(NSString *title, NSString *iconName, NSStrin
         }
     }
 
-    [sections insertObject:SPKTopicSection(@"Tab Bar", tabBarRows, nil) atIndex:1];
+    // The gate and the Messages-Only rows join the bar they shape.
+    [tabBarRows addObjectsFromArray:@[
+            // D5: the six tab toggles become one gate. Each item replicates what
+            // SPKHideTabSwitch did per row — the last-visible-tab guard, the
+            // restart prompt, and the effective-key write that actually hides
+            // the tab. Two items are conditional on the Classic tab order.
+            ({
+                SPKToggleMenuItem * (^tabItem)(NSString *, NSString *, NSString *) =
+                    ^SPKToggleMenuItem *(NSString *title, NSString *iconName, NSString *key) {
+                        SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:title
+                                                                          iconName:iconName
+                                                                       defaultsKey:key];
+                        item.enabledProvider = ^BOOL {
+                            if ([SPKUtils getBoolPref:key])
+                                return YES;
+                            return !SPKEnablingKeyHidesEveryTab(key);
+                        };
+                        item.requiresRestart = YES;
+                        item.changeHandler = ^(BOOL isOn) {
+                            [[NSUserDefaults standardUserDefaults] setBool:isOn
+                                                                    forKey:SPKEffectivePreferenceKey(key)];
+                        };
+                        return item;
+                    };
+
+                SPKToggleMenuItem *messagesItem = tabItem(@"Messages", @"messages", @"interface_hide_msgs_tab");
+                // Classic puts Messages back in the top-right corner instead of the
+                // bottom bar (that layout is where the Create "+" becomes a tab), so
+                // the "tab" toggle doesn't apply — hide it whenever Create's does show.
+                messagesItem.hiddenProvider = ^BOOL {
+                    return [[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
+                };
+
+                SPKToggleMenuItem *createItem = tabItem(@"Create", @"plus", @"interface_hide_create_tab");
+                // The create button is only a dedicated tab in the Classic tab
+                // order; the other layouts fold it into the composer.
+                createItem.hiddenProvider = ^BOOL {
+                    return ![[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
+                };
+
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Tabs", @"eye", @[
+                    tabItem(@"Feed", @"home", @"interface_hide_feed_tab"),
+                    tabItem(@"Explore", @"search", @"interface_hide_explore_tab"),
+                    messagesItem,
+                    tabItem(@"Reels", @"reels", @"interface_hide_reels_tab"),
+                    createItem,
+                    tabItem(@"Profile", @"user_circle", @"interface_hide_profile_tab"),
+                ]);
+                g.searchKeywords = @"hide tab bar feed explore messages reels create profile";
+                g;
+            })
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Tab Bar"
+                                                           icon:nil
+                                                    defaultsKey:@"interface_hide_tab_bar_in_messages_only"];
+                s.enabledProvider = ^BOOL {
+                    return SPKIsMessagesOnlyMode();
+                };
+                s.helpText = @"Available once Messages is the only visible tab. Sparkle Settings then opens by long-pressing the right navigation button.";
+                s.searchKeywords = @"long press settings access space";
+                s;
+            }),
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Header Shortcut Button"
+                                                           icon:nil
+                                                    defaultsKey:@"interface_show_header_button_in_messages_only"];
+                s.enabledProvider = ^BOOL {
+                    return SPKIsMessagesOnlyMode();
+                };
+                s.helpText = @"Available once Messages is the only visible tab. Puts the feed header shortcut on the left of the navigation bar.";
+                s;
+            })
+    ]];
+
+    [sections addObject:SPKTopicSection(@"Screen", screenRows, nil)];
+    // A single navigation row needs no header of its own — it closes the page.
+    [sections addObject:SPKTopicSection(@"", @[
+        [SPKSetting navigationCellWithTitle:@"Notifications"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"notification")
+                                    navSections:[SPKNotificationSettingsProvider sections]]
+    ],
+                                        nil)];
+
+    [sections insertObject:SPKTopicSection(@"Tab Bar", tabBarRows, nil) atIndex:0];
 
     return SPKTopicNavigationSetting(@"Interface", @"interface", 24.0, sections);
 }

@@ -155,13 +155,6 @@
     resetAllSettings.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
     NSArray *sections = @[
-        SPKTopicSection(@"Storage", @[
-            [SPKSetting navigationCellWithTitle:@"Storage Usage"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"info")
-                                 viewController:[SPKStorageUsageViewController new]]
-        ],
-                        @"See how much on-device space each Sparkle feature uses."),
         SPKTopicSection(@"Backup & Transfer", @[
             SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export"
                                                                subtitle:nil
@@ -172,9 +165,14 @@
                                                                subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_down")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:YES]],
-                                    [SPKUtils SPKColor_InstagramPrimaryText])
-        ],
-                        @"Choose to export or import settings, Gallery media, Deleted Messages, and Profile Analyzer data."),
+                                    [SPKUtils SPKColor_InstagramPrimaryText]),
+            [SPKSetting navigationCellWithTitle:@"Storage Usage"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"info")
+                                 viewController:[SPKStorageUsageViewController new]]],
+                        @"1. Choose to export or import settings, Gallery media, Deleted Messages, and Profile Analyzer data.\n"
+                        @"2. Import brings those same items back from a Sparkle backup file.\n"
+                        @"3. See how much on-device space each Sparkle feature uses."),
         SPKTopicSection(@"Reset", @[
             resetAllSettings
         ],

@@ -29,21 +29,12 @@ static NSArray *SPKInstantsSettingsSections(void);
 
 static NSArray *SPKInstantsSettingsSections(void) {
     return @[
-        SPKTopicSection(@"Action Button", @[
-            [SPKSetting switchCellWithTitle:@"Instants Action Button"
-                                       icon:SPKSettingsIcon(@"action")
-                                defaultsKey:kSPKInstantsActionButtonEnabledKey],
-            SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceInstants),
-            SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceInstants, @"Instants", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceInstants), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceInstants))
-        ],
-                        @"Choose what tapping the action button does. Long press opens the full menu."),
-        SPKTopicSection(@"Privacy", @[
+        // "Privacy" held a single row; screenshots are part of what the camera
+        // does, so the two sections become one.
+        SPKTopicSection(@"Camera", @[
             [SPKSetting switchCellWithTitle:@"Allow Screenshots"
                                        icon:SPKSettingsIcon(@"warning")
                                 defaultsKey:@"instants_allow_screenshot"],
-        ],
-                        @"Bypass screenshot and screen recording detection in the Instants viewer."),
-        SPKTopicSection(@"Creation", @[
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants Creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
                 s.switchChangeHandler = ^(BOOL isOn) {
@@ -68,16 +59,27 @@ static NSArray *SPKInstantsSettingsSections(void) {
             // setting like the three above.
             [SPKSetting switchCellWithTitle:@"Camera View Button"
                                        icon:SPKSettingsIcon(SPKActionButtonOpenMenuIconName())
-                                defaultsKey:@"instants_camera_btn"],
+                                defaultsKey:@"instants_camera_btn"]
         ],
-                        @"1. Blocks Instant capture (photo and video) without disabling received Instants. The shutter is darkened.\n"
-                        @"2. Skips the camera page Instagram opens after viewing the last Instant.\n"
-                        @"3. Stops the hardware Camera Control button (iPhone 16/17) from taking an Instant.\n"
-                        @"4. Adds a Sparkle button to the Instants camera view to upload a photo from Photos, Files, or Gallery, and to browse the Instants you have saved."),
+                        @"1. Bypass screenshot and screen recording detection in the Instants viewer.\n"
+                        @"2. Blocks Instant capture (photo and video) without disabling received Instants. The shutter is darkened.\n"
+                        @"3. Skips the camera page Instagram opens after viewing the last Instant.\n"
+                        @"4. Stops the hardware Camera Control button (iPhone 16/17) from taking an Instant.\n"
+                        @"5. Adds a Sparkle button to the Instants camera view to upload a photo from Photos, Files, or Gallery, and to browse the Instants you have saved."),
         // Convention v1.2 gate row — see SPKToggleMenu.h. "Instants ›
         // Confirmations › Capture": both dropped words sit right above.
         // Capture keeps its disabled state (feature suspended).
         SPKTopicSection(@"", @[
+            SPKActionButtonRowSetting(kSPKInstantsActionButtonEnabledKey,
+                                      @"Choose what tapping the action button does. Long press opens the full menu.",
+                                      @[
+                [SPKSetting switchCellWithTitle:@"Instants Action Button"
+                                           icon:SPKSettingsIcon(@"action")
+                                    defaultsKey:kSPKInstantsActionButtonEnabledKey],
+                SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceInstants),
+                SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceInstants, @"Instants", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceInstants), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceInstants))
+        
+                                      ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 ({
                     SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:@"Capture"

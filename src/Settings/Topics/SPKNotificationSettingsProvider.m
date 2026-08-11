@@ -91,21 +91,17 @@
                                singularLabel:@" second"]
         ],
                         nil),
-        SPKTopicSection(@"Preview", @[
+        SPKTopicSection(@"", @[
             [SPKSetting buttonCellWithTitle:@"Test Notification"
                                    subtitle:nil
                                        icon:nil
                                      action:^{
                                          [self spk_showNextNotificationPreview];
-                                     }]
-        ],
-                        nil),
-        SPKTopicSection(@"", @[
+                                     }],
             [SPKSetting navigationCellWithTitle:@"Haptics"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"haptics")
-                                    navSections:[self spk_featureSectionsForHaptics:YES]]
-        ],
+                                    navSections:[self spk_featureSectionsForHaptics:YES]]],
                         nil)
     ]];
 

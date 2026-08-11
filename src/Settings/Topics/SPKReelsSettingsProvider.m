@@ -11,61 +11,6 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
 
 + (SPKSetting *)rootSetting {
     return SPKTopicNavigationSetting(@"Reels", @"reels", 24.0, @[
-        SPKTopicSection(@"Action Button", @[
-            [SPKSetting switchCellWithTitle:@"Reels Action Button"
-                                       icon:SPKSettingsIcon(@"action")
-                                defaultsKey:kSPKReelsActionButtonEnabledKey],
-            SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceReels),
-            SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceReels, @"Reels", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceReels), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceReels))
-        ],
-                        @"Choose what tapping the action button does. Long press opens the full menu."),
-        SPKTopicSection(@"Behavior", @[
-            [SPKSetting menuCellWithTitle:@"Tap Controls"
-                                     icon:SPKSettingsIcon(@"play")
-                                     menu:SPKReelsTapControlMenu()],
-            [SPKSetting switchCellWithTitle:@"Show Progress Scrubber"
-                                       icon:SPKSettingsIcon(@"clock")
-                                defaultsKey:@"reels_show_scrubber"],
-            [SPKSetting switchCellWithTitle:@"Disable Auto-Unmuting Reels"
-                                       icon:SPKSettingsIcon(@"volume_off")
-                                defaultsKey:@"reels_disable_auto_unmute"
-                            requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Disable Reels Tab Refresh"
-                                       icon:SPKSettingsIcon(@"arrow_cw")
-                                defaultsKey:@"reels_disable_tab_refresh"]
-        ],
-                        @"Tap Controls changes what happens when you tap on a reel. Auto-unmuting controls prevent reels from unmuting when volume or silent mode changes."),
-        SPKTopicSection(@"Limits", @[
-            [SPKSetting switchCellWithTitle:@"Disable Scrolling Reels"
-                                       icon:SPKSettingsIcon(@"autoscroll")
-                                defaultsKey:@"reels_disable_scrolling"
-                            requiresRestart:YES],
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Prevent Doom Scrolling"
-                                                           icon:SPKSettingsIcon(@"arrow_down")
-                                                    defaultsKey:@"reels_prevent_doom_scroll"];
-                // The limit below only matters while this is on — grey it live.
-                s.reloadsTableOnSwitchChange = YES;
-                s;
-            }),
-            ({
-                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Doom Scrolling Limit"
-                                    subtitle:@"Only loads %@ %@"
-                                 defaultsKey:@"reels_doom_scroll_limit"
-                                         min:1
-                                         max:100
-                                        step:1
-                                       label:@"reels"
-                               singularLabel:@"reel"];
-                s.enabledProvider = ^BOOL {
-                    return [SPKUtils getBoolPref:@"reels_prevent_doom_scroll"];
-                };
-                s;
-            }),
-        ],
-                        @"1. Stop vertical swiping between reels so the current reel stays put.\n"
-                        @"2. Stop loading more reels once the limit below is reached.\n"
-                        @"3. How many reels load before Prevent Doom Scrolling kicks in."),
         SPKTopicSection(@"Layout", @[
             [SPKSetting switchCellWithTitle:@"Hide Reels Header"
                                        icon:SPKSettingsIcon(@"reels")
@@ -97,9 +42,65 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             }),
         ],
                         nil),
+        SPKTopicSection(@"Playback", @[
+            [SPKSetting menuCellWithTitle:@"Tap Controls"
+                                     icon:SPKSettingsIcon(@"play")
+                                     menu:SPKReelsTapControlMenu()],
+            [SPKSetting switchCellWithTitle:@"Show Progress Scrubber"
+                                       icon:SPKSettingsIcon(@"clock")
+                                defaultsKey:@"reels_show_scrubber"],
+            [SPKSetting switchCellWithTitle:@"Keep Reels Muted"
+                                       icon:SPKSettingsIcon(@"volume_off")
+                                defaultsKey:@"reels_disable_auto_unmute"
+                            requiresRestart:YES],
+            [SPKSetting switchCellWithTitle:@"Disable Reels Tab Refresh"
+                                       icon:SPKSettingsIcon(@"arrow_cw")
+                                defaultsKey:@"reels_disable_tab_refresh"]
+        ],
+                        @"Tap Controls changes what happens when you tap on a reel. Auto-unmuting controls prevent reels from unmuting when volume or silent mode changes."),
+        SPKTopicSection(@"Limits", @[
+            [SPKSetting switchCellWithTitle:@"One Reel at a Time"
+                                       icon:SPKSettingsIcon(@"autoscroll")
+                                defaultsKey:@"reels_disable_scrolling"
+                            requiresRestart:YES],
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Prevent Doom Scrolling"
+                                                           icon:SPKSettingsIcon(@"arrow_down")
+                                                    defaultsKey:@"reels_prevent_doom_scroll"];
+                // The limit below only matters while this is on — grey it live.
+                s.reloadsTableOnSwitchChange = YES;
+                s;
+            }),
+            ({
+                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Doom Scrolling Limit"
+                                    subtitle:@"Only loads %@ %@"
+                                 defaultsKey:@"reels_doom_scroll_limit"
+                                         min:1
+                                         max:100
+                                        step:1
+                                       label:@"reels"
+                               singularLabel:@"reel"];
+                s.enabledProvider = ^BOOL {
+                    return [SPKUtils getBoolPref:@"reels_prevent_doom_scroll"];
+                };
+                s;
+            }),
+        ],
+                        @"1. Stop vertical swiping between reels so the current reel stays put.\n"
+                        @"2. Stop loading more reels once the limit below is reached.\n"
+                        @"3. How many reels load before Prevent Doom Scrolling kicks in."),
         // Convention v1.2 gate row — see SPKToggleMenu.h. "Reel Refresh" keeps
         // its qualifier: the page also has Disable Reels Tab Refresh.
         SPKTopicSection(@"", @[
+            SPKActionButtonRowSetting(kSPKReelsActionButtonEnabledKey,
+                                      @"Choose what tapping the action button does. Long press opens the full menu.",
+                                      @[
+                [SPKSetting switchCellWithTitle:@"Reels Action Button"
+                                           icon:SPKSettingsIcon(@"action")
+                                    defaultsKey:kSPKReelsActionButtonEnabledKey],
+                SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceReels),
+                SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceReels, @"Reels", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceReels), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceReels))
+                                      ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"

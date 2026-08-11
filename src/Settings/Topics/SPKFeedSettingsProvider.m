@@ -90,24 +90,6 @@ static NSArray *SPKFeedCommentsSections(void) {
                                                                    subtitle:nil
                                                                        icon:SPKSettingsIcon(@"sliders")
                                                                 navSections:@[
-                                                                    SPKTopicSection(@"Destinations", @[
-                                                                        [SPKSetting switchCellWithTitle:@"Gallery"
-                                                                                                   icon:SPKSettingsIcon(@"sparkle_gallery")
-                                                                                            defaultsKey:@"feed_header_button_dest_gallery"],
-                                                                        [SPKSetting switchCellWithTitle:@"Profile Analyzer"
-                                                                                                   icon:SPKSettingsIcon(@"profile_analyzer")
-                                                                                            defaultsKey:@"feed_header_button_dest_analyzer"],
-                                                                        [SPKSetting switchCellWithTitle:@"Deleted Messages"
-                                                                                                   icon:SPKSettingsIcon(@"channels")
-                                                                                            defaultsKey:@"feed_header_button_dest_deleted"],
-                                                                        [SPKSetting switchCellWithTitle:@"Downloads"
-                                                                                                   icon:SPKSettingsIcon(@"download")
-                                                                                            defaultsKey:@"feed_header_button_dest_downloads"],
-                                                                        [SPKSetting switchCellWithTitle:@"Sparkle Settings"
-                                                                                                   icon:SPKSettingsIcon(@"settings")
-                                                                                            defaultsKey:@"feed_header_button_dest_settings"],
-                                                                    ],
-                                                                                    nil)
                                                                 ]];
     configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
 
@@ -117,11 +99,6 @@ static NSArray *SPKFeedCommentsSections(void) {
     mainFeedMode.helpText = @"Following is the chronological feed of accounts you follow — Instagram keeps labelling the tab \"For you\".";
     mainFeedMode.searchKeywords = @"following chronological algorithm for you";
 
-    SPKSetting *disableAppIconGesture = [SPKSetting switchCellWithTitle:@"Disable App Icon Gesture"
-                                                                   icon:SPKSettingsIcon(@"app")
-                                                            defaultsKey:@"feed_disable_appicon_gesture"];
-    disableAppIconGesture.helpText = @"Stops the header-logo long-press from opening Instagram's icon picker. Sparkle's own picker lives in General → App.";
-    disableAppIconGesture.searchKeywords = @"logo long press picker";
 
     SPKSetting *hideEntireFeed = [SPKSetting switchCellWithTitle:@"Hide Entire Feed"
                                                             icon:SPKSettingsIcon(@"feed")
@@ -144,21 +121,8 @@ static NSArray *SPKFeedCommentsSections(void) {
     disableHomeRefresh.helpText = @"Re-tapping the Home tab scrolls back to top without reloading the feed.";
 
     return SPKTopicNavigationSetting(@"Feed", @"feed", 24.0, @[
-        SPKTopicSection(@"Action Button", @[
-            masterActionButton,
-            SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceFeed),
-            SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceFeed, @"Feed", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceFeed), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceFeed))
-        ],
-                        nil),
-        SPKTopicSection(@"Header Shortcut", @[
-            headerButton,
-            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
-            configureDestinations,
-        ],
-                        nil),
         SPKTopicSection(@"Layout", @[
             mainFeedMode,
-            disableAppIconGesture,
             hideEntireFeed,
             // Stays a full row: requiresRestart disqualifies it from a gate
             // (doctrine R4) — the restart prompt needs the regular switch path.
@@ -204,36 +168,65 @@ static NSArray *SPKFeedCommentsSections(void) {
             }),
         ],
                         nil),
-        SPKTopicSection(@"Media", @[
+        SPKTopicSection(@"Playback & Refresh", @[
             longPressExpand,
-            [SPKSetting switchCellWithTitle:@"Disable Video Autoplay"
+            [SPKSetting switchCellWithTitle:@"Tap to Play Videos"
                                        icon:SPKSettingsIcon(@"autoplay_off")
                                 defaultsKey:@"feed_disable_autoplay"
                             requiresRestart:YES],
             [SPKSetting switchCellWithTitle:@"Start Expanded Videos Muted"
                                        icon:SPKSettingsIcon(@"volume_off")
                                 defaultsKey:@"feed_expanded_vid_start_muted"],
-        ],
-                        nil),
-        SPKTopicSection(@"Refresh", @[
             disableHomeRefresh,
             [SPKSetting switchCellWithTitle:@"Disable Background Refresh"
                                        icon:SPKSettingsIcon(@"arrow_cw")
                                 defaultsKey:@"feed_disable_bg_refresh"]
         ],
                         nil),
+        SPKTopicSection(@"Header Shortcut", @[
+            headerButton,
+            // Was its own five-row section: the destinations of the header
+            // shortcut belong to the shortcut, not to a list of their own.
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Destinations", @"link", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Gallery"
+                                            iconName:@"sparkle_gallery"
+                                         defaultsKey:@"feed_header_button_dest_gallery"],
+                    [SPKToggleMenuItem itemWithTitle:@"Profile Analyzer"
+                                            iconName:@"profile_analyzer"
+                                         defaultsKey:@"feed_header_button_dest_analyzer"],
+                    [SPKToggleMenuItem itemWithTitle:@"Deleted Messages"
+                                            iconName:@"channels"
+                                         defaultsKey:@"feed_header_button_dest_deleted"],
+                    [SPKToggleMenuItem itemWithTitle:@"Downloads"
+                                            iconName:@"download"
+                                         defaultsKey:@"feed_header_button_dest_downloads"],
+                    [SPKToggleMenuItem itemWithTitle:@"Sparkle Settings"
+                                            iconName:@"settings"
+                                         defaultsKey:@"feed_header_button_dest_settings"],
+                ]);
+                g.searchKeywords = @"destinations shortcut gallery analyzer downloads deleted settings";
+                g;
+            }),
+            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
+            configureDestinations,
+        ],
+                        nil),
 
         // Comments moved in from General — a new user looks for comments where
         // they see them. Seven rows, keys untouched, arrives as a sub-page.
-        SPKTopicSection(@"Comments", @[
+SPKTopicSection(@"", @[
             [SPKSetting navigationCellWithTitle:@"Comments"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"comment")
-                                    navSections:SPKFeedCommentsSections()]
-        ],
-                        nil),
-        // Convention v1.2 gate row — see SPKToggleMenu.h.
-        SPKTopicSection(@"", @[
+                                    navSections:SPKFeedCommentsSections()],
+            SPKActionButtonRowSetting(kSPKFeedActionButtonEnabledKey,
+                                      nil,
+                                      @[
+                masterActionButton,
+                SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceFeed),
+                SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceFeed, @"Feed", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceFeed), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceFeed))
+                                      ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"

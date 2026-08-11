@@ -19,10 +19,6 @@
     };
 
     return SPKTopicNavigationSetting(@"About", @"info", 24.0, @[
-        SPKTopicSection(@"Support", @[
-            donate
-        ],
-                        @"Consider donating to support the tweak's development."),
         SPKTopicSection(@"Information", @[
             [SPKSetting staticCellWithTitle:@"Sparkle"
                                    subtitle:SPKVersionString
@@ -35,7 +31,7 @@
                                        icon:SPKSettingsIcon(@"key")]
         ],
                         nil),
-        SPKTopicSection(@"", @[
+        SPKTopicSection(@"Links", @[
             [SPKSetting linkCellWithTitle:@"waffle"
                                  subtitle:@"Sparkle developer"
                                  imageUrl:@"https://avatars.githubusercontent.com/u/117626247?v=4"
@@ -43,15 +39,11 @@
             [SPKSetting linkCellWithTitle:@"View Source Code"
                                  subtitle:@"Tap to open on GitHub"
                                  imageUrl:@"https://i.imgur.com/BBUNzeP.png"
-                                      url:@"https://github.com/efibalogh/sparkle-ig"]
-        ],
-                        nil),
-        SPKTopicSection(@"Community", @[
+                                      url:@"https://github.com/efibalogh/sparkle-ig"],
             [SPKSetting linkCellWithTitle:@"Telegram Channel"
                                  subtitle:@"Join the community for updates and support"
                                  imageUrl:@"https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/960px-Telegram_logo.svg.png"
-                                      url:@"https://t.me/sparkle_ig"]
-        ],
+                                      url:@"https://t.me/sparkle_ig"]],
                         nil),
         SPKTopicSection(@"Credits", @[
             [SPKSetting linkCellWithTitle:@"SoCuul • SCInsta"
@@ -72,6 +64,10 @@
                                       url:@"https://github.com/asdfzxcvbn/zxPluginsInject"]
         ],
                         nil),
+        SPKTopicSection(@"", @[
+            donate
+        ],
+                        @"Consider donating to support the tweak's development.")
     ]);
 }
 

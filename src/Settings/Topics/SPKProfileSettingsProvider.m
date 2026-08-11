@@ -122,22 +122,12 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
 
 + (SPKSetting *)rootSetting {
     return SPKTopicNavigationSetting(@"Profile", @"user_circle", 24.0, @[
-        SPKTopicSection(@"Action Button", @[
-            [SPKSetting switchCellWithTitle:@"Profile Action Button"
-                                       icon:SPKSettingsIcon(@"action")
-                                defaultsKey:@"profile_action_btn"],
-            SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceProfile),
-            SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceProfile, @"Profile", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceProfile), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceProfile)),
-            SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Copy Info Default" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
-        ],
-                        @"Choose what tapping the action button does. Copy Info Default controls what gets copied when Default Tap Action is Copy Info."),
-        SPKTopicSection(@"Profile Picture", @[
+        // One row under "Profile Picture", four under "Indicators": both describe
+        // the profile screen.
+        SPKTopicSection(@"Profile", @[
             [SPKSetting switchCellWithTitle:@"Long Press to Expand"
                                        icon:SPKSettingsIcon(@"expand")
-                                defaultsKey:@"profile_photo_zoom"]
-        ],
-                        @"Long press a profile picture to open it expanded."),
-        SPKTopicSection(@"Indicators", @[
+                                defaultsKey:@"profile_photo_zoom"],
             ({
                 SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following Indicator"
                                                             icon:SPKSettingsIcon(@"user_check")
@@ -181,9 +171,21 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                                        icon:SPKSettingsIcon(@"threads")
                                 defaultsKey:@"profile_hide_threads_btn"]
         ],
-                        @"Following Indicator shows whether a profile follows you back, under their stats. Text or Icon; it's Instagram's native gray unless you turn on Colorful Indicator for green/red."),
+                        @"1. Long press a profile picture to open it expanded.\n"
+                        @"2. Following Indicator shows whether a profile follows you back, under their stats. Text or Icon; it's Instagram's native gray unless you turn on Colorful Indicator for green/red."),
         // Convention v1.2 gate row — see SPKToggleMenu.h.
         SPKTopicSection(@"", @[
+            SPKActionButtonRowSetting(@"profile_action_btn",
+                                      @"Choose what tapping the action button does. Copy Info Default controls what gets copied when Default Tap Action is Copy Info.",
+                                      @[
+                [SPKSetting switchCellWithTitle:@"Profile Action Button"
+                                           icon:SPKSettingsIcon(@"action")
+                                    defaultsKey:@"profile_action_btn"],
+                SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceProfile),
+                SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceProfile, @"Profile", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceProfile), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceProfile)),
+                SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Copy Info Default" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
+        
+                                      ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Follow"
                                         iconName:@"user_follow"

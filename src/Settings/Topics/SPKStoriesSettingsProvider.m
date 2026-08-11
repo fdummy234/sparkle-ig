@@ -83,40 +83,50 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
 
 static NSArray *SPKStoriesSettingsSections(void) {
     return @[
-        SPKTopicSection(@"Action Button", @[
-            [SPKSetting switchCellWithTitle:@"Stories Action Button"
-                                       icon:SPKSettingsIcon(@"action")
-                                defaultsKey:kSPKStoriesActionButtonEnabledKey],
-            SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceStories),
-            SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceStories, @"Stories", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceStories), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceStories))
-        ],
-                        @"1. Add an action button above the bottom story bar.\n"
-                        @"2. Choose the default action. Long press opens the full menu."),
-        SPKStoriesSeenReceiptsSection(), SPKTopicSection(@"Navigation", @[
+
+
+        // "Other" was the confession that no subject had been found — these four
+        // all act while viewing a story.
+        SPKTopicSection(@"While Viewing", @[
             ({
                 // Renamed from "Stop Auto Advance" — aligned with the Messages
                 // twin (lot 1) and the Disable lexicon; "stop" stays searchable.
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Auto Advance"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Stay on Current Story"
                                                            icon:SPKSettingsIcon(@"autoscroll")
                                                     defaultsKey:@"stories_stop_auto_advance"];
                 s.searchKeywords = @"stop next skip";
                 s;
             }),
-            [SPKSetting switchCellWithTitle:@"Advance on Eye Button"
-                                       icon:SPKSettingsIcon(@"eye")
-                                defaultsKey:@"stories_advance_on_manual_seen"],
-            [SPKSetting switchCellWithTitle:@"Advance on Like"
-                                       icon:SPKSettingsIcon(@"heart")
-                                defaultsKey:@"stories_advance_on_like_seen"],
-            [SPKSetting switchCellWithTitle:@"Advance on Reply"
-                                       icon:SPKSettingsIcon(@"reply")
-                                defaultsKey:@"stories_advance_on_reply_seen"],
-        ],
-                                                         @"1. Prevent automatically moving to the next story.\n"
-                                                         @"2. Move to the next story when you press the eye button.\n"
-                                                         @"3. Move to the next story when you press like.\n"
-                                                         @"4. Move to the next story when you reply."),
-        SPKTopicSection(@"Instagram Plus", @[
+            // The three "Advance on…" rows, one gate. Their three footer notes
+            // become the gate's ⓘ — a numbered footer can only point at rows.
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Advance On…", @"autoscroll", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Eye Button"
+                                            iconName:@"eye"
+                                         defaultsKey:@"stories_advance_on_manual_seen"],
+                    [SPKToggleMenuItem itemWithTitle:@"Like"
+                                            iconName:@"heart"
+                                         defaultsKey:@"stories_advance_on_like_seen"],
+                    [SPKToggleMenuItem itemWithTitle:@"Reply"
+                                            iconName:@"reply"
+                                         defaultsKey:@"stories_advance_on_reply_seen"],
+                ]);
+                g.helpText = @"Move to the next story when you press the eye button.\nMove to the next story when you press like.\nMove to the next story when you reply.";
+                g.searchKeywords = @"advance auto next story eye button like reply";
+                g;
+            }),
+            [SPKSetting switchCellWithTitle:@"Search Viewer List"
+                                       icon:SPKSettingsIcon(@"search")
+                                defaultsKey:@"stories_search_viewer_list"],
+            [SPKSetting switchCellWithTitle:@"Hide Join Trending"
+                                       icon:SPKSettingsIcon(@"arrow_up_right")
+                                defaultsKey:@"stories_hide_join_trending"],
+            [SPKSetting switchCellWithTitle:@"Show Story Mentions"
+                                       icon:SPKSettingsIcon(@"mention")
+                                defaultsKey:@"stories_mentions_btn"],
+            [SPKSetting switchCellWithTitle:@"Show Poll Vote Counts"
+                                       icon:SPKSettingsIcon(@"poll")
+                                defaultsKey:@"stories_poll_vote_counts"],
             [SPKSetting switchCellWithTitle:@"Unlock Story Preview"
                                        icon:SPKSettingsIcon(@"story_preview")
                                 defaultsKey:@"stories_unlock_preview"],
@@ -124,9 +134,17 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                        icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:@"stories_hide_ig_plus_button"]
         ],
-                        @"1. Unlock \"Story Preview\": the story long-press menu shows the actual story without appearing on the viewer list.\n"
-                        @"2. Hide the Instagram Plus button in your story's viewer list."),
+                        @"1. Prevent automatically moving to the next story.\n"
+                        @"2. Choose which gestures move to the next story.\n"
+                        @"3. Add a search button to your story's viewer list to search and filter anyone who viewed it.\n"
+                        @"4. Hide the the \"Join a trending\" / \"Add Yours\" promo cards from stories.\n"
+                        @"5. Enabling this will add a button above the bottom story bar, where you can see all mentioned users.\n"
+                        @"6. Display the vote counts for each option the poll has.\n"
+                        @"7. Unlock \"Story Preview\": the story long-press menu shows the actual story without appearing on the viewer list.\n"
+                        @"8. Hide the Instagram Plus button in your story's viewer list."),
 
+        // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
+        // section (mid-page, plural header); now closes the page like everywhere.
         SPKTopicSection(@"Creation", @[
             [SPKSetting switchCellWithTitle:@"Allow Videos in Photo Sticker"
                                        icon:SPKSettingsIcon(@"video")
@@ -141,31 +159,18 @@ static NSArray *SPKStoriesSettingsSections(void) {
                         @"1. Allow selecting videos from your library in the story photo sticker.\n"
                         @"2. Use media from Sparkle Gallery as stickers.\n"
                         @"3. Long press on the eyedropper tool in stories to customize text color more precisely."),
-
-        // "Other" was the confession that no subject had been found — these four
-        // all act while viewing a story.
-        SPKTopicSection(@"While Viewing", @[
-            [SPKSetting switchCellWithTitle:@"Search Viewer List"
-                                       icon:SPKSettingsIcon(@"search")
-                                defaultsKey:@"stories_search_viewer_list"],
-            [SPKSetting switchCellWithTitle:@"Hide Join Trending"
-                                       icon:SPKSettingsIcon(@"arrow_up_right")
-                                defaultsKey:@"stories_hide_join_trending"],
-            [SPKSetting switchCellWithTitle:@"Show Story Mentions"
-                                       icon:SPKSettingsIcon(@"mention")
-                                defaultsKey:@"stories_mentions_btn"],
-            [SPKSetting switchCellWithTitle:@"Show Poll Vote Counts"
-                                       icon:SPKSettingsIcon(@"poll")
-                                defaultsKey:@"stories_poll_vote_counts"],
-        ],
-                        @"1. Add a search button to your story's viewer list to search and filter anyone who viewed it.\n"
-                        @"2. Hide the the \"Join a trending\" / \"Add Yours\" promo cards from stories.\n"
-                        @"3. Enabling this will add a button above the bottom story bar, where you can see all mentioned users.\n"
-                        @"4. Display the vote counts for each option the poll has."),
-
-        // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
-        // section (mid-page, plural header); now closes the page like everywhere.
         SPKTopicSection(@"", @[
+            SPKActionButtonRowSetting(kSPKStoriesActionButtonEnabledKey,
+                                      @"1. Add an action button above the bottom story bar.\n"
+                                      @"2. Choose the default action. Long press opens the full menu.",
+                                      @[
+                [SPKSetting switchCellWithTitle:@"Stories Action Button"
+                                           icon:SPKSettingsIcon(@"action")
+                                    defaultsKey:kSPKStoriesActionButtonEnabledKey],
+                SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceStories),
+                SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceStories, @"Stories", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceStories), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceStories))
+        
+                                      ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
