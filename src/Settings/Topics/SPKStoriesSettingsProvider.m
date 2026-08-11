@@ -64,8 +64,8 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
                                     iconName:@"reply"
                                  defaultsKey:@"stories_mark_seen_on_reply"],
         ]);
-        g.enabledProvider = ^BOOL {
-            return [SPKUtils getBoolPref:@"stories_manual_seen"];
+        g.hiddenProvider = ^BOOL {
+            return ![SPKUtils getBoolPref:@"stories_manual_seen"];
         };
         g.searchKeywords = @"mark seen like reply auto";
         g;
@@ -77,7 +77,15 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
                             defaultsKey:@"stories_manual_seen"],
         markSeenGate,
         manualSeenList,
-    ],
+            // Moved in from "While Viewing": it acts on the viewer list, which
+            // lives here. Its numbered footer note becomes its own ⓘ.
+            ({
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Search Viewer List"
+                                                           icon:SPKSettingsIcon(@"search")
+                                                    defaultsKey:@"stories_search_viewer_list"];
+                s.helpText = @"Add a search button to your story's viewer list to search and filter any viewer.";
+                s;
+            })],
                            footer);
 }
 
@@ -115,9 +123,6 @@ static NSArray *SPKStoriesSettingsSections(void) {
                 g.searchKeywords = @"advance auto next story eye button like reply";
                 g;
             }),
-            [SPKSetting switchCellWithTitle:@"Search Viewer List"
-                                       icon:SPKSettingsIcon(@"search")
-                                defaultsKey:@"stories_search_viewer_list"],
             [SPKSetting switchCellWithTitle:@"Hide Trending Prompts"
                                        icon:SPKSettingsIcon(@"arrow_up_right")
                                 defaultsKey:@"stories_hide_join_trending"],
@@ -132,16 +137,14 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                 defaultsKey:@"stories_unlock_preview"],
             [SPKSetting switchCellWithTitle:@"Hide Instagram Plus Button"
                                        icon:SPKSettingsIcon(@"aura")
-                                defaultsKey:@"stories_hide_ig_plus_button"]
-        ],
+                                defaultsKey:@"stories_hide_ig_plus_button"]],
                         @"1. Prevent automatically moving to the next story.\n"
                         @"2. Choose which gestures move to the next story.\n"
-                        @"3. Add a search button to your story's viewer list to search and filter anyone who viewed it.\n"
-                        @"4. Hide the the \"Join a trending\" / \"Add Yours\" promo cards from stories.\n"
-                        @"5. Enabling this will add a button above the bottom story bar, where you can see all mentioned users.\n"
-                        @"6. Display the vote counts for each option the poll has.\n"
-                        @"7. Unlock \"Story Preview\": the story long-press menu shows the actual story without appearing on the viewer list.\n"
-                        @"8. Hide the Instagram Plus button in your story's viewer list."),
+                        @"3. Hide the the \"Join a trending\" / \"Add Yours\" promo cards from stories.\n"
+                        @"4. Enabling this will add a button above the bottom story bar, where you can see all mentioned users.\n"
+                        @"5. Display the vote counts for each option the poll has.\n"
+                        @"6. Unlock \"Story Preview\": the story long-press menu shows the actual story without appearing on the viewer list.\n"
+                        @"7. Hide the Instagram Plus button in your story's viewer list."),
 
         // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
         // section (mid-page, plural header); now closes the page like everywhere.

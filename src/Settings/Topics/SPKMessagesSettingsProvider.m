@@ -21,8 +21,8 @@ static NSArray *SPKMessagesSettingsSections(void);
 // master toggle is off (keeping its stored value).
 static SPKSetting *SPKAudioGatedSwitch(NSString *title, UIImage *icon, NSString *defaultsKey) {
     SPKSetting *setting = [SPKSetting switchCellWithTitle:title icon:icon defaultsKey:defaultsKey];
-    setting.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"downloads_audio_enabled"];
+    setting.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"downloads_audio_enabled"];
     };
     return setting;
 }
@@ -90,6 +90,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
     SPKSetting *manualSeenSwitch = [SPKSetting switchCellWithTitle:@"Manually Mark Chats Seen"
                                                               icon:SPKSettingsIcon(@"eye")
                                                        defaultsKey:@"msgs_manual_seen"];
+manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     manualSeenSwitch.helpText = @"Chats stop sending read receipts until you tap the eye button. The list below picks which chats are excluded or included.";
 
     // Auto-seen triggers only act while manual seen is on. Keep their stored value
@@ -112,8 +113,8 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                     iconName:@"keyboard"
                                  defaultsKey:@"msgs_seen_on_typing"],
         ]);
-        g.enabledProvider = ^BOOL {
-            return [SPKUtils getBoolPref:@"msgs_manual_seen"];
+        g.hiddenProvider = ^BOOL {
+            return ![SPKUtils getBoolPref:@"msgs_manual_seen"];
         };
         g.searchKeywords = @"mark seen send reply reaction typing auto";
         g;
@@ -126,8 +127,8 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                                                                               icon:SPKSettingsIcon(@"pin")
                                                                                               menu:SPKSeenButtonPositionMenu()],
                                                                      SPKSettingsIcon(@"arrow_up"));
-    seenButtonPosition.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_seen"];
+    seenButtonPosition.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"msgs_manual_seen"];
     };
     seenButtonPosition.helpText = @"The eye button lives in the top bar, or as a draggable bubble above the composer — scroll to snap the bubble back.";
 
@@ -136,6 +137,7 @@ static NSArray *SPKMessagesSettingsSections(void) {
     SPKSetting *keepDeleted = [SPKSetting switchCellWithTitle:@"Keep Deleted Messages"
                                                          icon:SPKSettingsIcon(@"undo_circle")
                                                   defaultsKey:@"msgs_keep_deleted"];
+    keepDeleted.reloadsTableOnSwitchChange = YES;
     keepDeleted.helpText = @"Unsent messages stay in the chat with an undo marker until the inbox reloads.";
 
 
@@ -148,6 +150,9 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                                             subtitle:nil
                                                                 icon:SPKSettingsIcon(@"trash")
                                                       viewController:[SPKDeletedMessagesViewController new]];
+    viewDeletedLog.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
+    };
     viewDeletedLog.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)deletedLogCount]};
 
     // ---- Interface -----------------------------------------------------
@@ -166,8 +171,8 @@ static NSArray *SPKMessagesSettingsSections(void) {
 
     // Advancing after a manual seen only applies while visual manual seen is on.
     SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance After Manual Seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
-    advanceVisual.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
+    advanceVisual.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
     };
 
     // Lexicon rename ("Stop …" → "Disable …"); old phrasing kept searchable.
@@ -272,6 +277,10 @@ static NSArray *SPKMessagesSettingsSections(void) {
                 g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
                              @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
                 g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
+                // R5 : le journal n'existe que si l'on garde les messages supprimés.
+                g.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
+                };
                 g;
             }),
             viewDeletedLog],
@@ -309,28 +318,16 @@ static NSArray *SPKMessagesSettingsSections(void) {
             }),
         ],
                         nil),
-        SPKTopicSection(@"Notes", @[
-            [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
-                                       icon:SPKSettingsIcon(@"notes")
-                                defaultsKey:@"msgs_hide_notes_tray"],
-            [SPKSetting switchCellWithTitle:@"Hide Friends Map"
-                                       icon:SPKSettingsIcon(@"map")
-                                defaultsKey:@"msgs_hide_friends_map"],
-            downloadNotesAudio,
-            copyNoteText,
-        ],
-                        nil),
-        SPKTopicSection(@"Audio & Media", @[
-            downloadVoice,
-            uploadAudio,
-            trimAudio,
-            uploadGalleryPhoto,
-        ],
-                        nil),
         // Convention v1.2: the "Confirmations" gate row closes every page — one
         // tap opens the multi-toggle menu (icon left, checkmark right, stays
         // open while toggling). Items keep the old switches' keys and icons.
         SPKTopicSection(@"", @[
+            // Eight rows we set once at install: they keep their two sections,
+            // one level down. Search still reaches every one of them.
+            [SPKSetting navigationCellWithTitle:@"Notes & Media"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"notes")
+                                    navSections:SPKMessagesNotesAndMediaSections()],
             SPKActionButtonRowSetting(kSPKMessagesActionButtonEnabledKey,
                                       nil,
                                       @[
@@ -382,6 +379,28 @@ static NSArray *SPKMessagesSettingsSections(void) {
 }
 
 @implementation SPKMessagesSettingsProvider
+
+static NSArray *SPKMessagesNotesAndMediaSections(void) {
+    return @[
+        SPKTopicSection(@"Notes", @[
+            [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
+                                       icon:SPKSettingsIcon(@"notes")
+                                defaultsKey:@"msgs_hide_notes_tray"],
+            [SPKSetting switchCellWithTitle:@"Hide Friends Map"
+                                       icon:SPKSettingsIcon(@"map")
+                                defaultsKey:@"msgs_hide_friends_map"],
+            downloadNotesAudio,
+            copyNoteText,
+        ],
+                        nil),
+        SPKTopicSection(@"Audio & Media", @[
+            downloadVoice,
+            uploadAudio,
+            trimAudio,
+            uploadGalleryPhoto,
+        ],
+                        nil)    ];
+}
 
 + (SPKSetting *)rootSetting {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Messages"

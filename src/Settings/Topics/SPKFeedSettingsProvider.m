@@ -39,8 +39,8 @@ static NSArray *SPKFeedCommentsSections(void) {
                                                                                           icon:SPKSettingsIcon(@"left_right")
                                                                                           menu:SPKSwipeCloseCommentsDirectionMenu()],
                                                                  SPKSettingsIcon(@"left_right"));
-    swipeDirection.enabledProvider = ^BOOL {
-        return [SPKUtils getBoolPref:@"general_comments_swipe_close"];
+    swipeDirection.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
     SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Button"
@@ -84,6 +84,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show Header Button"
                                                           icon:SPKSettingsIcon(@"action")
                                                    defaultsKey:kSPKHeaderButtonEnabledKey];
+    headerButton.reloadsTableOnSwitchChange = YES;
     headerButton.searchKeywords = @"feed header button";
     headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
 
@@ -92,6 +93,9 @@ static NSArray *SPKFeedCommentsSections(void) {
                                                                        icon:SPKSettingsIcon(@"slider")
                                                                 navSections:@[
                                                                 ]];
+    configureDestinations.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
+    };
     configureDestinations.searchKeywords = @"configure";
     configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
 
@@ -212,6 +216,10 @@ static NSArray *SPKFeedCommentsSections(void) {
                                          defaultsKey:@"feed_header_button_dest_settings"],
                 ]);
                 g.searchKeywords = @"destinations shortcut gallery analyzer downloads deleted settings";
+                // R5 : les destinations n'existent que si le bouton est affiché.
+                g.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
+                };
                 g;
             }),
             SPKFeedHeaderButtonDefaultActionNavigationSetting(),
