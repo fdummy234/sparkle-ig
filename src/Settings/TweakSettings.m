@@ -97,7 +97,7 @@ static SPKSetting *SPKRootRow(SPKSetting *topic) {
                 SPKRootRow([SPKProfileSettingsProvider rootSetting])
             ]
         },
-        @        @{
+        @{
             @"header" : @"Library",
             @"rows" : @[
                 SPKRootRow([SPKGallerySettingsProvider rootSetting]),
