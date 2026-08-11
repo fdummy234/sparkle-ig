@@ -327,7 +327,27 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             [SPKSetting navigationCellWithTitle:@"Notes & Media"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"notes")
-                                    navSections:SPKMessagesNotesAndMediaSections()],
+                                    navSections:@[
+
+        SPKTopicSection(@"Notes", @[
+            [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
+                                       icon:SPKSettingsIcon(@"notes")
+                                defaultsKey:@"msgs_hide_notes_tray"],
+            [SPKSetting switchCellWithTitle:@"Hide Friends Map"
+                                       icon:SPKSettingsIcon(@"map")
+                                defaultsKey:@"msgs_hide_friends_map"],
+            downloadNotesAudio,
+            copyNoteText,
+        ],
+                        nil),
+        SPKTopicSection(@"Audio & Media", @[
+            downloadVoice,
+            uploadAudio,
+            trimAudio,
+            uploadGalleryPhoto,
+        ],
+                        nil)
+                                    ]],
             SPKActionButtonRowSetting(kSPKMessagesActionButtonEnabledKey,
                                       nil,
                                       @[
@@ -380,27 +400,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 
 @implementation SPKMessagesSettingsProvider
 
-static NSArray *SPKMessagesNotesAndMediaSections(void) {
-    return @[
-        SPKTopicSection(@"Notes", @[
-            [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
-                                       icon:SPKSettingsIcon(@"notes")
-                                defaultsKey:@"msgs_hide_notes_tray"],
-            [SPKSetting switchCellWithTitle:@"Hide Friends Map"
-                                       icon:SPKSettingsIcon(@"map")
-                                defaultsKey:@"msgs_hide_friends_map"],
-            downloadNotesAudio,
-            copyNoteText,
-        ],
-                        nil),
-        SPKTopicSection(@"Audio & Media", @[
-            downloadVoice,
-            uploadAudio,
-            trimAudio,
-            uploadGalleryPhoto,
-        ],
-                        nil)    ];
-}
 
 + (SPKSetting *)rootSetting {
     SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Messages"
