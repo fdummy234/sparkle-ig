@@ -160,6 +160,33 @@ static NSMutableArray *SPKVisibleSectionsCopy(NSArray *sections) {
     return mutableSections;
 }
 
+// A section hides rows when its displayed row count is short of the count in
+// `originalSections`, which keeps every row regardless of `hiddenProvider`.
+// The header's info glyph fills in to signal that options are waiting there.
+static BOOL SPKSectionHidesRows(NSDictionary *displayedSection, NSArray *originalSections) {
+    NSArray *displayedRows = displayedSection[@"rows"];
+    if (![displayedRows isKindOfClass:[NSArray class]])
+        return NO;
+    for (NSDictionary *original in originalSections) {
+        if (![original isKindOfClass:[NSDictionary class]])
+            continue;
+        NSArray *originalRows = original[@"rows"];
+        if (![originalRows isKindOfClass:[NSArray class]])
+            continue;
+        BOOL sameHeader = (displayedSection[@"header"] == original[@"header"]) ||
+                          [displayedSection[@"header"] isEqual:original[@"header"]];
+        if (!sameHeader)
+            continue;
+        for (id row in originalRows) {
+            if ([row isKindOfClass:[SPKSetting class]] && ((SPKSetting *)row).hiddenProvider &&
+                ((SPKSetting *)row).hiddenProvider())
+                return YES;
+        }
+        return NO;
+    }
+    return NO;
+}
+
 static UIImage *SPKSettingsSizedRemoteImage(UIImage *image, BOOL circular) {
     if (!image)
         return nil;
@@ -1087,7 +1114,8 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         helpButton.tag = section;
         helpButton.tintColor = [UIColor colorWithRed:0.651 green:0.651 blue:0.675 alpha:1.0];  // #A6A6AC
         helpButton.accessibilityLabel = @"About these settings";
-        [helpButton setImage:[UIImage systemImageNamed:@"info.circle"
+        BOOL hidesRows = SPKSectionHidesRows(self.sections[section], self.originalSections);
+        [helpButton setImage:[UIImage systemImageNamed:(hidesRows ? @"info.circle.fill" : @"info.circle")
                                      withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:17.0
                                                                                                        weight:UIImageSymbolWeightRegular]]
                     forState:UIControlStateNormal];
