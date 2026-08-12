@@ -2,17 +2,17 @@
 #import <objc/runtime.h>
 
 // Sparkle's single visible entry point: a ✦ button in the navigation bar of
-// Instagram's own "Settings and activity" screen. Everything else that used to
-// open Sparkle (tab-bar long-press, profile ☰ long-press, inbox pencil
-// long-press) stands down once this button is in place — see
-// SPKNativeSettingsEntryInstalled().
+// Instagram's own "Settings and activity" screen.
 //
-// The host is a Swift generic: Settings.Views.IGSettingsHostingController<
-// IGSettingScreenView>, mangled as
-// _TtGC14Settings2Views27IGSettingsHostingControllerVS_19IGSettingScreenView_.
-// The name carries no per-build hash, so it survives app updates as long as
-// Meta keeps its own type names. A scan by fragment covers the case where the
-// generic parameter changes.
+// That screen is Settings.Views.IGSettingsHostingController<IGSettingScreenView>,
+// a Swift class the runtime does not register at launch — resolving it once
+// during startup finds nothing. So nothing is resolved ahead of time:
+// IGNavigationController is a plain ObjC class that is always present, and every
+// controller it pushes is checked as it appears.
+//
+// Two independent signals identify the screen, so a rename on either side still
+// lands: the class name contains "IGSettingsHostingController", or the title
+// reads "Settings and activity".
 
 static const void *kSPKNativeSettingsButtonAssocKey = &kSPKNativeSettingsButtonAssocKey;
 static BOOL SPKNativeSettingsEntryDidInstall = NO;
@@ -21,28 +21,13 @@ BOOL SPKNativeSettingsEntryInstalled(void) {
     return SPKNativeSettingsEntryDidInstall;
 }
 
-static Class SPKSettingsHostingControllerClass(void) {
-    static Class resolved;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        resolved = objc_getClass("_TtGC14Settings2Views27IGSettingsHostingControllerVS_19IGSettingScreenView_");
-        if (resolved)
-            return;
-
-        // The generic parameter changed: find the hosting controller by the
-        // stable part of its name instead of the whole mangled string.
-        unsigned int count = 0;
-        Class *classes = objc_copyClassList(&count);
-        for (unsigned int i = 0; i < count; i++) {
-            const char *name = class_getName(classes[i]);
-            if (name && strstr(name, "IGSettingsHostingController")) {
-                resolved = classes[i];
-                break;
-            }
-        }
-        free(classes);
-    });
-    return resolved;
+static BOOL SPKIsNativeSettingsScreen(UIViewController *controller) {
+    if (!controller)
+        return NO;
+    const char *name = class_getName(object_getClass(controller));
+    if (name && strstr(name, "IGSettingsHostingController"))
+        return YES;
+    return [controller.title isEqualToString:@"Settings and activity"];
 }
 
 @interface SPKNativeSettingsEntryTarget : NSObject
@@ -62,36 +47,26 @@ static Class SPKSettingsHostingControllerClass(void) {
 }
 
 - (void)openSparkleSettings:(id)sender {
-    UIWindow *window = nil;
-    if ([sender isKindOfClass:[UIView class]])
-        window = ((UIView *)sender).window;
-    if (!window)
-        window = [UIApplication sharedApplication].keyWindow;
-    [SPKUtils showSettingsVC:window];
+    [SPKUtils showSettingsVC:[UIApplication sharedApplication].keyWindow];
 }
 
 @end
 
-%group SPKNativeSettingsEntryHooks
-%hook SPKSettingsHostingController
+static void SPKSeatNativeSettingsButton(UIViewController *controller) {
+    if (!SPKIsNativeSettingsScreen(controller))
+        return;
 
-- (void)viewWillAppear:(BOOL)animated {
-    %orig;
-
-    UIViewController *controller = (UIViewController *)self;
     UINavigationItem *item = controller.navigationItem;
     if (!item)
         return;
 
-    // The screen is SwiftUI-hosted and may rebuild its bar between
-    // appearances, so the button is re-seated every time rather than once.
     UIBarButtonItem *existing = objc_getAssociatedObject(controller, kSPKNativeSettingsButtonAssocKey);
     if (existing && item.rightBarButtonItem == existing)
         return;
 
     UIImage *icon = [UIImage systemImageNamed:@"sparkles"
-                          withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:19.0
-                                                                                            weight:UIImageSymbolWeightRegular]];
+                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:19.0
+                                                                                              weight:UIImageSymbolWeightRegular]];
     UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithImage:icon
                                                                style:UIBarButtonItemStylePlain
                                                               target:[SPKNativeSettingsEntryTarget sharedTarget]
@@ -100,6 +75,34 @@ static Class SPKSettingsHostingControllerClass(void) {
     item.rightBarButtonItem = button;
     objc_setAssociatedObject(controller, kSPKNativeSettingsButtonAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     SPKNativeSettingsEntryDidInstall = YES;
+    SPKLog(@"Settings", @"[Sparkle] Settings entry seated on %@", NSStringFromClass(object_getClass(controller)));
+}
+
+// The screen is SwiftUI-hosted and rebuilds its bar as it settles, so the button
+// is seated on push and again on the next runloop turns.
+static void SPKSeatNativeSettingsButtonRepeatedly(UIViewController *controller) {
+    if (!SPKIsNativeSettingsScreen(controller))
+        return;
+    SPKSeatNativeSettingsButton(controller);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        SPKSeatNativeSettingsButton(controller);
+    });
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        SPKSeatNativeSettingsButton(controller);
+    });
+}
+
+%group SPKNativeSettingsEntryHooks
+%hook IGNavigationController
+
+- (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated {
+    %orig;
+    SPKSeatNativeSettingsButtonRepeatedly(viewController);
+}
+
+- (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers animated:(BOOL)animated {
+    %orig;
+    SPKSeatNativeSettingsButtonRepeatedly(viewControllers.lastObject);
 }
 
 %end
@@ -108,11 +111,6 @@ static Class SPKSettingsHostingControllerClass(void) {
 void SPKInstallNativeSettingsEntryHooksIfNeeded(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        Class hostingController = SPKSettingsHostingControllerClass();
-        if (!hostingController) {
-            SPKWarnLog(@"Settings", @"Native settings screen not found: keeping the long-press shortcuts armed.");
-            return;
-        }
-        %init(SPKNativeSettingsEntryHooks, SPKSettingsHostingController = hostingController);
+        %init(SPKNativeSettingsEntryHooks);
     });
 }
