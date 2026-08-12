@@ -49,6 +49,10 @@ static NSDictionary *SPKStoriesSeenReceiptsSection(void) {
                                                                 icon:SPKSettingsIcon(@"users")
                                                       viewController:SPKStoryManualSeenListViewController()];
     manualSeenList.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)SPKStoryManualSeenUserList(manualSeen).count]};
+manualSeenList.hiddenProvider = ^BOOL {
+    // R5: the chat list only applies while manual seen is on.
+    return ![SPKUtils getBoolPref:@"stories_manual_seen"];
+};
 
     // The auto-seen triggers only do anything while manual seen is on. Keep their
     // stored value but lock the cells when manual seen is off.

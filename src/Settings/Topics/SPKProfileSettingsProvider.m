@@ -124,7 +124,8 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
     return SPKTopicNavigationSetting(@"Profile", @"user_circle", 24.0, @[
         // One row under "Profile Picture", four under "Indicators": both describe
         // the profile screen.
-        SPKTopicSection(@"Profile", @[
+        // The page is already called Profile: a header repeating it says nothing.
+        SPKTopicSection(@"", @[
             [SPKSetting switchCellWithTitle:@"Long Press to Expand"
                                        icon:SPKSettingsIcon(@"expand")
                                 defaultsKey:@"profile_photo_zoom"],

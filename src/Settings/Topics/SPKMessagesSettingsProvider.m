@@ -57,6 +57,10 @@ static NSArray *SPKMessagesSettingsSections(void) {
                                                                 icon:SPKSettingsIcon(@"users")
                                                       viewController:SPKDirectManualSeenListViewController()];
     manualSeenList.userInfo = @{@"accessoryText" : [NSString stringWithFormat:@"%lu", (unsigned long)SPKDirectManualSeenThreadCount(manualSeen)]};
+manualSeenList.hiddenProvider = ^BOOL {
+    // R5: the chat list only applies while manual seen is on.
+    return ![SPKUtils getBoolPref:@"msgs_manual_seen"];
+};
     manualSeenList.helpText = @"Excluded chats keep Instagram's normal read receipts; in Included mode only the listed chats are held. Also manageable from the eye button or a long-press in the inbox.";
 
     // ---- Action Button -------------------------------------------------
@@ -225,8 +229,16 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             manualSeenSwitch,
             markSeenGate,
             seenButtonPosition,
-            manualSeenList
-        ],
+            manualSeenList,
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
+                                           icon:SPKSettingsIcon(@"eye")
+                                    defaultsKey:@"msgs_manual_visual_seen"];
+                row.reloadsTableOnSwitchChange = YES;  // R5: reveals Advance After Manual Seen in place.
+                row.helpText = @"Photos and videos stop sending read receipts until the eye is tapped. Turning this on reveals Advance After Manual Seen.";
+                row;
+            }),
+            advanceVisual],
                         nil),
         SPKTopicSection(@"Chat Screen", @[
             unlockPreview,
@@ -258,7 +270,10 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
             lastActiveFormat],
                         nil),
-        SPKTopicSection(@"Deleted Messages", @[
+// Visual Messages ∪ Vanish Mode: same territory (messages that
+        // disappear) — and it resolves the duplicated "Disable Screenshot
+        // Detection" row: one gate, two context-named items.
+        SPKTopicSection(@"Disappearing Messages", @[
             keepDeleted,
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
@@ -282,21 +297,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 };
                 g;
             }),
-            viewDeletedLog],
-                        nil),
-        // Visual Messages ∪ Vanish Mode: same territory (messages that
-        // disappear) — and it resolves the duplicated "Disable Screenshot
-        // Detection" row: one gate, two context-named items.
-        SPKTopicSection(@"Disappearing Messages", @[
-            ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
-                                           icon:SPKSettingsIcon(@"eye")
-                                    defaultsKey:@"msgs_manual_visual_seen"];
-                row.reloadsTableOnSwitchChange = YES;  // R5: reveals Advance After Manual Seen in place.
-                row.helpText = @"Photos and videos stop sending read receipts until the eye is tapped. Turning this on reveals Advance After Manual Seen.";
-                row;
-            }),
-            advanceVisual,
+            viewDeletedLog,
             disableAutoAdvance,
             disableViewOnce,
             ({
@@ -317,8 +318,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 ]);
                 g.searchKeywords = @"screenshot detection vanish view once";
                 g;
-            }),
-        ],
+            })],
                         nil),
         SPKTopicSection(@"Notes", @[
             [SPKSetting switchCellWithTitle:@"Hide Notes Tray"

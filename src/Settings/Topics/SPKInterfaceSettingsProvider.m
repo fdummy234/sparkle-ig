@@ -85,10 +85,6 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     ] mutableCopy];
 
     NSMutableArray *tabBarRows = [@[
-        [SPKSetting menuCellWithTitle:@"Launch Tab"
-                                 icon:SPKSettingsIcon(@"home")
-                                 menu:SPKLaunchTabMenu()],
-        tabIconOrder,
         swipeBetweenTabs,
     ] mutableCopy];
 
@@ -268,16 +264,21 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             })
     ]];
 
-    [sections addObject:SPKTopicSection(@"Screen", screenRows, nil)];
-    // A single navigation row needs no header of its own — it closes the page.
-    [sections addObject:SPKTopicSection(@"", @[
+    // The Notifications sub-page closes the Screen section (scale level 4).
+    [screenRows addObject:
         [SPKSetting navigationCellWithTitle:@"Notifications"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"notification")
-                                    navSections:[SPKNotificationSettingsProvider sections]]
-    ],
-                                        nil)];
+                                   subtitle:nil
+                                       icon:SPKSettingsIcon(@"notification")
+                                navSections:[SPKNotificationSettingsProvider sections]]];
+    [sections addObject:SPKTopicSection(@"Screen", screenRows, nil)];
 
+    // R2: value pickers follow the switches assembled above.
+    [tabBarRows addObjectsFromArray:@[
+        [SPKSetting menuCellWithTitle:@"Launch Tab"
+                                 icon:SPKSettingsIcon(@"home")
+                                 menu:SPKLaunchTabMenu()],
+        tabIconOrder,
+    ]];
     [sections insertObject:SPKTopicSection(@"Tab Bar", tabBarRows, nil) atIndex:0];
 
     return SPKTopicNavigationSetting(@"Interface", @"interface", 24.0, sections);
