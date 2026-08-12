@@ -801,6 +801,14 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         config.image = [UIImage systemImageNamed:@"chevron.up.chevron.down"];
         config.imagePlacement = NSDirectionalRectEdgeTrailing;
         config.imagePadding = 6.0;
+        // UIButtonConfiguration overrides titleLabel.font; the value label
+        // keeps the shared 14 pt state-text size through the transformer.
+        config.titleTextAttributesTransformer = ^NSDictionary<NSAttributedStringKey, id> *(NSDictionary<NSAttributedStringKey, id> *attrs) {
+            NSMutableDictionary *withFont = [attrs mutableCopy];
+            withFont[NSFontAttributeName] = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline]
+                scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize weight:UIFontWeightRegular]];
+            return withFont;
+        };
         config.preferredSymbolConfigurationForImage = [UIImageSymbolConfiguration configurationWithPointSize:10.0 weight:UIImageSymbolWeightBold];
 
         menuButton.configuration = config;

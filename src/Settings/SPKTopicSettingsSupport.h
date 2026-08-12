@@ -32,10 +32,15 @@
 //  R6                 Section order: the page's signature section opens,
 //                     destructive sections close, a single-row navigation
 //                     section joins the closing block.
+//  R7 (under R6)      At equal standing, a section holding a master switch
+//                     follows a section whose rows are always shown: the part
+//                     of the page whose height varies sits last.
 //
 //  A gate exists only when its question can be named ("confirm what?",
 //  "hide where?"). Otherwise the rows form a section, not a menu.
 //  Gate rows read "Off" at zero enabled items; the counter starts at 1.
+//  A section header must cover at least two rows in every state; a header
+//  repeating the page title is dropped and the section goes untitled.
 // ─────────────────────────────────────────────────────────────────────────────
 
 NS_ASSUME_NONNULL_BEGIN

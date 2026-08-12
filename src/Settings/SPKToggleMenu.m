@@ -224,8 +224,16 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     container.layer.shadowOffset = CGSizeMake(0, 10);
     overlay.menuContainer = container;
 
-    UIVisualEffectView *blurView = [[UIVisualEffectView alloc]
-        initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial]];
+    // Matches the material of the system's own menus: glass on iOS 26+,
+    // the classic system material before that.
+    UIVisualEffect *menuEffect;
+    Class glassEffectClass = NSClassFromString(@"UIGlassEffect");
+    if (glassEffectClass) {
+        menuEffect = [[glassEffectClass alloc] init];
+    } else {
+        menuEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial];
+    }
+    UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:menuEffect];
     blurView.frame = CGRectMake(0, 0, kSPKToggleMenuWidth, menuHeight);
     blurView.layer.cornerRadius = kSPKToggleMenuCornerRadius;
     blurView.layer.cornerCurve = kCACornerCurveContinuous;
