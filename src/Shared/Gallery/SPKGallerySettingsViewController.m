@@ -1,3 +1,4 @@
+#import "SPKGalleryViewController.h"
 #import "SPKGallerySettingsViewController.h"
 #import "../../AssetUtils.h"
 #import "../../Settings/SPKTopicSettingsSupport.h"
@@ -199,22 +200,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
 - (void)rebuildSections {
     NSMutableArray *sections = [NSMutableArray array];
 
-    [sections addObject:SPKTopicSection(@"Storage", @[
-                  [SPKSetting valueCellWithTitle:@"Total"
-                                        subtitle:[NSString stringWithFormat:@"%ld files • %@", (long)self.stats.totalFiles, [self formattedSize:self.stats.totalSize]]
-                                            icon:SPKSettingsIcon(@"info")],
-                  [SPKSetting valueCellWithTitle:@"Images"
-                                        subtitle:[NSString stringWithFormat:@"%ld", (long)self.stats.imageCount]
-                                            icon:SPKSettingsIcon(@"photo")],
-                  [SPKSetting valueCellWithTitle:@"Videos"
-                                        subtitle:[NSString stringWithFormat:@"%ld", (long)self.stats.videoCount]
-                                            icon:SPKSettingsIcon(@"video")],
-                  [SPKSetting valueCellWithTitle:@"Audio"
-                                        subtitle:[NSString stringWithFormat:@"%ld", (long)self.stats.audioCount]
-                                            icon:SPKSettingsIcon(@"audio")]
-              ],
-                                        nil)];
-
+    
     SPKSetting *favoritesRow = [SPKSetting switchCellWithTitle:@"Show Favorites at Top" icon:SPKSettingsIcon(@"heart") defaultsKey:kFavoritesAtTopKey];
     favoritesRow.action = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:@"SPKGalleryFavoritesSortPreferenceChanged" object:nil];
@@ -232,17 +218,37 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     flatBrowsingRow.action = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:kSPKGalleryBrowsingScopeChangedNotification object:nil];
     };
-    [sections addObject:SPKTopicSection(@"Browsing", @[favoritesRow, pinFolderRow, flatBrowsingRow],
+    // The two rows that opened this screen from the settings tree now open the
+    // gallery itself, at the top of the page they used to hide behind.
+    [sections addObject:SPKTopicSection(@"", @[
+                  [SPKSetting buttonCellWithTitle:@"Open Gallery"
+                                         subtitle:nil
+                                             icon:SPKSettingsIcon(@"sparkle_gallery")
+                                           action:^{
+                                               [SPKGalleryViewController presentGallery];
+                                           }],
+                  SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Quick Gallery Access"
+                                                                          icon:SPKSettingsIcon(@"circle_off")
+                                                                          menu:SPKGalleryShortcutTargetMenu()],
+                                                  SPKSettingsIcon(@"circle_off"))
+              ],
+                                        nil)];
+
+    // Browsing, Grid and Preview asked the same question — what the grid shows
+    // and how you move in it — under three headers.
+    [sections addObject:SPKTopicSection(@"Browsing",
+                                        @[favoritesRow, pinFolderRow, flatBrowsingRow,
+                                          pinchRow, sourceUsernameRow, mediaInfoRow],
                                         @"1. Pin favorites above other files inside the current sort and folder context.\n"
                                         @"2. Keep the subfolder bar pinned to the top while scrolling.\n"
-                                        @"3. Show files from all folders instead of only the current folder's files. The folders stay in the bar above and still narrow the list.")];
+                                        @"3. Show files from all folders instead of only the current folder's files. The folders stay in the bar above and still narrow the list.\n"
+                                        @"4. Pinch the grid to change density (2, 3 or 5 columns).\n"
+                                        @"5. Overlay the source icon and username on each grid item; the username shows at lower densities.\n"
+                                        @"6. Overlay the username, source, and saved/posted dates on the expanded photo preview. Tap the media to hide it along with the controls.")];
 
-    [sections addObject:SPKTopicSection(@"Editing", @[
-                  [SPKSetting switchCellWithTitle:@"Ask to Replace Original"
-                                             icon:SPKSettingsIcon(@"left_right")
-                                      defaultsKey:@"trim_gallery_prompt_replace"]
-              ],
-                                        @"When you trim or edit a Gallery item, ask whether to replace the original or save a copy. Off always saves a copy and keeps the original.")];
+    SPKSetting *replaceOriginalRow = [SPKSetting switchCellWithTitle:@"Ask to Replace Original"
+                                                                icon:SPKSettingsIcon(@"left_right")
+                                                         defaultsKey:@"trim_gallery_prompt_replace"];
 
     SPKSetting *accountFilterRow = [SPKSetting switchCellWithTitle:@"This Account Only" icon:SPKSettingsIcon(@"user_circle") defaultsKey:@"gallery_filter_current_account"];
     __weak typeof(self) weakAccountSelf = self;
@@ -252,15 +258,10 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
             [weakAccountSelf promptClaimUnassignedFiles];
         }
     };
-    [sections addObject:SPKTopicSection(@"Visibility", @[
-                  accountFilterRow,
-                  [SPKSetting navigationCellWithTitle:@"Hidden Sources"
-                                             subtitle:@""
-                                                 icon:SPKSettingsIcon(@"eye_off")
-                                       viewController:[SPKGalleryHiddenSourcesViewController new]]
-              ],
-                                        @"1. Show only media saved while logged into the current account, plus older unassigned files; reassign a file's account from its details sheet.\n"
-                                        @"2. Hide selected sources from Gallery browsing and upload picker sheets without deleting their files.")];
+    SPKSetting *hiddenSourcesRow = [SPKSetting navigationCellWithTitle:@"Hidden Sources"
+                                                              subtitle:@""
+                                                                  icon:SPKSettingsIcon(@"eye_off")
+                                                        viewController:[SPKGalleryHiddenSourcesViewController new]];
 
     // Grid section: pinch-to-zoom toggle. Defaults ON; the backing pref stores
     // the *disabled* state, so the switch inverts.
@@ -282,16 +283,11 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
         [[NSNotificationCenter defaultCenter] postNotificationName:kSPKGalleryGridControlsChangedNotification object:nil];
     };
 
-    [sections addObject:SPKTopicSection(@"Grid", @[ pinchRow, sourceUsernameRow ],
-                                        @"1. Pinch the grid to change density (2, 3 or 5 columns).\n"
-                                        @"2. Overlay the source icon and username on each grid item; the username shows at lower densities.")];
 
-    [sections addObject:SPKTopicSection(@"Preview", @[
-                  [SPKSetting switchCellWithTitle:@"Show Media Info"
-                                             icon:SPKSettingsIcon(@"info")
-                                      defaultsKey:@"gallery_preview_show_metadata"]
-              ],
-                                        @"Overlay the username, source, and saved/posted dates on the expanded photo preview. Tap the media to hide it along with the controls.")];
+
+    SPKSetting *mediaInfoRow = [SPKSetting switchCellWithTitle:@"Show Media Info"
+                                                          icon:SPKSettingsIcon(@"info")
+                                                   defaultsKey:@"gallery_preview_show_metadata"];
 
     NSMutableArray *lockRows = [NSMutableArray array];
 
@@ -319,7 +315,13 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     };
     [lockRows addObject:changePasscode];
 
-    [sections addObject:SPKTopicSection(@"Lock", lockRows, @"Lock the Gallery with a passcode or biometrics.")];
+    // Visibility and Lock answered one question: who gets to see this gallery.
+    NSMutableArray *privacyRows = [@[accountFilterRow, hiddenSourcesRow] mutableCopy];
+    [privacyRows addObjectsFromArray:lockRows];
+    [sections addObject:SPKTopicSection(@"Privacy", privacyRows,
+                                        @"1. Show only media saved while logged into the current account, plus older unassigned files; reassign a file's account from its details sheet.\n"
+                                        @"2. Hide selected sources from Gallery browsing and upload picker sheets without deleting their files."
+                                        @"\n3. Lock the Gallery with a passcode or biometrics.")];
 
     SPKSetting *importRow = [SPKSetting buttonCellWithTitle:@"Import Media"
                                                    subtitle:nil
@@ -328,9 +330,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                          SPKGalleryImportViewController *vc = [[SPKGalleryImportViewController alloc] initWithDestinationFolderPath:self.importDestinationFolderPath];
                                                          [self.navigationController pushViewController:vc animated:YES];
                                                      }];
-    [sections addObject:SPKTopicSection(@"Import", @[ importRow ],
-                                        @"Import media from the Files app with full editable metadata.\n"
-                                        @"Coming from Regram? Pick your exported folder or MediaVault.zip here to bring your whole Media Vault over.")];
+
 
     SPKSetting *deleteRow = [SPKSetting buttonCellWithTitle:@"Delete Files"
                                                    subtitle:nil
@@ -348,7 +348,28 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     deleteRow.tintColor = [SPKUtils SPKColor_InstagramDestructive];
     deleteRow.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
-    [sections addObject:SPKTopicSection(@"Delete", @[ deleteRow ], nil)];
+    // Editing, Import and Delete were three sections of one row each: what
+    // happens to the files, destructive last.
+    [sections addObject:SPKTopicSection(@"Files",
+                                        @[replaceOriginalRow, importRow, deleteRow],
+                                        @"1. When you trim or edit a Gallery item, ask whether to replace the original or save a copy. Off always saves a copy and keeps the original.\n"
+                                        @"2. Import media from the Files app with full editable metadata. Coming from Regram? Pick your exported folder or MediaVault.zip here.\n"
+                                        @"3. Remove files from the Gallery for good.")];
+
+    [sections addObject:SPKTopicSection(@"", @[
+                  // Storage is read, not set: one line at the end of the page
+                  // instead of four rows and a header at the top of it.
+                  [SPKSetting valueCellWithTitle:[NSString stringWithFormat:@"%@ · %ld file%@",
+                                                  [self formattedSize:self.stats.totalSize],
+                                                  (long)self.stats.totalFiles,
+                                                  self.stats.totalFiles == 1 ? @"" : @"s"]
+                                        subtitle:[NSString stringWithFormat:@"%ld image%@ · %ld video%@ · %ld audio",
+                                                  (long)self.stats.imageCount, self.stats.imageCount == 1 ? @"" : @"s",
+                                                  (long)self.stats.videoCount, self.stats.videoCount == 1 ? @"" : @"s",
+                                                  (long)self.stats.audioCount]
+                                            icon:SPKSettingsIcon(@"chest")]
+              ],
+                                        nil)];
 
     [self replaceSections:sections];
 }
