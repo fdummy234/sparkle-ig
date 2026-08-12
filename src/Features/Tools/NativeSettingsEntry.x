@@ -59,7 +59,7 @@ static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
 }
 
 static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
-    UIResponder *responder = bar.next;
+    UIResponder *responder = bar.nextResponder;
     while (responder) {
         if ([responder isKindOfClass:[UINavigationController class]])
             return ((UINavigationController *)responder).topViewController;
