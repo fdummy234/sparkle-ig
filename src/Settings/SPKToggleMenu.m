@@ -54,6 +54,9 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 #pragma mark - Item control (manual frame layout — fully deterministic)
 
 @interface SPKToggleMenuItemControl : UIControl
+/// Set by the presenter for single-choice menus: applying a value closes the
+/// menu through the overlay, which owns the animation and onDismiss.
+@property (nonatomic, copy, nullable) void (^dismissHandler)(void);
 @property (nonatomic, strong) SPKToggleMenuItem *item;
 - (void)refreshAnimated:(BOOL)animated;
 @property (nonatomic, strong) UIImageView *iconView;
@@ -144,7 +147,8 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
         if (self.item.pickHandler)
             self.item.pickHandler();
-        [self spk_dismissFromDone];
+        if (self.dismissHandler)
+            self.dismissHandler();
         return;
     }
 
@@ -282,6 +286,12 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
             y += hairline;
         }
         SPKToggleMenuItemControl *control = [[SPKToggleMenuItemControl alloc] initWithItem:items[i]];
+        if (!showsDone) {
+            __weak SPKToggleMenuOverlay *weakOverlay = overlay;
+            control.dismissHandler = ^{
+                [weakOverlay spk_dismissFromDone];
+            };
+        }
         control.frame = CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight);
         [blurView.contentView addSubview:control];
         y += kSPKToggleMenuItemHeight;
