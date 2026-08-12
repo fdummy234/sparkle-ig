@@ -43,6 +43,7 @@ FOUNDATION_EXPORT void SPKInstallHideExploreGridHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallHideTrendingSearchesHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallNavigationHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallSettingsShortcutsHooksIfNeeded(void);
+FOUNDATION_EXPORT void SPKInstallNativeSettingsEntryHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallDisableHapticsHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallCopyDescriptionHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallNoRecentSearchesHooksIfEnabled(void);
@@ -115,6 +116,9 @@ static BOOL SPKShouldSuppressFeatureHooks(void) {
 // access to Sparkle Settings (home tab long-press → settings).
 static void SPKInstallEssentialAccessHooks(void) {
     SPKInstallNavigationHooksIfNeeded();
+    // The native entry goes first: the long-press shortcuts below check whether
+    // it took, and only arm themselves if it did not.
+    SPKInstallNativeSettingsEntryHooksIfNeeded();
     SPKInstallSettingsShortcutsHooksIfNeeded();
 }
 
