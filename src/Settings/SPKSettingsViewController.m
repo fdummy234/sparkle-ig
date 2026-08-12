@@ -31,6 +31,27 @@ static CGFloat const SPKUI_BandLast           = 6.0;   // same band as between g
 
 // Associates a menu row with its button so the tap can rebuild its picker.
 static const void *kSPKMenuButtonRowKey = &kSPKMenuButtonRowKey;
+
+// Storage bar row: the strip is rebuilt on each configuration, found by tag.
+static NSInteger const kSPKStorageBarTag = 8801;
+
+// "78 KB · 1 file" — the size carries the weight, the rest stays quiet.
+static NSAttributedString *SPKStorageValueText(NSString *value) {
+    NSArray<NSString *> *parts = [value componentsSeparatedByString:@" · "];
+    NSMutableAttributedString *text = [NSMutableAttributedString new];
+    [text appendAttributedString:[[NSAttributedString alloc]
+        initWithString:parts.firstObject ?: value
+            attributes:@{ NSFontAttributeName : [UIFont systemFontOfSize:SPKUI_ValueFontSize weight:UIFontWeightSemibold],
+                          NSForegroundColorAttributeName : [SPKUtils SPKColor_InstagramPrimaryText] }]];
+    if (parts.count > 1) {
+        NSString *rest = [NSString stringWithFormat:@" · %@", [[parts subarrayWithRange:NSMakeRange(1, parts.count - 1)] componentsJoinedByString:@" · "]];
+        [text appendAttributedString:[[NSAttributedString alloc]
+            initWithString:rest
+                attributes:@{ NSFontAttributeName : [UIFont systemFontOfSize:SPKUI_ValueFontSize weight:UIFontWeightRegular],
+                              NSForegroundColorAttributeName : [SPKUtils SPKColor_InstagramSecondaryText] }]];
+    }
+    return text;
+}
 static CGFloat const SPKUI_HeaderTop          = 14.0;
 static CGFloat const SPKUI_HeaderBottom       = 14.0;
 static CGFloat const SPKUI_HeaderLeading      = 16.5;  // renders ~18 on screen
@@ -824,7 +845,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         // as the gates, built from the UIMenu the row already provides. The
         // commands carry their key and value, so applying a choice runs through
         // menuChanged: exactly as before.
-        menuButton.menu = [row menuForButton:menuButton];
+        // No UIKit menu on the button: assigning one installs its own gesture,
+        // which swallows the tap. The call still runs, for its side effect of
+        // putting the current value in the title.
+        (void)[row menuForButton:menuButton];
         menuButton.showsMenuAsPrimaryAction = NO;
         objc_setAssociatedObject(menuButton, kSPKMenuButtonRowKey, row, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [menuButton addTarget:self action:@selector(spk_menuButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -953,6 +977,70 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         cellContentConfig.secondaryText = row.subtitle;
         cellContentConfig.prefersSideBySideTextAndSecondaryText = YES;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        break;
+    }
+
+    case SPKTableCellStorageBar: {
+        // A figure that is read, not set: a proportional bar and the total,
+        // with no icon and nothing to tap.
+        cellContentConfig.text = @"";
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        cell.accessoryType = UITableViewCellAccessoryNone;
+
+        UIView *strip = [cell.contentView viewWithTag:kSPKStorageBarTag];
+        if (!strip) {
+            strip = [UIView new];
+            strip.tag = kSPKStorageBarTag;
+            strip.userInteractionEnabled = NO;
+            [cell.contentView addSubview:strip];
+        }
+        for (UIView *old in strip.subviews)
+            [old removeFromSuperview];
+
+        UILabel *value = [UILabel new];
+        value.attributedText = SPKStorageValueText(row.barValue);
+        value.textAlignment = NSTextAlignmentRight;
+        [strip addSubview:value];
+
+        UIView *track = [UIView new];
+        track.backgroundColor = [SPKUtils SPKColor_InstagramSeparator];
+        track.layer.cornerRadius = 2.5;
+        track.clipsToBounds = YES;
+        [strip addSubview:track];
+
+        CGFloat total = 0.0;
+        for (NSNumber *fraction in row.barFractions)
+            total += MAX(0.0, fraction.doubleValue);
+        NSArray<UIColor *> *shades = @[ [SPKUtils SPKColor_InstagramPrimaryText],
+                                        [SPKUtils SPKColor_InstagramSecondaryText],
+                                        [SPKUtils SPKColor_InstagramSeparator] ];
+        __block CGFloat offset = 0.0;
+        [row.barFractions enumerateObjectsUsingBlock:^(NSNumber *fraction, NSUInteger idx, BOOL *stop) {
+            CGFloat share = total > 0.0 ? MAX(0.0, fraction.doubleValue) / total : (idx == 0 ? 1.0 : 0.0);
+            UIView *segment = [UIView new];
+            segment.backgroundColor = shades[MIN(idx, shades.count - 1)];
+            segment.tag = (NSInteger)(offset * 10000) + 1;
+            [track addSubview:segment];
+            offset += share;
+        }];
+
+        strip.frame = CGRectMake(SPKUI_RowLeading, 0,
+                                 CGRectGetWidth(cell.contentView.bounds) - SPKUI_RowLeading * 2.0,
+                                 SPKUI_RowHeight);
+        strip.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        CGFloat valueWidth = [value.attributedText size].width + 2.0;
+        CGFloat stripWidth = CGRectGetWidth(strip.bounds);
+        value.frame = CGRectMake(stripWidth - valueWidth, 0, valueWidth, SPKUI_RowHeight);
+        track.frame = CGRectMake(0, (SPKUI_RowHeight - 5.0) / 2.0,
+                                 MAX(0.0, stripWidth - valueWidth - 14.0), 5.0);
+        CGFloat x = 0.0;
+        for (NSUInteger idx = 0; idx < track.subviews.count; idx++) {
+            CGFloat share = total > 0.0 ? MAX(0.0, row.barFractions[idx].doubleValue) / total
+                                        : (idx == 0 ? 1.0 : 0.0);
+            CGFloat w = CGRectGetWidth(track.bounds) * share;
+            track.subviews[idx].frame = CGRectMake(x, 0, w, 5.0);
+            x += w;
+        }
         break;
     }
     }
@@ -1567,8 +1655,12 @@ static void SPKCollectMenuCommands(UIMenu *menu, NSMutableArray<UICommand *> *ou
         };
         [items addObject:item];
     }
-    if (items.count == 0)
+    if (items.count == 0) {
+        // Never leave a dead control: hand the row back to the system menu.
+        sender.menu = menu;
+        sender.showsMenuAsPrimaryAction = YES;
         return;
+    }
 
     [SPKToggleMenu presentWithChoices:items fromView:sender inViewController:self onDismiss:nil];
 }

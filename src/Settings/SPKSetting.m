@@ -303,6 +303,16 @@
     return setting;
 }
 
++ (instancetype)storageBarCellWithFractions:(NSArray<NSNumber *> *)fractions
+                                      value:(NSString *)value {
+    SPKSetting *setting = [self new];
+    setting->_type = SPKTableCellStorageBar;
+    setting.title = value;
+    setting.barFractions = fractions;
+    setting.barValue = value;
+    return setting;
+}
+
 // MARK: -  Instance methods
 
 - (UIMenu *)menuForButton:(UIButton *)button {

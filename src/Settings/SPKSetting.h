@@ -13,6 +13,7 @@ typedef NS_ENUM(NSInteger, SPKTableCell) {
     SPKTableCellNavigation,
     SPKTableCellTextField,
     SPKTableCellValue,
+    SPKTableCellStorageBar,
 };
 
 ///
@@ -20,6 +21,10 @@ typedef NS_ENUM(NSInteger, SPKTableCell) {
 @interface SPKSetting : NSObject
 
 @property (nonatomic, readonly) SPKTableCell type;
+
+/// Storage bar rows only: the segment weights and the trailing value.
+@property (nonatomic, copy, nullable) NSArray<NSNumber *> *barFractions;
+@property (nonatomic, copy, nullable) NSString *barValue;
 
 @property (nonatomic, strong) NSString *title;
 @property (nonatomic, strong) NSString *subtitle;
@@ -192,6 +197,12 @@ typedef NS_ENUM(NSInteger, SPKTableCell) {
 + (instancetype)valueCellWithTitle:(NSString *)title
                           subtitle:(nullable NSString *)subtitle
                               icon:(nullable UIImage *)icon;
+
+/// A read-only row that draws a proportional bar followed by a value, for a
+/// figure that is observed rather than set. `fractions` are shaded from dark to
+/// light in order and are normalised by the cell.
++ (instancetype)storageBarCellWithFractions:(NSArray<NSNumber *> *)fractions
+                                      value:(NSString *)value;
 
 #pragma mark - Instance methods
 
