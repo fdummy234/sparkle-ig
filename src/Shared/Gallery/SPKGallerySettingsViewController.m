@@ -332,9 +332,9 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                        icon:SPKSettingsIcon(@"media")
                                                      action:^{
                                                          SPKGalleryImportViewController *vc = [[SPKGalleryImportViewController alloc] initWithDestinationFolderPath:self.importDestinationFolderPath];
-    importRow.helpText = @"Import media from the Files app with full editable metadata. Coming from Regram? Pick your exported folder or MediaVault.zip here.";
                                                          [self.navigationController pushViewController:vc animated:YES];
                                                      }];
+    importRow.helpText = @"Import media from the Files app with full editable metadata. Coming from Regram? Pick your exported folder or MediaVault.zip here.";
 
 
     SPKSetting *deleteRow = [SPKSetting buttonCellWithTitle:@"Delete Files"
@@ -342,7 +342,6 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                        icon:SPKSettingsIcon(@"trash")
                                                      action:^{
                                                          SPKGalleryDeleteViewController *vc = [[SPKGalleryDeleteViewController alloc] initWithMode:SPKGalleryDeletePageModeRoot];
-    deleteRow.helpText = @"Remove files from the Gallery for good.";
                                                          __weak typeof(self) weakSelf = self;
                                                          vc.onDidDelete = ^{
                                                              [weakSelf reloadStats];
@@ -351,6 +350,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                          };
                                                          [self.navigationController pushViewController:vc animated:YES];
                                                      }];
+    deleteRow.helpText = @"Remove files from the Gallery for good.";
     deleteRow.tintColor = [SPKUtils SPKColor_InstagramDestructive];
     deleteRow.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
