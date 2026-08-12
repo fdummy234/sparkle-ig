@@ -4,30 +4,24 @@
 // Sparkle's single visible entry point: a ✦ button in the navigation bar of
 // Instagram's own "Settings and activity" screen.
 //
-// That screen is Settings.Views.IGSettingsHostingController<IGSettingScreenView>,
-// a Swift class the runtime does not register at launch — resolving it once
-// during startup finds nothing. So nothing is resolved ahead of time:
-// IGNavigationController is a plain ObjC class that is always present, and every
-// controller it pushes is checked as it appears.
+// Two things make that screen hostile to a plain rightBarButtonItem: it is
+// hosted by SwiftUI, which owns its toolbar and rebuilds it as the view
+// settles, and its controller is a Swift generic the runtime only registers
+// once its module loads. So the button is not a bar button item at all — it is
+// a view parented to the navigation bar and re-seated on every layout pass,
+// the same approach the inbox header button already uses against this app.
 //
-// Two independent signals identify the screen, so a rename on either side still
-// lands: the class name contains "IGSettingsHostingController", or the title
-// reads "Settings and activity".
+// The hook sits on UINavigationBar rather than on any Instagram class: UIKit is
+// always present, and the bar is walked back to its owning controller to decide
+// whether this is the settings screen.
 
-static const void *kSPKNativeSettingsButtonAssocKey = &kSPKNativeSettingsButtonAssocKey;
+static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
+static CGFloat const kSPKSettingsEntryButtonSize = 40.0;
+static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
 static BOOL SPKNativeSettingsEntryDidInstall = NO;
 
 BOOL SPKNativeSettingsEntryInstalled(void) {
     return SPKNativeSettingsEntryDidInstall;
-}
-
-static BOOL SPKIsNativeSettingsScreen(UIViewController *controller) {
-    if (!controller)
-        return NO;
-    const char *name = class_getName(object_getClass(controller));
-    if (name && strstr(name, "IGSettingsHostingController"))
-        return YES;
-    return [controller.title isEqualToString:@"Settings and activity"];
 }
 
 @interface SPKNativeSettingsEntryTarget : NSObject
@@ -47,62 +41,74 @@ static BOOL SPKIsNativeSettingsScreen(UIViewController *controller) {
 }
 
 - (void)openSparkleSettings:(id)sender {
-    [SPKUtils showSettingsVC:[UIApplication sharedApplication].keyWindow];
+    UIWindow *window = [sender isKindOfClass:[UIView class]] ? ((UIView *)sender).window : nil;
+    [SPKUtils showSettingsVC:window ?: [UIApplication sharedApplication].keyWindow];
 }
 
 @end
 
-static void SPKSeatNativeSettingsButton(UIViewController *controller) {
-    if (!SPKIsNativeSettingsScreen(controller))
-        return;
-
-    UINavigationItem *item = controller.navigationItem;
-    if (!item)
-        return;
-
-    UIBarButtonItem *existing = objc_getAssociatedObject(controller, kSPKNativeSettingsButtonAssocKey);
-    if (existing && item.rightBarButtonItem == existing)
-        return;
-
-    UIImage *icon = [UIImage systemImageNamed:@"sparkles"
-                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:19.0
-                                                                                              weight:UIImageSymbolWeightRegular]];
-    UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithImage:icon
-                                                               style:UIBarButtonItemStylePlain
-                                                              target:[SPKNativeSettingsEntryTarget sharedTarget]
-                                                              action:@selector(openSparkleSettings:)];
-    button.accessibilityLabel = @"Sparkle";
-    item.rightBarButtonItem = button;
-    objc_setAssociatedObject(controller, kSPKNativeSettingsButtonAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SPKNativeSettingsEntryDidInstall = YES;
-    SPKLog(@"Settings", @"[Sparkle] Settings entry seated on %@", NSStringFromClass(object_getClass(controller)));
+// Identified by two independent signals so a rename on either side still lands:
+// the Swift class name, or the title Instagram gives the screen.
+static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
+    if (!controller)
+        return NO;
+    const char *name = class_getName(object_getClass(controller));
+    if (name && strstr(name, "IGSettingsHostingController"))
+        return YES;
+    return [controller.title isEqualToString:@"Settings and activity"];
 }
 
-// The screen is SwiftUI-hosted and rebuilds its bar as it settles, so the button
-// is seated on push and again on the next runloop turns.
-static void SPKSeatNativeSettingsButtonRepeatedly(UIViewController *controller) {
-    if (!SPKIsNativeSettingsScreen(controller))
-        return;
-    SPKSeatNativeSettingsButton(controller);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        SPKSeatNativeSettingsButton(controller);
-    });
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        SPKSeatNativeSettingsButton(controller);
-    });
+static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
+    UIResponder *responder = bar.next;
+    while (responder) {
+        if ([responder isKindOfClass:[UINavigationController class]])
+            return ((UINavigationController *)responder).topViewController;
+        responder = responder.nextResponder;
+    }
+    return nil;
 }
 
 %group SPKNativeSettingsEntryHooks
-%hook IGNavigationController
+%hook UINavigationBar
 
-- (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated {
+- (void)layoutSubviews {
     %orig;
-    SPKSeatNativeSettingsButtonRepeatedly(viewController);
-}
 
-- (void)setViewControllers:(NSArray<UIViewController *> *)viewControllers animated:(BOOL)animated {
-    %orig;
-    SPKSeatNativeSettingsButtonRepeatedly(viewControllers.lastObject);
+    UIButton *button = objc_getAssociatedObject(self, kSPKSettingsEntryButtonAssocKey);
+    if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(self))) {
+        button.hidden = YES;
+        return;
+    }
+
+    if (!button) {
+        button = [UIButton buttonWithType:UIButtonTypeSystem];
+        UIImage *icon = [UIImage systemImageNamed:@"sparkles"
+                                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20.0
+                                                                                                  weight:UIImageSymbolWeightRegular]];
+        [button setImage:icon forState:UIControlStateNormal];
+        button.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+        button.accessibilityLabel = @"Sparkle";
+        [button addTarget:[SPKNativeSettingsEntryTarget sharedTarget]
+                   action:@selector(openSparkleSettings:)
+         forControlEvents:UIControlEventTouchUpInside];
+        objc_setAssociatedObject(self, kSPKSettingsEntryButtonAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        SPKNativeSettingsEntryDidInstall = YES;
+        SPKLog(@"Settings", @"[Sparkle] Settings entry seated in the navigation bar");
+    }
+
+    // SwiftUI re-adds its own content on each pass, so the button is brought
+    // back to the front rather than added once.
+    if (button.superview != self)
+        [self addSubview:button];
+    [self bringSubviewToFront:button];
+    button.hidden = NO;
+
+    CGFloat size = kSPKSettingsEntryButtonSize;
+    CGRect bounds = self.bounds;
+    button.frame = CGRectMake(CGRectGetMaxX(bounds) - size - kSPKSettingsEntryButtonInset,
+                              CGRectGetMaxY(bounds) - size - (CGRectGetHeight(bounds) > 60.0 ? 6.0 : 2.0),
+                              size,
+                              size);
 }
 
 %end
