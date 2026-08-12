@@ -157,6 +157,9 @@ void SPKInstallLaunchCriticalHooks(void) {
     SPK_INSTALL(SPKInstallStoryAdBlockingHooksIfEnabled);
     SPK_INSTALL(SPKInstallNavigationHooksIfNeeded);
     SPK_INSTALL(SPKInstallSettingsShortcutsHooksIfNeeded);
+    // The one visible way into Sparkle: install it on the normal path too, not
+    // only in the suppressed-hooks path above.
+    SPK_INSTALL(SPKInstallNativeSettingsEntryHooksIfNeeded);
 }
 
 void SPKInstallFeedSurfaceHooksIfNeeded(void) {
