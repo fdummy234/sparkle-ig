@@ -106,7 +106,10 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
         if (subview == button || CGRectIsEmpty(subview.frame))
             continue;
         const char *name = class_getName(object_getClass(subview));
-        if (name && strstr(name, "ContentView")) {
+        // "NavigationBarContentView" exactly: "ContentView" alone also matches
+        // the visual effect's content view, which spans the whole bar and sits
+        // the icon far too low.
+        if (name && strstr(name, "NavigationBarContentView")) {
             contentRow = subview;
             break;
         }
