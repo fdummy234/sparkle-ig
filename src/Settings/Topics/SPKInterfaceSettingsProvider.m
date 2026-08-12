@@ -84,9 +84,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             }),
     ] mutableCopy];
 
-    NSMutableArray *tabBarRows = [@[
-        swipeBetweenTabs,
-    ] mutableCopy];
+    NSMutableArray *tabBarRows = [NSMutableArray array];
 
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         // Was the untitled section — six homogeneous rows deserve their name.
@@ -166,8 +164,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
 
             [screenRows addObjectsFromArray:@[ liquidGlass, progressiveBlur ]];
             // The bar's scroll behavior belongs to the tab bar on every iOS.
-            [tabBarRows addObject:tabBarBehaviorCell()];
-        } else {
+                } else {
             // Pre-iOS 26 can't render the glass material, but the same tab bar
             // experiment gates still reshape the bar into the floating pill.
             // Expose that as a focused toggle sharing the Liquid Glass pref.
@@ -186,8 +183,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             pillTabBar.searchKeywords = @"liquid glass floating";
 
             [tabBarRows addObject:pillTabBar];
-            [tabBarRows addObject:tabBarBehaviorCell()];
-        }
+                }
     }
 
     // The gate and the Messages-Only rows join the bar they shape.
@@ -248,18 +244,8 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                 s.enabledProvider = ^BOOL {
                     return SPKIsMessagesOnlyMode();
                 };
-                s.helpText = @"Available once Messages is the only visible tab. Sparkle Settings then opens by long-pressing the right navigation button.";
-                s.searchKeywords = @"long press settings access space";
-                s;
-            }),
-            ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Header Shortcut Button"
-                                                           icon:SPKSettingsIcon(@"action")
-                                                    defaultsKey:@"interface_show_header_button_in_messages_only"];
-                s.enabledProvider = ^BOOL {
-                    return SPKIsMessagesOnlyMode();
-                };
-                s.helpText = @"Available once Messages is the only visible tab. Puts the feed header shortcut on the left of the navigation bar.";
+                s.helpText = @"Available once Messages is the only visible tab. Sparkle then opens from the ✦ button in the Messages header.";
+                s.searchKeywords = @"tab bar space settings access";
                 s;
             })
     ]];
@@ -272,8 +258,11 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                                 navSections:[SPKNotificationSettingsProvider sections]]];
     [sections addObject:SPKTopicSection(@"Screen", screenRows, nil)];
 
-    // R2: value pickers follow the switches assembled above.
+    // R2: every value picker follows the switches and the gate assembled above —
+    // "Swipe Between Tabs" and "Hide on Scroll" are pickers too, not switches.
     [tabBarRows addObjectsFromArray:@[
+        swipeBetweenTabs,
+        tabBarBehaviorCell(),
         [SPKSetting menuCellWithTitle:@"Launch Tab"
                                  icon:SPKSettingsIcon(@"home")
                                  menu:SPKLaunchTabMenu()],

@@ -228,30 +228,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
         // Everything about the chat screen itself. Was split across "Messaging"
         // and a section literally called "Interface".
         SPKTopicSection(@"Disappearing Messages", @[
-            keepDeleted,
-            ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
-                                            iconName:@"logs"
-                                         defaultsKey:@"msgs_deleted_log"],
-                    [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
-                                            iconName:@"reactions"
-                                         defaultsKey:@"msgs_deleted_log_reactions"],
-                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
-                                            iconName:@"eye"
-                                         defaultsKey:@"msgs_deleted_log_respect_seen_list"],
-                ]);
-                // Per-item help text for the menu items above.
-                g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
-                             @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
-                g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
-                // R5: hidden while Keep Deleted Messages is off.
-                g.hiddenProvider = ^BOOL {
-                    return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
-                };
-                g;
-            }),
-            viewDeletedLog,
             ({
                 // One switch for both surfaces: view-once media and vanish mode
                 // keep their own keys, written together so they never diverge.
@@ -278,7 +254,31 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                                                      defaultsKey:@"msgs_disable_vanish_swipe_up"];
                 sw.searchKeywords = @"gesture vanish mode";
                 sw;
-            })],
+            }),
+            keepDeleted,
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
+                                            iconName:@"logs"
+                                         defaultsKey:@"msgs_deleted_log"],
+                    [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
+                                            iconName:@"reactions"
+                                         defaultsKey:@"msgs_deleted_log_reactions"],
+                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
+                                            iconName:@"eye"
+                                         defaultsKey:@"msgs_deleted_log_respect_seen_list"],
+                ]);
+                // Per-item help text for the menu items above.
+                g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
+                             @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
+                g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
+                // R5: hidden while Keep Deleted Messages is off.
+                g.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
+                };
+                g;
+            }),
+            viewDeletedLog],
                         nil),
         SPKTopicSection(@"Seen Receipts", @[
             ({

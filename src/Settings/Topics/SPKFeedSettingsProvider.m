@@ -195,40 +195,6 @@ static NSArray *SPKFeedCommentsSections(void) {
                                 defaultsKey:@"feed_disable_bg_refresh"]
         ],
                         nil),
-        SPKTopicSection(@"Header Shortcut", @[
-            headerButton,
-            // Was its own five-row section: the destinations of the header
-            // shortcut belong to the shortcut, not to a list of their own.
-            ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Destinations", @"compass", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Gallery"
-                                            iconName:@"sparkle_gallery"
-                                         defaultsKey:@"feed_header_button_dest_gallery"],
-                    [SPKToggleMenuItem itemWithTitle:@"Profile Analyzer"
-                                            iconName:@"profile_analyzer"
-                                         defaultsKey:@"feed_header_button_dest_analyzer"],
-                    [SPKToggleMenuItem itemWithTitle:@"Deleted Messages"
-                                            iconName:@"trash"
-                                         defaultsKey:@"feed_header_button_dest_deleted"],
-                    [SPKToggleMenuItem itemWithTitle:@"Downloads"
-                                            iconName:@"download"
-                                         defaultsKey:@"feed_header_button_dest_downloads"],
-                    [SPKToggleMenuItem itemWithTitle:@"Sparkle Settings"
-                                            iconName:@"settings"
-                                         defaultsKey:@"feed_header_button_dest_settings"],
-                ]);
-                g.searchKeywords = @"destinations shortcut gallery analyzer downloads deleted settings";
-                // R5: hidden while Show Header Button is off.
-                g.hiddenProvider = ^BOOL {
-                    return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-                };
-                g;
-            }),
-            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
-            configureDestinations,
-        ],
-                        nil),
-
 SPKTopicSection(@"", @[
             [SPKSetting navigationCellWithTitle:@"Comments"
                                        subtitle:nil

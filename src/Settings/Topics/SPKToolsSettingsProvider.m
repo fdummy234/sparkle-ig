@@ -152,17 +152,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
     // last — FLEX often is not even installed on regular builds.
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Tweak", @[
-            [SPKSetting switchCellWithTitle:@"Quick Settings Access"
-                           icon:SPKSettingsIcon(@"settings")
-                                defaultsKey:@"tools_settings_shortcut"
-                            requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
-                           icon:SPKSettingsIcon(@"haptics")
-                                defaultsKey:@"tools_shortcut_haptics"],
-            [SPKSetting switchCellWithTitle:@"Show Settings on App Launch"
-                           icon:SPKSettingsIcon(@"play")
-                                defaultsKey:@"tools_open_settings_on_launch"],
-            [SPKSetting buttonCellWithTitle:@"Show Onboarding"
+[SPKSetting buttonCellWithTitle:@"Show Onboarding"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"compass")
                                      action:^(void) {
