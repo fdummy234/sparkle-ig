@@ -96,41 +96,45 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     [self bringSubviewToFront:button];
     button.hidden = NO;
 
-    // The bar's box is taller than its control row — it extends under the status
-    // bar — so anchoring to either edge misplaces the icon. UIKit keeps the row
-    // in a content view; its centre and its leading inset are what to match.
+    // Containers move between iOS versions; the title does not. It sits in the
+    // middle of the control row by definition, so its centre is the one to
+    // match — found by walking down to the deepest label with text.
     CGFloat size = kSPKSettingsEntryButtonSize;
     CGRect bounds = self.bounds;
-    UIView *contentRow = nil;
-    for (UIView *subview in self.subviews) {
-        if (subview == button || CGRectIsEmpty(subview.frame))
+    UILabel *titleLabel = nil;
+    NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
+    while (queue.count > 0) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        if (view == button)
             continue;
-        const char *name = class_getName(object_getClass(subview));
-        // "NavigationBarContentView" exactly: "ContentView" alone also matches
-        // the visual effect's content view, which spans the whole bar and sits
-        // the icon far too low.
-        if (name && strstr(name, "NavigationBarContentView")) {
-            contentRow = subview;
-            break;
-        }
-        // Fallback: among the full-width layers, the control row is the shortest.
-        if (CGRectGetWidth(subview.frame) >= CGRectGetWidth(bounds) - 1.0 &&
-            (!contentRow || CGRectGetHeight(subview.frame) < CGRectGetHeight(contentRow.frame)))
-            contentRow = subview;
+        if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
+            (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
+            titleLabel = (UILabel *)view;
+        [queue addObjectsFromArray:view.subviews];
     }
-    CGRect row = contentRow ? contentRow.frame : CGRectMake(0, CGRectGetMaxY(bounds) - 44.0, CGRectGetWidth(bounds), 44.0);
-    CGFloat centreY = CGRectGetMidY(row);
 
+    CGFloat centreY = titleLabel
+        ? CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self])
+        : CGRectGetMaxY(bounds) - 22.0;
+
+    // Mirror the leading inset of whatever sits on the other side of the title.
     CGFloat inset = kSPKSettingsEntryButtonInset;
     UIView *leading = nil;
-    for (UIView *child in (contentRow ? contentRow.subviews : @[])) {
-        if (CGRectIsEmpty(child.frame) || CGRectGetWidth(child.frame) > CGRectGetWidth(bounds) * 0.4)
+    for (UIView *child in (titleLabel.superview ? titleLabel.superview.subviews : self.subviews)) {
+        if (child == button || child == titleLabel || CGRectIsEmpty(child.frame))
             continue;
-        if (!leading || CGRectGetMinX(child.frame) < CGRectGetMinX(leading.frame))
+        CGRect f = [child convertRect:child.bounds toView:self];
+        if (CGRectGetWidth(f) > CGRectGetWidth(bounds) * 0.4)
+            continue;
+        if (!leading || CGRectGetMinX(f) < CGRectGetMinX([leading convertRect:leading.bounds toView:self]))
             leading = child;
     }
-    if (leading && CGRectGetMinX(leading.frame) < CGRectGetWidth(bounds) * 0.25)
-        inset = CGRectGetMinX(leading.frame);
+    if (leading) {
+        CGFloat x = CGRectGetMinX([leading convertRect:leading.bounds toView:self]);
+        if (x < CGRectGetWidth(bounds) * 0.25)
+            inset = x;
+    }
 
     button.frame = CGRectMake(CGRectGetMaxX(bounds) - size - inset,
                               centreY - size / 2.0,
