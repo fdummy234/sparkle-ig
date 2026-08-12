@@ -234,17 +234,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
               ],
                                         nil)];
 
-    // Browsing, Grid and Preview asked the same question — what the grid shows
-    // and how you move in it — under three headers.
-    [sections addObject:SPKTopicSection(@"Browsing",
-                                        @[favoritesRow, pinFolderRow, flatBrowsingRow,
-                                          pinchRow, sourceUsernameRow, mediaInfoRow],
-                                        @"1. Pin favorites above other files inside the current sort and folder context.\n"
-                                        @"2. Keep the subfolder bar pinned to the top while scrolling.\n"
-                                        @"3. Show files from all folders instead of only the current folder's files. The folders stay in the bar above and still narrow the list.\n"
-                                        @"4. Pinch the grid to change density (2, 3 or 5 columns).\n"
-                                        @"5. Overlay the source icon and username on each grid item; the username shows at lower densities.\n"
-                                        @"6. Overlay the username, source, and saved/posted dates on the expanded photo preview. Tap the media to hide it along with the controls.")];
+
 
     SPKSetting *replaceOriginalRow = [SPKSetting switchCellWithTitle:@"Ask to Replace Original"
                                                                 icon:SPKSettingsIcon(@"left_right")
@@ -288,6 +278,18 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     SPKSetting *mediaInfoRow = [SPKSetting switchCellWithTitle:@"Show Media Info"
                                                           icon:SPKSettingsIcon(@"info")
                                                    defaultsKey:@"gallery_preview_show_metadata"];
+
+    // Browsing, Grid and Preview asked the same question — what the grid shows
+    // and how you move in it — under three headers.
+    [sections addObject:SPKTopicSection(@"Browsing",
+                                        @[favoritesRow, pinFolderRow, flatBrowsingRow,
+                                          pinchRow, sourceUsernameRow, mediaInfoRow],
+                                        @"1. Pin favorites above other files inside the current sort and folder context.\n"
+                                        @"2. Keep the subfolder bar pinned to the top while scrolling.\n"
+                                        @"3. Show files from all folders instead of only the current folder's files. The folders stay in the bar above and still narrow the list.\n"
+                                        @"4. Pinch the grid to change density (2, 3 or 5 columns).\n"
+                                        @"5. Overlay the source icon and username on each grid item; the username shows at lower densities.\n"
+                                        @"6. Overlay the username, source, and saved/posted dates on the expanded photo preview. Tap the media to hide it along with the controls.")];
 
     NSMutableArray *lockRows = [NSMutableArray array];
 
