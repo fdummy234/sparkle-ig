@@ -32,6 +32,13 @@ static CGFloat const SPKUI_BandLast           = 6.0;   // same band as between g
 // Associates a menu row with its button so the tap can rebuild its picker.
 static const void *kSPKMenuButtonRowKey = &kSPKMenuButtonRowKey;
 
+static CGFloat const SPKUI_HeaderTop          = 14.0;
+static CGFloat const SPKUI_HeaderBottom       = 14.0;
+static CGFloat const SPKUI_HeaderLeading      = 16.5;  // renders ~18 on screen
+static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // full glyph height measured: 38 px native vs 44 px at 16 pt
+static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
+static CGFloat const SPKUI_ValueFontSize      = 14.0;  // "11 active", menu values — native measures 31 px vs 34 at 15 pt: one step smaller than the title
+
 // Storage bar row: the strip is rebuilt on each configuration, found by tag.
 static NSInteger const kSPKStorageBarTag = 8801;
 
@@ -52,12 +59,6 @@ static NSAttributedString *SPKStorageValueText(NSString *value) {
     }
     return text;
 }
-static CGFloat const SPKUI_HeaderTop          = 14.0;
-static CGFloat const SPKUI_HeaderBottom       = 14.0;
-static CGFloat const SPKUI_HeaderLeading      = 16.5;  // renders ~18 on screen
-static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // full glyph height measured: 38 px native vs 44 px at 16 pt
-static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
-static CGFloat const SPKUI_ValueFontSize      = 14.0;  // "11 active", menu values — native measures 31 px vs 34 at 15 pt: one step smaller than the title
 
 
 static char rowStaticRef[] = "row";
