@@ -5,6 +5,8 @@
 #import "../../Settings/SPKSettingsViewController.h"
 #import "../../Shared/Gallery/SPKGalleryViewController.h"
 #import "../../Utils.h"
+
+FOUNDATION_EXPORT BOOL SPKNativeSettingsEntryInstalled(void);
 #import "../../App/SPKPerfMeter.h"
 
 static const void *kSPKHomeTabSettingsLongPressAssocKey = &kSPKHomeTabSettingsLongPressAssocKey;
@@ -223,7 +225,9 @@ static BOOL SPKTabHiddenForIdentifier(NSString *identifier) {
 }
 
 static NSString *SPKResolvedSettingsShortcutTabIdentifier(void) {
-    if (![SPKUtils getBoolPref:@"tools_settings_shortcut"])
+    // Fallback only: the ✦ in Instagram's own settings screen is the way in.
+    // This long-press exists purely so a failed hook can't lock anyone out.
+    if (SPKNativeSettingsEntryInstalled())
         return nil;
 
     NSArray<NSString *> *priority = @[ @"mainfeed-tab", @"reels-tab", @"direct-inbox-tab", @"camera-tab", @"explore-tab", @"profile-tab" ];
