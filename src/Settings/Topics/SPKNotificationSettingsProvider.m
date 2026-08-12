@@ -103,7 +103,7 @@
                                      action:^{
                                          [self spk_showNextNotificationPreview];
                                      }],
-            [SPKSetting navigationCellWithTitle:@"Haptics"
+            [SPKSetting navigationCellWithTitle:@"Notification Haptics"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"haptics")
                                     navSections:[self spk_featureSectionsForHaptics:YES]]],

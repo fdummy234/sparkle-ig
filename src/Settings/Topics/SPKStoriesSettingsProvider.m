@@ -76,7 +76,10 @@ manualSeenList.hiddenProvider = ^BOOL {
     });
 
     return SPKTopicSection(@"Seen Receipts", @[
-        ({
+            [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
+                                       icon:SPKSettingsIcon(@"story")
+                                defaultsKey:@"stories_unlock_preview"],
+            ({
             SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"stories_manual_seen"];
@@ -84,6 +87,8 @@ manualSeenList.hiddenProvider = ^BOOL {
             row.helpText = @"Stories stop sending read receipts until the eye button is tapped. Turning this on reveals Mark Seen On\u2026 and the viewer tools.";
             row;
         }),
+            markSeenGate,
+            manualSeenList,
             // Acts on the story viewer list; help text replaces the former
             // numbered footer note.
             ({
@@ -92,9 +97,7 @@ manualSeenList.hiddenProvider = ^BOOL {
                                                     defaultsKey:@"stories_search_viewer_list"];
                 s.helpText = @"Add a search button to your story's viewer list to search and filter any viewer.";
                 s;
-            }),
-        markSeenGate,
-        manualSeenList],
+            })],
                            footer);
 }
 
@@ -141,9 +144,6 @@ static NSArray *SPKStoriesSettingsSections(void) {
             [SPKSetting switchCellWithTitle:@"Show Poll Vote Counts"
                                        icon:SPKSettingsIcon(@"poll")
                                 defaultsKey:@"stories_poll_vote_counts"],
-            [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
-                                       icon:SPKSettingsIcon(@"story")
-                                defaultsKey:@"stories_unlock_preview"],
             [SPKSetting switchCellWithTitle:@"Hide Instagram Plus Button"
                                        icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:@"stories_hide_ig_plus_button"]],

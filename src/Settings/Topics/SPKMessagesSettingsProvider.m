@@ -163,6 +163,11 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 
     // Tri-state control for reformatting the chat-header last-active presence
     // label: Off / Smart / Date & Time.
+    SPKSetting *hideCreateGroup = [SPKSetting switchCellWithTitle:@"Hide Create Group Button"
+                                                             icon:SPKSettingsIcon(@"group")
+                                                      defaultsKey:@"general_hide_create_group"];
+    hideCreateGroup.searchKeywords = @"send share sheet";
+
     SPKSetting *lastActiveFormat = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Last Active"
                                                                                             icon:SPKSettingsIcon(@"clock")
                                                                                             menu:SPKLastActiveFormatMenu()],
@@ -209,10 +214,10 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                                                 defaultsKey:@"msgs_audio_upload_trim"];
     trimAudio.searchKeywords = @"cut editor length";
 
-    SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
+    SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Send Photo from Gallery"
                                                                 icon:SPKSettingsIcon(@"photo")
                                                          defaultsKey:@"msgs_upload_gallery_media"];
-    uploadGalleryPhoto.searchKeywords = @"composer plus menu picture send";
+    uploadGalleryPhoto.searchKeywords = @"composer plus menu picture send upload photo gallery";
 
     // ---- Notes ---------------------------------------------------------
 
@@ -281,6 +286,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             viewDeletedLog],
                         nil),
         SPKTopicSection(@"Seen Receipts", @[
+            unlockPreview,
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
                                            icon:SPKSettingsIcon(@"eye")
@@ -296,7 +302,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             manualSeenList],
                         nil),
         SPKTopicSection(@"Chat Screen", @[
-            unlockPreview,
+            hideCreateGroup,
             // Six hides of the same screen, one gate — the verb lives on the
             // row; Typing Status keeps its noun (it is not a button).
             ({
@@ -361,6 +367,9 @@ SPKTopicSection(@"Notes", @[
                                       ]),
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
+                [SPKToggleMenuItem itemWithTitle:@"Create Group"
+                                        iconName:@"group"
+                                     defaultsKey:@"general_confirm_create_group"],
                 // Was a row in "Deleted Messages" — it is a confirmation like
                 // the others, and it belongs where the user looks for them.
                 [SPKToggleMenuItem itemWithTitle:@"Inbox Refresh"

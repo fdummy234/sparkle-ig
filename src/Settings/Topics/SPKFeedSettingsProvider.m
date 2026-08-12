@@ -22,11 +22,11 @@ static NSArray *SPKFeedCommentsSections(void) {
     commentMediaActions.helpText = @"Adds Photos, Share, Gallery and link actions to GIF and photo comments.";
     commentMediaActions.searchKeywords = @"comment gif photos share gallery link";
 
-    SPKSetting *commentGalleryUpload = [SPKSetting switchCellWithTitle:@"Upload Photo from Gallery"
+    SPKSetting *commentGalleryUpload = [SPKSetting switchCellWithTitle:@"Attach Photo to Comments"
                                                                   icon:SPKSettingsIcon(@"photo")
                                                            defaultsKey:@"general_comments_gallery_upload"];
     commentGalleryUpload.helpText = @"Long-press the composer's photo button to attach from your Sparkle Gallery.";
-    commentGalleryUpload.searchKeywords = @"attach composer sparkle gallery";
+    commentGalleryUpload.searchKeywords = @"attach composer sparkle gallery upload photo gallery";
 
     SPKSetting *swipeCloseComments = [SPKSetting switchCellWithTitle:@"Swipe to Close"
                                                                 icon:SPKSettingsIcon(@"left_right")
@@ -195,11 +195,10 @@ static NSArray *SPKFeedCommentsSections(void) {
                                 defaultsKey:@"feed_disable_bg_refresh"]
         ],
                         nil),
-SPKTopicSection(@"", @[
-            [SPKSetting navigationCellWithTitle:@"Comments"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"comment")
-                                    navSections:SPKFeedCommentsSections()],
+        // Comments is a full section again: eight rows deep enough to stand on
+        // their own page were one tap away for no reason.
+        SPKFeedCommentsSections().firstObject,
+        SPKTopicSection(@"", @[
             SPKActionButtonRowSetting(kSPKFeedActionButtonEnabledKey,
                                       nil,
                                       @[

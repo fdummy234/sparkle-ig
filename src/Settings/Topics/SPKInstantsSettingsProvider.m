@@ -32,7 +32,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
         // "Privacy" held a single row; screenshots are part of what the camera
         // does, so the two sections become one.
         SPKTopicSection(@"Camera", @[
-            [SPKSetting switchCellWithTitle:@"Allow Screenshots"
+            [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
                                        icon:SPKSettingsIcon(@"warning")
                                 defaultsKey:@"instants_allow_screenshot"],
             ({

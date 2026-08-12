@@ -147,10 +147,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // ---- Sharing -------------------------------------------------------
 
-    SPKSetting *hideCreateGroup = [SPKSetting switchCellWithTitle:@"Hide Create Group Button"
-                                                             icon:SPKSettingsIcon(@"group")
-                                                      defaultsKey:@"general_hide_create_group"];
-    hideCreateGroup.searchKeywords = @"send share sheet";
 
     // ---- Media Preview & Menu ------------------------------------------
 
@@ -191,10 +187,8 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
             copyText,
             stripTracking,
             holdSendCopyLink,
-            hideCreateGroup,
             showMediaInfo,
-            showDateInMenu
-        ],
+            showDateInMenu],
                         nil),
         // Kept as a footer: it describes the section, not any one row, so it has
         // no row to hang off and no ⓘ to open.
@@ -303,9 +297,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // everywhere else.
         SPKTopicSection(@"", @[
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
-                [SPKToggleMenuItem itemWithTitle:@"Create Group"
-                                        iconName:@"group"
-                                     defaultsKey:@"general_confirm_create_group"],
                 [SPKToggleMenuItem itemWithTitle:@"New Post"
                                         iconName:@"messages"
                                      defaultsKey:@"general_confirm_send"],

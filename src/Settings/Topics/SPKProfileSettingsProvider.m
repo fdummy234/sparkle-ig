@@ -126,7 +126,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
         // the profile screen.
         // The page is already called Profile: a header repeating it says nothing.
         SPKTopicSection(@"", @[
-            [SPKSetting switchCellWithTitle:@"Long Press to Expand"
+            [SPKSetting switchCellWithTitle:@"Long Press to Zoom Photo"
                                        icon:SPKSettingsIcon(@"expand")
                                 defaultsKey:@"profile_photo_zoom"],
             [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
