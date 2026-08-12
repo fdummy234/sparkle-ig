@@ -195,6 +195,8 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // findable through the search keywords below.
 
     SPKSetting *downloadVoice = SPKAudioGatedSwitch(@"Download Voice Messages", SPKSettingsIcon(@"audio_download"), @"msgs_download_audio_messages");
+    // Its master lives on another page, so the row names where to find it.
+    downloadVoice.helpText = @"Shown while Audio Downloads is on in the Downloads page.";
     downloadVoice.searchKeywords = @"voice message audio save";
 
     SPKSetting *uploadAudio = [SPKSetting switchCellWithTitle:@"Upload Audio"
@@ -225,11 +227,60 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     return @[
         // Everything about the chat screen itself. Was split across "Messaging"
         // and a section literally called "Interface".
+        SPKTopicSection(@"Disappearing Messages", @[
+            keepDeleted,
+            ({
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
+                                            iconName:@"logs"
+                                         defaultsKey:@"msgs_deleted_log"],
+                    [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
+                                            iconName:@"reactions"
+                                         defaultsKey:@"msgs_deleted_log_reactions"],
+                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
+                                            iconName:@"eye"
+                                         defaultsKey:@"msgs_deleted_log_respect_seen_list"],
+                ]);
+                // Per-item help text for the menu items above.
+                g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
+                             @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
+                g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
+                // R5: hidden while Keep Deleted Messages is off.
+                g.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
+                };
+                g;
+            }),
+            viewDeletedLog,
+            ({
+                // One switch for both surfaces: view-once media and vanish mode
+                // keep their own keys, written together so they never diverge.
+                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
+                                                            icon:SPKSettingsIcon(@"warning")
+                                                     defaultsKey:@""];
+                sw.switchValueProvider = ^BOOL {
+                    return [SPKUtils getBoolPref:@"msgs_disable_screenshot_detection"]
+                        && [SPKUtils getBoolPref:@"msgs_hide_vanish_screenshot"];
+                };
+                sw.switchChangeHandler = ^(BOOL isOn) {
+                    SPKPreferenceSetObject(@(isOn), @"msgs_disable_screenshot_detection");
+                    SPKPreferenceSetObject(@(isOn), @"msgs_hide_vanish_screenshot");
+                };
+                sw.helpText = @"Stops the screenshot alert on view-once media and in vanish mode.";
+                sw.searchKeywords = @"screenshot detection vanish view once media";
+                sw;
+            }),
+            disableAutoAdvance,
+            disableViewOnce,
+            ({
+                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Vanish Swipe-Up"
+                                                            icon:SPKSettingsIcon(@"arrow_up")
+                                                     defaultsKey:@"msgs_disable_vanish_swipe_up"];
+                sw.searchKeywords = @"gesture vanish mode";
+                sw;
+            })],
+                        nil),
         SPKTopicSection(@"Seen Receipts", @[
-            manualSeenSwitch,
-            markSeenGate,
-            seenButtonPosition,
-            manualSeenList,
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
                                            icon:SPKSettingsIcon(@"eye")
@@ -238,7 +289,11 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 row.helpText = @"Photos and videos stop sending read receipts until the eye is tapped. Turning this on reveals Advance After Manual Seen.";
                 row;
             }),
-            advanceVisual],
+            advanceVisual,
+            manualSeenSwitch,
+            markSeenGate,
+            seenButtonPosition,
+            manualSeenList],
                         nil),
         SPKTopicSection(@"Chat Screen", @[
             unlockPreview,
@@ -273,54 +328,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 // Visual Messages ∪ Vanish Mode: same territory (messages that
         // disappear) — and it resolves the duplicated "Disable Screenshot
         // Detection" row: one gate, two context-named items.
-        SPKTopicSection(@"Disappearing Messages", @[
-            keepDeleted,
-            ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
-                                            iconName:@"logs"
-                                         defaultsKey:@"msgs_deleted_log"],
-                    [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
-                                            iconName:@"reactions"
-                                         defaultsKey:@"msgs_deleted_log_reactions"],
-                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
-                                            iconName:@"eye"
-                                         defaultsKey:@"msgs_deleted_log_respect_seen_list"],
-                ]);
-                // Per-item help text for the menu items above.
-                g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
-                             @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
-                g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
-                // R5: hidden while Keep Deleted Messages is off.
-                g.hiddenProvider = ^BOOL {
-                    return ![SPKUtils getBoolPref:@"msgs_keep_deleted"];
-                };
-                g;
-            }),
-            viewDeletedLog,
-            disableAutoAdvance,
-            disableViewOnce,
-            ({
-                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Vanish Swipe-Up"
-                                                            icon:SPKSettingsIcon(@"arrow_up")
-                                                     defaultsKey:@"msgs_disable_vanish_swipe_up"];
-                sw.searchKeywords = @"gesture vanish mode";
-                sw;
-            }),
-            ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Disable Screenshot Detection", @"warning", @[
-                    [SPKToggleMenuItem itemWithTitle:@"View-Once Media"
-                                            iconName:@"view_once"
-                                         defaultsKey:@"msgs_disable_screenshot_detection"],
-                    [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
-                                            iconName:@"vanish"
-                                         defaultsKey:@"msgs_hide_vanish_screenshot"],
-                ]);
-                g.searchKeywords = @"screenshot detection vanish view once";
-                g;
-            })],
-                        nil),
-        SPKTopicSection(@"Notes", @[
+SPKTopicSection(@"Notes", @[
             [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
                                        icon:SPKSettingsIcon(@"notes")
                                 defaultsKey:@"msgs_hide_notes_tray"],
