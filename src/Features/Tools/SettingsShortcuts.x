@@ -5,8 +5,6 @@
 #import "../../Settings/SPKSettingsViewController.h"
 #import "../../Shared/Gallery/SPKGalleryViewController.h"
 #import "../../Utils.h"
-
-FOUNDATION_EXPORT BOOL SPKNativeSettingsEntryInstalled(void);
 #import "../../App/SPKPerfMeter.h"
 
 static const void *kSPKHomeTabSettingsLongPressAssocKey = &kSPKHomeTabSettingsLongPressAssocKey;
@@ -15,7 +13,6 @@ static const void *kSPKProfileMoreSettingsLongPressAssocKey = &kSPKProfileMoreSe
 static const NSTimeInterval kSPKHomeTabLongPressDuration = 0.5;
 static const NSTimeInterval kSPKGalleryTabLongPressDuration = 0.65;
 static const NSTimeInterval kSPKProfileMoreSettingsLongPressDuration = 0.5;
-static NSInteger const kSPKProfileMoreShortcutMaxInstallAttempts = 6;
 static NSString *const kSPKGalleryQuickAccessDisabledValue = @"none";
 
 @interface IGTabBarButton (SPKQuickActions)
@@ -36,8 +33,6 @@ static NSString *const kSPKGalleryQuickAccessDisabledValue = @"none";
 // UIImpactFeedbackGenerator hook (DisableHaptics.x) already respects
 // general_disable_haptics, so this stays silent when the user disabled haptics.
 static void SPKFireShortcutHaptic(void) {
-    if (![SPKUtils getBoolPref:@"tools_shortcut_haptics"])
-        return;
     UIImpactFeedbackGenerator *generator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
     [generator prepare];
     [generator impactOccurred];
@@ -62,93 +57,6 @@ static void SPKFireShortcutHaptic(void) {
     [SPKUtils showSettingsVC:sender.view.window];
 }
 @end
-
-static BOOL SPKIsProfileMoreButton(UIView *view) {
-    return [view.accessibilityIdentifier isEqualToString:@"profile-more-button"];
-}
-
-static void SPKAddProfileSettingsLongPressToView(UIView *view) {
-    if (!view)
-        return;
-    for (UIGestureRecognizer *gesture in view.gestureRecognizers) {
-        if (![gesture isKindOfClass:[UILongPressGestureRecognizer class]])
-            continue;
-        if (objc_getAssociatedObject(gesture, kSPKProfileMoreSettingsLongPressAssocKey)) {
-            return;
-        }
-    }
-
-    SPKLog(@"General", @"[Sparkle] Adding tweak settings long press gesture recognizer to %@ id=%@ label=%@",
-           NSStringFromClass(view.class),
-           view.accessibilityIdentifier,
-           view.accessibilityLabel);
-
-    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:[SPKSettingsShortcutTarget sharedTarget]
-                                                                                            action:@selector(handleProfileMoreLongPress:)];
-    longPress.minimumPressDuration = kSPKProfileMoreSettingsLongPressDuration;
-    longPress.cancelsTouchesInView = YES;
-    longPress.delaysTouchesBegan = YES;
-    longPress.delaysTouchesEnded = YES;
-
-    for (UIGestureRecognizer *existing in view.gestureRecognizers) {
-        [existing requireGestureRecognizerToFail:longPress];
-    }
-
-    [view addGestureRecognizer:longPress];
-    objc_setAssociatedObject(longPress, kSPKProfileMoreSettingsLongPressAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-static void (*orig_spkProfileMoreDidMoveToWindow)(id, SEL);
-static void SPKHookedProfileMoreDidMoveToWindow(id self, SEL _cmd) {
-    if (orig_spkProfileMoreDidMoveToWindow)
-        orig_spkProfileMoreDidMoveToWindow(self, _cmd);
-    if ([self isKindOfClass:[UIView class]] && SPKIsProfileMoreButton((UIView *)self)) {
-        SPKAddProfileSettingsLongPressToView((UIView *)self);
-    }
-}
-
-static void (*orig_spkProfileMoreLayoutSubviews)(id, SEL);
-static void SPKHookedProfileMoreLayoutSubviews(id self, SEL _cmd) {
-    if (orig_spkProfileMoreLayoutSubviews)
-        orig_spkProfileMoreLayoutSubviews(self, _cmd);
-    if ([self isKindOfClass:[UIView class]] && SPKIsProfileMoreButton((UIView *)self)) {
-        SPKAddProfileSettingsLongPressToView((UIView *)self);
-    }
-}
-
-static BOOL SPKProfileMoreShortcutHooksInstalled = NO;
-static BOOL SPKProfileMoreShortcutRetryScheduled = NO;
-static NSInteger SPKProfileMoreShortcutInstallAttempts = 0;
-
-static void SPKInstallProfileMoreShortcutHooks(void) {
-    if (SPKProfileMoreShortcutHooksInstalled)
-        return;
-
-    SPKProfileMoreShortcutInstallAttempts += 1;
-    Class buttonClass = objc_getClass("IGProfileNavigation.IGBadgedNavigationButton");
-    if (!buttonClass)
-        buttonClass = objc_getClass("_TtC19IGProfileNavigation24IGBadgedNavigationButton");
-    if (!buttonClass)
-        buttonClass = objc_getClass("IGBadgedNavigationButton");
-    if (!buttonClass) {
-        SPKLog(@"General", @"[Sparkle] Profile more settings shortcut hook target unavailable attempt=%ld",
-               (long)SPKProfileMoreShortcutInstallAttempts);
-        if (!SPKProfileMoreShortcutRetryScheduled &&
-            SPKProfileMoreShortcutInstallAttempts < kSPKProfileMoreShortcutMaxInstallAttempts) {
-            SPKProfileMoreShortcutRetryScheduled = YES;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.75 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                SPKProfileMoreShortcutRetryScheduled = NO;
-                SPKInstallProfileMoreShortcutHooks();
-            });
-        }
-        return;
-    }
-
-    MSHookMessageEx(buttonClass, @selector(didMoveToWindow), (IMP)SPKHookedProfileMoreDidMoveToWindow, (IMP *)&orig_spkProfileMoreDidMoveToWindow);
-    MSHookMessageEx(buttonClass, @selector(layoutSubviews), (IMP)SPKHookedProfileMoreLayoutSubviews, (IMP *)&orig_spkProfileMoreLayoutSubviews);
-    SPKProfileMoreShortcutHooksInstalled = YES;
-    SPKLog(@"General", @"[Sparkle] Profile more settings shortcut hooks class=%@", NSStringFromClass(buttonClass));
-}
 
 static NSString *SPKGalleryShortcutTabIdentifier(void) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -193,18 +101,6 @@ static BOOL SPKTabButtonMatchesTarget(NSString *identifier, NSString *label, NSS
     return NO;
 }
 
-static BOOL SPKIsMessagesOnlyMode(void) {
-    BOOL msgsVisible = ![SPKUtils getBoolPref:@"interface_hide_msgs_tab"];
-    BOOL feedHidden = [SPKUtils getBoolPref:@"interface_hide_feed_tab"];
-    BOOL exploreHidden = [SPKUtils getBoolPref:@"interface_hide_explore_tab"];
-    BOOL reelsHidden = [SPKUtils getBoolPref:@"interface_hide_reels_tab"];
-    BOOL profileHidden = [SPKUtils getBoolPref:@"interface_hide_profile_tab"];
-    
-    BOOL usesClassic = [[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
-    BOOL createHidden = !usesClassic || [SPKUtils getBoolPref:@"interface_hide_create_tab"];
-    
-    return msgsVisible && feedHidden && exploreHidden && reelsHidden && profileHidden && createHidden;
-}
 
 static BOOL SPKTabHiddenForIdentifier(NSString *identifier) {
     BOOL usesClassic = [[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
@@ -224,18 +120,10 @@ static BOOL SPKTabHiddenForIdentifier(NSString *identifier) {
     return NO;
 }
 
+// Settings now open from the ✦ in Instagram's own settings screen, so no tab
+// hosts a settings long-press. The gallery shortcut still asks, to make sure it
+// never lands on a tab that already carries one.
 static NSString *SPKResolvedSettingsShortcutTabIdentifier(void) {
-    // Fallback only: the ✦ in Instagram's own settings screen is the way in.
-    // This long-press exists purely so a failed hook can't lock anyone out.
-    if (SPKNativeSettingsEntryInstalled())
-        return nil;
-
-    NSArray<NSString *> *priority = @[ @"mainfeed-tab", @"reels-tab", @"direct-inbox-tab", @"camera-tab", @"explore-tab", @"profile-tab" ];
-    for (NSString *identifier in priority) {
-        if (SPKTabHiddenForIdentifier(identifier))
-            continue;
-        return identifier;
-    }
     return nil;
 }
 
@@ -422,59 +310,12 @@ SPKFireShortcutHaptic();
 }
 %end
 
-%hook IGDirectInboxNavigationHeaderView
-- (void)layoutSubviews {
-    %orig;
-    SPK_PERF_SCOPE(@"SettingsShortcuts.layoutSubviews2");
-
-    UIButton *btn = nil;
-    if ([self respondsToSelector:@selector(messageButton)]) {
-        btn = [self valueForKey:@"messageButton"];
-    }
-    if (btn) {
-        BOOL shouldAdd = SPKIsMessagesOnlyMode();
-        if (shouldAdd) {
-            UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:[SPKSettingsShortcutTarget sharedTarget]
-                                                                                                     action:@selector(handleProfileMoreLongPress:)];
-            longPress.minimumPressDuration = kSPKProfileMoreSettingsLongPressDuration;
-            longPress.cancelsTouchesInView = YES;
-            longPress.delaysTouchesBegan = YES;
-            longPress.delaysTouchesEnded = YES;
-
-            for (UIGestureRecognizer *gesture in [btn.gestureRecognizers copy]) {
-                if ([gesture isKindOfClass:[UILongPressGestureRecognizer class]] &&
-                    objc_getAssociatedObject(gesture, kSPKProfileMoreSettingsLongPressAssocKey)) {
-                    [btn removeGestureRecognizer:gesture];
-                }
-            }
-
-            for (UIGestureRecognizer *existing in btn.gestureRecognizers) {
-                [existing requireGestureRecognizerToFail:longPress];
-            }
-
-            [btn addGestureRecognizer:longPress];
-            objc_setAssociatedObject(longPress, kSPKProfileMoreSettingsLongPressAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        } else {
-            // Clean up gesture if it shouldn't be here
-            for (UIGestureRecognizer *gesture in [btn.gestureRecognizers copy]) {
-                if ([gesture isKindOfClass:[UILongPressGestureRecognizer class]] &&
-                    objc_getAssociatedObject(gesture, kSPKProfileMoreSettingsLongPressAssocKey)) {
-                    [btn removeGestureRecognizer:gesture];
-                }
-            }
-        }
-    }
-}
-%end
 
 %end
 
 void SPKInstallSettingsShortcutsHooksIfNeeded(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        %init(SPKSettingsShortcutsHooks,
-              IGDirectInboxNavigationHeaderView = SPKResolveIGClass(@"IGDirectInboxNavigationHeaderView.IGDirectInboxNavigationHeaderView",
-                                                                    @"IGDirectInboxNavigationHeaderView"));
-        SPKInstallProfileMoreShortcutHooks();
+        %init(SPKSettingsShortcutsHooks);
     });
 }

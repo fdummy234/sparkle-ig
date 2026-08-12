@@ -18,12 +18,6 @@
 static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
 static CGFloat const kSPKSettingsEntryButtonSize = 40.0;
 static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
-static BOOL SPKNativeSettingsEntryDidInstall = NO;
-
-BOOL SPKNativeSettingsEntryInstalled(void) {
-    return SPKNativeSettingsEntryDidInstall;
-}
-
 @interface SPKNativeSettingsEntryTarget : NSObject
 + (instancetype)sharedTarget;
 - (void)openSparkleSettings:(id)sender;
@@ -92,7 +86,6 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
                    action:@selector(openSparkleSettings:)
          forControlEvents:UIControlEventTouchUpInside];
         objc_setAssociatedObject(self, kSPKSettingsEntryButtonAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        SPKNativeSettingsEntryDidInstall = YES;
         SPKLog(@"Settings", @"[Sparkle] Settings entry seated in the navigation bar");
     }
 
@@ -103,10 +96,30 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     [self bringSubviewToFront:button];
     button.hidden = NO;
 
+    // Aligned on the back button rather than on the bar's box: the bar is taller
+    // than its control row, so anchoring to the bottom edge sits the icon low.
+    // The leading control gives both the row's centre and the edge inset to mirror.
     CGFloat size = kSPKSettingsEntryButtonSize;
     CGRect bounds = self.bounds;
-    button.frame = CGRectMake(CGRectGetMaxX(bounds) - size - kSPKSettingsEntryButtonInset,
-                              CGRectGetMaxY(bounds) - size - (CGRectGetHeight(bounds) > 60.0 ? 6.0 : 2.0),
+    CGFloat centreY = CGRectGetMaxY(bounds) - 22.0;
+    CGFloat inset = kSPKSettingsEntryButtonInset;
+
+    UIView *leading = nil;
+    for (UIView *subview in self.subviews) {
+        if (subview == button || subview.hidden || CGRectIsEmpty(subview.frame))
+            continue;
+        if (CGRectGetWidth(subview.frame) > CGRectGetWidth(bounds) * 0.5)
+            continue;   // the title container, not a control
+        if (!leading || CGRectGetMinX(subview.frame) < CGRectGetMinX(leading.frame))
+            leading = subview;
+    }
+    if (leading && CGRectGetMinX(leading.frame) < CGRectGetWidth(bounds) * 0.25) {
+        centreY = CGRectGetMidY(leading.frame);
+        inset = CGRectGetMinX(leading.frame);
+    }
+
+    button.frame = CGRectMake(CGRectGetMaxX(bounds) - size - inset,
+                              centreY - size / 2.0,
                               size,
                               size);
 }
