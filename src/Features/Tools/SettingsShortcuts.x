@@ -12,7 +12,6 @@ static const void *kSPKGalleryTabLongPressAssocKey = &kSPKGalleryTabLongPressAss
 static const void *kSPKProfileMoreSettingsLongPressAssocKey = &kSPKProfileMoreSettingsLongPressAssocKey;
 static const NSTimeInterval kSPKHomeTabLongPressDuration = 0.5;
 static const NSTimeInterval kSPKGalleryTabLongPressDuration = 0.65;
-static const NSTimeInterval kSPKProfileMoreSettingsLongPressDuration = 0.5;
 static NSString *const kSPKGalleryQuickAccessDisabledValue = @"none";
 
 @interface IGTabBarButton (SPKQuickActions)
@@ -24,11 +23,6 @@ static NSString *const kSPKGalleryQuickAccessDisabledValue = @"none";
 - (void)handleDirectInboxTabLongPress:(UILongPressGestureRecognizer *)sender;
 @end
 
-@interface SPKSettingsShortcutTarget : NSObject
-+ (instancetype)sharedTarget;
-- (void)handleProfileMoreLongPress:(UILongPressGestureRecognizer *)sender;
-@end
-
 // Light confirmation tap fired when a tab-bar shortcut activates. The global
 // UIImpactFeedbackGenerator hook (DisableHaptics.x) already respects
 // general_disable_haptics, so this stays silent when the user disabled haptics.
@@ -37,26 +31,6 @@ static void SPKFireShortcutHaptic(void) {
     [generator prepare];
     [generator impactOccurred];
 }
-
-@implementation SPKSettingsShortcutTarget
-+ (instancetype)sharedTarget {
-    static SPKSettingsShortcutTarget *target;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        target = [SPKSettingsShortcutTarget new];
-    });
-    return target;
-}
-
-- (void)handleProfileMoreLongPress:(UILongPressGestureRecognizer *)sender {
-    if (sender.state != UIGestureRecognizerStateBegan)
-        return;
-
-    SPKLog(@"General", @"[Sparkle] Tweak settings gesture activated");
-    SPKFireShortcutHaptic();
-    [SPKUtils showSettingsVC:sender.view.window];
-}
-@end
 
 static NSString *SPKGalleryShortcutTabIdentifier(void) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
