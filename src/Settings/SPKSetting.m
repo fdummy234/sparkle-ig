@@ -304,12 +304,14 @@
 }
 
 + (instancetype)storageBarCellWithFractions:(NSArray<NSNumber *> *)fractions
-                                      value:(NSString *)value {
+                                      value:(NSString *)value
+                                     legend:(NSString *)legend {
     SPKSetting *setting = [self new];
     setting->_type = SPKTableCellStorageBar;
     setting.title = value;
     setting.barFractions = fractions;
     setting.barValue = value;
+    setting.barLegend = legend;
     return setting;
 }
 

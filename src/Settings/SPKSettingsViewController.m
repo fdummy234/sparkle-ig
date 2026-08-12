@@ -588,6 +588,11 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     SPKSetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
     if (![row isKindOfClass:[SPKSetting class]])
         return UITableViewAutomaticDimension;
+
+    // The storage bar carries its legend inside the row, so it needs the extra
+    // line — without it, everything else keeps the measured 44 pt pitch.
+    if (row.type == SPKTableCellStorageBar)
+        return row.barLegend.length > 0 ? SPKUI_RowHeight + 14.0 : SPKUI_RowHeight;
     BOOL needsAutomatic = row.subtitle.length > 0 ||
                           row.avatarPK.length > 0 ||
                           row.imageUrl != nil ||
@@ -1012,9 +1017,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         CGFloat total = 0.0;
         for (NSNumber *fraction in row.barFractions)
             total += MAX(0.0, fraction.doubleValue);
-        NSArray<UIColor *> *shades = @[ [SPKUtils SPKColor_InstagramPrimaryText],
-                                        [SPKUtils SPKColor_InstagramSecondaryText],
-                                        [SPKUtils SPKColor_InstagramSeparator] ];
+        // Three greys, not black: the bar reports, it does not shout.
+        NSArray<UIColor *> *shades = @[ [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.85],
+                                        [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.45],
+                                        [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.22] ];
         __block CGFloat offset = 0.0;
         [row.barFractions enumerateObjectsUsingBlock:^(NSNumber *fraction, NSUInteger idx, BOOL *stop) {
             CGFloat share = total > 0.0 ? MAX(0.0, fraction.doubleValue) / total : (idx == 0 ? 1.0 : 0.0);
@@ -1025,6 +1031,15 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
             offset += share;
         }];
 
+        UILabel *legend = nil;
+        if (row.barLegend.length > 0) {
+            legend = [UILabel new];
+            legend.text = row.barLegend;
+            legend.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
+            legend.textColor = [SPKUtils SPKColor_InstagramTertiaryText];
+            [strip addSubview:legend];
+        }
+
         strip.frame = CGRectMake(SPKUI_RowLeading, 0,
                                  CGRectGetWidth(cell.contentView.bounds) - SPKUI_RowLeading * 2.0,
                                  SPKUI_RowHeight);
@@ -1032,8 +1047,11 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         CGFloat valueWidth = [value.attributedText size].width + 2.0;
         CGFloat stripWidth = CGRectGetWidth(strip.bounds);
         value.frame = CGRectMake(stripWidth - valueWidth, 0, valueWidth, SPKUI_RowHeight);
-        track.frame = CGRectMake(0, (SPKUI_RowHeight - 5.0) / 2.0,
+        CGFloat barRow = legend ? SPKUI_RowHeight - 16.0 : SPKUI_RowHeight;
+        value.frame = CGRectMake(stripWidth - valueWidth, 0, valueWidth, barRow);
+        track.frame = CGRectMake(0, (barRow - 5.0) / 2.0,
                                  MAX(0.0, stripWidth - valueWidth - 14.0), 5.0);
+        legend.frame = CGRectMake(0, barRow - 2.0, stripWidth, 16.0);
         CGFloat x = 0.0;
         for (NSUInteger idx = 0; idx < track.subviews.count; idx++) {
             CGFloat share = total > 0.0 ? MAX(0.0, row.barFractions[idx].doubleValue) / total
