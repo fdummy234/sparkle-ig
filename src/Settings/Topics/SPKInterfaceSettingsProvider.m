@@ -125,21 +125,21 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                         nil),
     ]];
 
-    {
-        // Tab Bar Behavior is shared by both presentations: it configures the
-        // scroll behavior of the (pill/glass) tab bar and is enabled whenever
-        // the Liquid Glass pref is on.
-        SPKSetting *(^tabBarBehaviorCell)(void) = ^SPKSetting * {
-            SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Hide on Scroll"
-                                                                  icon:SPKSettingsIcon(@"arrow_down")
-                                                                  menu:SPKLiquidGlassTabBarStateMenu()];
+    // Hoisted to function scope: the row is assembled inside the block below
+    // but consumed after it, once the gate and its dependants are in place.
+    SPKSetting *(^tabBarBehaviorCell)(void) = ^SPKSetting * {
+        SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Hide on Scroll"
+                                                              icon:SPKSettingsIcon(@"arrow_down")
+                                                              menu:SPKLiquidGlassTabBarStateMenu()];
     tabBarBehavior.searchKeywords = @"tab bar behavior";
-            tabBarBehavior.defaultsKey = kSPKPrefInterfaceLiquidGlassTabBarMode;
-            tabBarBehavior.enabledProvider = ^BOOL {
-                return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
-            };
-            return tabBarBehavior;
+        tabBarBehavior.defaultsKey = kSPKPrefInterfaceLiquidGlassTabBarMode;
+        tabBarBehavior.enabledProvider = ^BOOL {
+            return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
         };
+        return tabBarBehavior;
+    };
+
+    {
 
         if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"26.0")) {
             // Full Liquid Glass: real glass material, progressive blur, tab bar.
