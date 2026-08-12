@@ -361,17 +361,18 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     [sections addObject:SPKTopicSection(@"", @[
                   // Storage is read, not set: one line at the end of the page
                   // instead of four rows and a header at the top of it.
-                  [SPKSetting valueCellWithTitle:[NSString stringWithFormat:@"%@ · %ld file%@",
-                                                  [self formattedSize:self.stats.totalSize],
-                                                  (long)self.stats.totalFiles,
-                                                  self.stats.totalFiles == 1 ? @"" : @"s"]
-                                        subtitle:[NSString stringWithFormat:@"%ld image%@ · %ld video%@ · %ld audio",
-                                                  (long)self.stats.imageCount, self.stats.imageCount == 1 ? @"" : @"s",
-                                                  (long)self.stats.videoCount, self.stats.videoCount == 1 ? @"" : @"s",
-                                                  (long)self.stats.audioCount]
-                                            icon:SPKSettingsIcon(@"chest")]
+                  [SPKSetting storageBarCellWithFractions:@[ @(self.stats.imageCount),
+                                                            @(self.stats.videoCount),
+                                                            @(self.stats.audioCount) ]
+                                                    value:[NSString stringWithFormat:@"%@ · %ld file%@",
+                                                           [self formattedSize:self.stats.totalSize],
+                                                           (long)self.stats.totalFiles,
+                                                           self.stats.totalFiles == 1 ? @"" : @"s"]]
               ],
-                                        nil)];
+                                        [NSString stringWithFormat:@"%ld image%@ · %ld video%@ · %ld audio",
+                                         (long)self.stats.imageCount, self.stats.imageCount == 1 ? @"" : @"s",
+                                         (long)self.stats.videoCount, self.stats.videoCount == 1 ? @"" : @"s",
+                                         (long)self.stats.audioCount])];
 
     [self replaceSections:sections];
 }
