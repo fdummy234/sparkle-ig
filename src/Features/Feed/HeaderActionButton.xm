@@ -461,7 +461,9 @@ static NSString *SPKHeaderButtonConfigSignature(NSArray<SPKHeaderDestination *> 
 }
 
 - (void)spk_installInboxHeaderActionButtonIfNeeded {
-    BOOL messagesOnly = [SPKUtils getBoolPref:@"interface_show_header_button_in_messages_only"] &&
+    // No setting: the button exists exactly when the tab bar is gone, because
+    // the inbox header is then the only chrome left on screen.
+    BOOL messagesOnly = [SPKUtils getBoolPref:@"interface_hide_tab_bar_in_messages_only"] &&
                          SPKIsMessagesOnlyMode();
     if (!messagesOnly) {
         SPKFeedHeaderActionButton *button = [self spk_inboxHeaderButton];
@@ -516,7 +518,7 @@ static NSString *SPKHeaderButtonConfigSignature(NSArray<SPKHeaderDestination *> 
     if (!button)
         return;
 
-    BOOL messagesOnly = [SPKUtils getBoolPref:@"interface_show_header_button_in_messages_only"] &&
+    BOOL messagesOnly = [SPKUtils getBoolPref:@"interface_hide_tab_bar_in_messages_only"] &&
                          SPKIsMessagesOnlyMode();
     if (!messagesOnly) {
         button.hidden = YES;
@@ -753,11 +755,12 @@ void SPKInstallHeaderActionButtonHooksIfEnabled(void) {
                                                       }];
     });
 
-    BOOL feedEnabled = [SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-    BOOL inboxEnabled = [SPKUtils getBoolPref:@"interface_show_header_button_in_messages_only"] &&
+    // The feed header button is gone; only the inbox one remains, and it
+    // installs whenever the tab bar is hidden in Messages-only mode.
+    BOOL inboxEnabled = [SPKUtils getBoolPref:@"interface_hide_tab_bar_in_messages_only"] &&
                         SPKIsMessagesOnlyMode();
 
-    if (!feedEnabled && !inboxEnabled) {
+    if (!inboxEnabled) {
         SPKLog(@"HeaderButton", @"[Sparkle] Header action button disabled — skipping install");
         return;
     }
