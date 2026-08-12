@@ -114,7 +114,11 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 
 - (void)refreshAnimated:(BOOL)animated {
     BOOL enabled = [self.item isEnabled];
-    BOOL on = enabled ? [SPKUtils getBoolPref:self.item.defaultsKey] : NO;
+    BOOL on;
+    if (self.item.pickValue.length > 0)
+        on = [[SPKUtils getStringPref:self.item.defaultsKey] isEqualToString:self.item.pickValue];
+    else
+        on = enabled ? [SPKUtils getBoolPref:self.item.defaultsKey] : NO;
     self.alpha = enabled ? 1.0 : 0.35;
     self.accessibilityValue = on ? @"On" : @"Off";
 
@@ -133,6 +137,17 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 - (void)didTap {
     if (![self.item isEnabled])
         return;
+
+    // Single-choice: the host applies the value and the menu closes, the way a
+    // system picker behaves. Multi-choice keeps toggling in place.
+    if (self.item.pickValue.length > 0) {
+        [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+        if (self.item.pickHandler)
+            self.item.pickHandler();
+        [self spk_dismissFromDone];
+        return;
+    }
+
     BOOL next = ![SPKUtils getBoolPref:self.item.defaultsKey];
     SPKPreferenceSetObject(@(next), self.item.defaultsKey);
     if (self.item.changeHandler)
@@ -193,9 +208,26 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 
 @implementation SPKToggleMenu
 
++ (void)presentWithChoices:(NSArray<SPKToggleMenuItem *> *)items
+                  fromView:(UIView *)anchorView
+          inViewController:(UIViewController *)viewController
+                 onDismiss:(void (^)(void))onDismiss {
+    [self spk_presentItems:items fromView:anchorView inViewController:viewController
+                 showsDone:NO onDismiss:onDismiss];
+}
+
 + (void)presentWithItems:(NSArray<SPKToggleMenuItem *> *)items
                 fromView:(UIView *)anchorView
         inViewController:(UIViewController *)viewController
+               onDismiss:(void (^)(void))onDismiss {
+    [self spk_presentItems:items fromView:anchorView inViewController:viewController
+                 showsDone:YES onDismiss:onDismiss];
+}
+
++ (void)spk_presentItems:(NSArray<SPKToggleMenuItem *> *)items
+                fromView:(UIView *)anchorView
+        inViewController:(UIViewController *)viewController
+               showsDone:(BOOL)showsDone
                onDismiss:(void (^)(void))onDismiss {
     UIWindow *window = viewController.view.window ?: anchorView.window;
     items = SPKToggleMenuVisibleItems(items);
@@ -205,7 +237,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     CGFloat hairline = 1.0 / MAX(UIScreen.mainScreen.scale, 1.0);
     CGFloat menuHeight = 2.0 * kSPKToggleMenuContentPadding
         + items.count * kSPKToggleMenuItemHeight + (items.count - 1) * hairline
-        + kSPKToggleMenuFooterGap + kSPKToggleMenuItemHeight; // v1.4 Done footer
+        + (showsDone ? kSPKToggleMenuFooterGap + kSPKToggleMenuItemHeight : 0.0);
 
     SPKToggleMenuOverlay *overlay = [[SPKToggleMenuOverlay alloc] initWithFrame:window.bounds];
     overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -255,51 +287,54 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         y += kSPKToggleMenuItemHeight;
     }
 
-    // v1.4 footer — sectioned gap, then an explicit way out. Same dismissal
-    // path as tapping outside (animation + onDismiss), with a light tick.
-    UIView *gapBand = [[UIView alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterGap)];
-    gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.18];
-    UIView *gapTop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSPKToggleMenuWidth, hairline)];
-    gapTop.backgroundColor = UIColor.separatorColor;
-    UIView *gapBottom = [[UIView alloc] initWithFrame:CGRectMake(0, kSPKToggleMenuFooterGap - hairline, kSPKToggleMenuWidth, hairline)];
-    gapBottom.backgroundColor = UIColor.separatorColor;
-    [gapBand addSubview:gapTop];
-    [gapBand addSubview:gapBottom];
-    [blurView.contentView addSubview:gapBand];
-    y += kSPKToggleMenuFooterGap;
+    if (showsDone) {
+        // v1.4 footer — sectioned gap, then an explicit way out. Same dismissal
+        // path as tapping outside (animation + onDismiss), with a light tick.
+        UIView *gapBand = [[UIView alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterGap)];
+        gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.18];
+        UIView *gapTop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSPKToggleMenuWidth, hairline)];
+        gapTop.backgroundColor = UIColor.separatorColor;
+        UIView *gapBottom = [[UIView alloc] initWithFrame:CGRectMake(0, kSPKToggleMenuFooterGap - hairline, kSPKToggleMenuWidth, hairline)];
+        gapBottom.backgroundColor = UIColor.separatorColor;
+        [gapBand addSubview:gapTop];
+        [gapBand addSubview:gapBottom];
+        [blurView.contentView addSubview:gapBand];
+        y += kSPKToggleMenuFooterGap;
 
-    UIControl *doneControl = [[UIControl alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight)];
-    UILabel *doneLabel = [[UILabel alloc] initWithFrame:doneControl.bounds];
-    doneLabel.text = @"Done";
-    doneLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
-    doneLabel.textColor = UIColor.labelColor;
-    doneLabel.textAlignment = NSTextAlignmentCenter;
-    doneLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [doneControl addSubview:doneLabel];
-    [doneControl addTarget:overlay action:@selector(spk_dismissFromDone) forControlEvents:UIControlEventTouchUpInside];
-    [blurView.contentView addSubview:doneControl];
-    y += kSPKToggleMenuItemHeight;
+        UIControl *doneControl = [[UIControl alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight)];
+        UILabel *doneLabel = [[UILabel alloc] initWithFrame:doneControl.bounds];
+        doneLabel.text = @"Done";
+        doneLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
+        doneLabel.textColor = UIColor.labelColor;
+        doneLabel.textAlignment = NSTextAlignmentCenter;
+        doneLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [doneControl addSubview:doneLabel];
+        [doneControl addTarget:overlay action:@selector(spk_dismissFromDone) forControlEvents:UIControlEventTouchUpInside];
+        [blurView.contentView addSubview:doneControl];
+        y += kSPKToggleMenuItemHeight;
 
-    // Placement: below the anchor when it fits, otherwise above — then clamp
-    // both axes into the safe area so the menu can never leave the screen.
-    CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:overlay];
-    UIEdgeInsets safe = window.safeAreaInsets;
-    CGFloat minX = safe.left + kSPKToggleMenuMargin;
-    CGFloat maxX = window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth;
-    CGFloat minY = safe.top + kSPKToggleMenuMargin;
-    CGFloat maxY = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin - menuHeight;
+        // Placement: below the anchor when it fits, otherwise above — then clamp
+        // both axes into the safe area so the menu can never leave the screen.
+        CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:overlay];
+        UIEdgeInsets safe = window.safeAreaInsets;
+        CGFloat minX = safe.left + kSPKToggleMenuMargin;
+        CGFloat maxX = window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth;
+        CGFloat minY = safe.top + kSPKToggleMenuMargin;
+        CGFloat maxY = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin - menuHeight;
 
-    CGFloat x = CGRectGetMaxX(anchorFrame) - kSPKToggleMenuWidth - kSPKToggleMenuMargin;
-    x = MAX(minX, MIN(x, maxX));
+        CGFloat x = CGRectGetMaxX(anchorFrame) - kSPKToggleMenuWidth - kSPKToggleMenuMargin;
+        x = MAX(minX, MIN(x, maxX));
 
-    CGFloat belowY = CGRectGetMaxY(anchorFrame) + kSPKToggleMenuAnchorGap;
-    BOOL fitsBelow = belowY <= maxY;
-    CGFloat menuY = fitsBelow ? belowY
-                              : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
-    menuY = MAX(minY, MIN(menuY, maxY));
+        CGFloat belowY = CGRectGetMaxY(anchorFrame) + kSPKToggleMenuAnchorGap;
+        BOOL fitsBelow = belowY <= maxY;
+        CGFloat menuY = fitsBelow ? belowY
+                                  : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
+        menuY = MAX(minY, MIN(menuY, maxY));
 
-    container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
-    [overlay addSubview:container];
+        container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
+        [overlay addSubview:container];
+    }
+
     [window addSubview:overlay];
 
     container.alpha = 0.0;

@@ -1,3 +1,4 @@
+#import <objc/runtime.h>
 #import "SPKSettingsViewController.h"
 #import "SPKToggleMenu.h"
 #import "../App/SPKStartupHooks.h"
@@ -26,7 +27,10 @@ static CGFloat const SPKUI_IconMax            = 26.0;  // glyph size cap
 static CGFloat const SPKUI_SubtitleIconRise   = 8.0;   // subtitle rows: glyph and accessory rise toward the title (matches the native Accounts Center)
 static CGFloat const SPKUI_IconTextGap        = 14.0;
 static CGFloat const SPKUI_BandHeight         = 6.0;   // band between groups
-static CGFloat const SPKUI_BandLast           = 24.0;  // respiration de fin de page
+static CGFloat const SPKUI_BandLast           = 6.0;   // same band as between groups
+
+// Associates a menu row with its button so the tap can rebuild its picker.
+static const void *kSPKMenuButtonRowKey = &kSPKMenuButtonRowKey;
 static CGFloat const SPKUI_HeaderTop          = 14.0;
 static CGFloat const SPKUI_HeaderBottom       = 14.0;
 static CGFloat const SPKUI_HeaderLeading      = 16.5;  // renders ~18 on screen
@@ -558,7 +562,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     // value already sit there — rows with "N active" inflate to 52 because
     // sizing reserves the stacked height of the side-by-side secondary text.
     // 44 is locked for standard rows, automatic
-    // seulement quand le contenu le justifie.
+    // only when the content calls for it.
     SPKSetting *row = self.sections[indexPath.section][@"rows"][indexPath.row];
     if (![row isKindOfClass:[SPKSetting class]])
         return UITableViewAutomaticDimension;
@@ -812,9 +816,18 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
 
     case SPKTableCellMenu: {
         UIButton *menuButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [menuButton setTitle:@"•••" forState:UIControlStateNormal];
+        // Show the chosen value, like every other picker. The dots are only a
+        // placeholder for a row that provides no text at all.
+        NSString *menuValue = SPKSettingsAccessoryText(row);
+        [menuButton setTitle:(menuValue.length > 0 ? menuValue : @"•••") forState:UIControlStateNormal];
+        // One picker for the whole tweak: the value menus now open the same view
+        // as the gates, built from the UIMenu the row already provides. The
+        // commands carry their key and value, so applying a choice runs through
+        // menuChanged: exactly as before.
         menuButton.menu = [row menuForButton:menuButton];
-        menuButton.showsMenuAsPrimaryAction = YES;
+        menuButton.showsMenuAsPrimaryAction = NO;
+        objc_setAssociatedObject(menuButton, kSPKMenuButtonRowKey, row, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        [menuButton addTarget:self action:@selector(spk_menuButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
         menuButton.enabled = rowEnabled;
         // Same weight as the other value labels (Regular, like IG).
         menuButton.titleLabel.font = [[UIFontMetrics metricsForTextStyle:UIFontTextStyleSubheadline] scaledFontForFont:[UIFont systemFontOfSize:SPKUI_ValueFontSize
@@ -1073,10 +1086,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         return nil;
     }
 
-    // Le cache ne sert QUE de gabarit de mesure (heightForHeader). Jamais
+    // The cache is a sizing template only (heightForHeader). Never
     // displayed: handing UIKit an instance it already owns — tolerated in
-    // plain par chance — devient dangereux en grouped, dont le cycle de vie
-    // headers differ. Display always receives a fresh view.
+    // tolerated in plain by luck, dangerous in grouped, where header
+    // lifecycles differ. Display always receives a fresh view.
     NSNumber *cacheKey = @(section);
     if (forSizing) {
         UIView *cached = self.footerViewCache[cacheKey];
@@ -1085,10 +1098,10 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         }
     }
 
-    // Un UIView nu, PAS un UITableViewHeaderFooterView : quand
-    // titleForHeaderInSection: fournit aussi le titre, UIKit remplit le
-    // the HeaderFooterView's built-in textLabel over the custom label —
-    // the doubled-text artifact. A plain UIView has nothing to fill.
+    // A bare UIView, NOT a UITableViewHeaderFooterView: when the section also
+    // supplies a title through titleForHeaderInSection:, UIKit fills the
+    // HeaderFooterView's built-in textLabel over the custom label — the
+    // doubled-text artifact. A plain UIView has nothing to fill.
     UIView *container = [UIView new];
     // Opaque: with plain-style pinning, nothing shows through behind.
     container.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
@@ -1508,6 +1521,56 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     SPKLog(@"General", @"Stepper changed: %f", normalizedValue);
 
     [self reloadCellForView:sender];
+}
+
+// Flattens the row's UIMenu — inline submenus included — into the picker items.
+static void SPKCollectMenuCommands(UIMenu *menu, NSMutableArray<UICommand *> *out) {
+    for (UIMenuElement *element in menu.children) {
+        if ([element isKindOfClass:[UIMenu class]])
+            SPKCollectMenuCommands((UIMenu *)element, out);
+        else if ([element isKindOfClass:[UICommand class]])
+            [out addObject:(UICommand *)element];
+    }
+}
+
+- (void)spk_menuButtonTapped:(UIButton *)sender {
+    SPKSetting *row = objc_getAssociatedObject(sender, kSPKMenuButtonRowKey);
+    UIMenu *menu = [row menuForButton:sender] ?: sender.menu;
+    if (!menu)
+        return;
+
+    NSMutableArray<UICommand *> *commands = [NSMutableArray array];
+    SPKCollectMenuCommands(menu, commands);
+    if (commands.count == 0)
+        return;
+
+    NSMutableArray<SPKToggleMenuItem *> *items = [NSMutableArray array];
+    for (UICommand *command in commands) {
+        NSDictionary *properties = command.propertyList;
+        NSString *key = properties[@"defaultsKey"];
+        NSString *value = properties[@"value"];
+        if (key.length == 0 || value.length == 0)
+            continue;
+        SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:command.title
+                                                          iconName:properties[@"iconName"] ?: @""
+                                                       defaultsKey:key];
+        item.pickValue = value;
+        BOOL disabled = (command.attributes & UIMenuElementAttributesDisabled) != 0;
+        if (disabled) {
+            item.enabledProvider = ^BOOL {
+                return NO;
+            };
+        }
+        __weak typeof(self) weakSelf = self;
+        item.pickHandler = ^{
+            [weakSelf menuChanged:command];
+        };
+        [items addObject:item];
+    }
+    if (items.count == 0)
+        return;
+
+    [SPKToggleMenu presentWithChoices:items fromView:sender inViewController:self onDismiss:nil];
 }
 
 - (void)menuChanged:(UICommand *)command {

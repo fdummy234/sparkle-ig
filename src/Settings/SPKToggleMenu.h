@@ -46,6 +46,15 @@ NS_ASSUME_NONNULL_BEGIN
 /// declares `requiresRestart`.
 @property (nonatomic, assign) BOOL requiresRestart;
 
+/// Single-choice mode: the item writes `pickValue` into its key instead of
+/// toggling a bool, shows a checkmark when the key already holds that value,
+/// and closes the menu on tap — one picker look for the whole tweak.
+@property (nonatomic, copy, nullable) NSString *pickValue;
+
+/// Called instead of the preference write when the host wants to apply the
+/// choice itself (the settings screen routes it through menuChanged:).
+@property (nonatomic, copy, nullable) void (^pickHandler)(void);
+
 /// Runs right after the preference is written, mirroring `switchChangeHandler`
 /// on a switch row — for families whose rows do more than store a bool.
 @property (nonatomic, copy, nullable) void (^changeHandler)(BOOL isOn);
@@ -58,6 +67,12 @@ NS_ASSUME_NONNULL_BEGIN
                 fromView:(UIView *)anchorView
         inViewController:(UIViewController *)viewController
                onDismiss:(void (^_Nullable)(void))onDismiss;
+
+/// Same menu, single-choice: no "Done" footer — picking closes it.
++ (void)presentWithChoices:(NSArray<SPKToggleMenuItem *> *)items
+                  fromView:(UIView *)anchorView
+          inViewController:(UIViewController *)viewController
+                 onDismiss:(void (^_Nullable)(void))onDismiss;
 
 @end
 
