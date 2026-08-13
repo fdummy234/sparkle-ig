@@ -411,6 +411,7 @@ static void SPKHookInstanceMethod(const char *className, SEL selector, IMP repla
 void SPKInstallDisableInstantsCreationHooksIfEnabled(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+
         const char *cameraControlView = "_TtC34IGQuickSnapCameraControlController28IGQuickSnapCameraControlView";
 
         // Install the whole surface unconditionally — each handler decides what to

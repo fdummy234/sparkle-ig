@@ -21,6 +21,19 @@ static Class SPKFriendMapSectionControllerClass(void) {
     return NSClassFromString(@"_TtC24IGDirectNotesTrayUISwift43IGDirectNotesTrayFriendMapSectionController");
 }
 
+// The Instants entry of the same tray — the "+" that opens the camera. Read from
+// the 441.0.0 binary: IGDirectNotesTrayInstantsSectionController lives in the
+// IGDirectNotesTrayUISwift module, right beside the friend map above.
+static Class SPKInstantsSectionControllerClass(void) {
+    return NSClassFromString(@"_TtC24IGDirectNotesTrayUISwift42IGDirectNotesTrayInstantsSectionController");
+}
+
+// "Disable Instants Creation" blocks the shutter; it should take the door away
+// too, instead of opening a camera that cannot capture.
+static BOOL SPKHideInstantsEntry(void) {
+    return [SPKUtils getBoolPref:@"instants_disable_creation"];
+}
+
 static BOOL SPKShouldHideFriendsMapObject(id object) {
     if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
         return NO;
@@ -62,51 +75,34 @@ static NSArray *SPKFilterFriendsMapObjects(NSArray *originalObjs) {
 // IGDirectNotesTrayFriendMapSectionController — true regardless of the (now
 // opaque) view-model's class or note PK. Filter those out of the objects array.
 static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapter, NSArray *originalObjs) {
-    // One-shot survey: prints every entry of the inbox tray with the section
-    // controller IGListKit picks for it. That is what identifies the Instants
-    // "+" — the same way the friend map is identified above. Remove once the
-    // class name is known.
-    SEL scSelector = @selector(listAdapter:sectionControllerForObject:);
-    static dispatch_once_t surveyToken;
-    dispatch_once(&surveyToken, ^{
-        if (!adapter || ![dataSource respondsToSelector:scSelector])
-            return;
-        SPKLog(@"TraySurvey", @"[Sparkle] --- inbox tray: %lu entries ---", (unsigned long)originalObjs.count);
-        NSUInteger index = 0;
-        for (id entry in originalObjs) {
-            NSString *sectionName = @"(unresolved)";
-            @try {
-                id controller = ((id (*)(id, SEL, id, id))objc_msgSend)(dataSource, scSelector, adapter, entry);
-                if (controller)
-                    sectionName = NSStringFromClass([controller class]);
-            } @catch (__unused NSException *exception) {
-            }
-            SPKLog(@"TraySurvey", @"[Sparkle] %lu · object %@ · section %@",
-                   (unsigned long)index++, NSStringFromClass([entry class]), sectionName);
-        }
-        SPKLog(@"TraySurvey", @"[Sparkle] --- end of tray ---");
-    });
-
-    if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
+    BOOL hideFriendMap = [SPKUtils getBoolPref:@"msgs_hide_friends_map"];
+    BOOL hideInstants = SPKHideInstantsEntry();
+    if (!hideFriendMap && !hideInstants)
         return originalObjs;
     if (![originalObjs isKindOfClass:[NSArray class]])
         return originalObjs;
 
+    Class instantsSection = SPKInstantsSectionControllerClass();
     Class friendMapSection = SPKFriendMapSectionControllerClass();
+    SEL scSelector = @selector(listAdapter:sectionControllerForObject:);
 
-    BOOL canResolveSection = friendMapSection && adapter &&
+    BOOL canResolveSection = (friendMapSection || instantsSection) && adapter &&
                              [dataSource respondsToSelector:scSelector];
 
     NSMutableArray *filteredObjs = [NSMutableArray arrayWithCapacity:[originalObjs count]];
     for (id obj in originalObjs) {
-        if (SPKShouldHideFriendsMapObject(obj)) {
+        if (hideFriendMap && SPKShouldHideFriendsMapObject(obj)) {
             SPKLog(@"General", @"[Sparkle] Hiding friends map");
             continue;
         }
         if (canResolveSection) {
             @try {
                 id sectionController = ((id (*)(id, SEL, id, id))objc_msgSend)(dataSource, scSelector, adapter, obj);
-                if ([sectionController isKindOfClass:friendMapSection]) {
+                if (hideInstants && instantsSection && [sectionController isKindOfClass:instantsSection]) {
+                    SPKLog(@"General", @"[Sparkle] Hiding the Instants entry");
+                    continue;
+                }
+                if (hideFriendMap && friendMapSection && [sectionController isKindOfClass:friendMapSection]) {
                     SPKLog(@"General", @"[Sparkle] Hiding friends map (section match)");
                     continue;
                 }
