@@ -15,7 +15,7 @@ static CGFloat const kSPKToggleMenuIconSize = 22.0;
 static CGFloat const kSPKToggleMenuHPad = 14.0;
 static CGFloat const kSPKToggleMenuMargin = 20.0;
 static CGFloat const kSPKToggleMenuContentPadding = 6.0;   // v1.4: breathing room above/below items
-static CGFloat const kSPKToggleMenuFooterGap = 6.0;        // v1.4.1: sectioned gap before Done (lighter, slimmer)
+static CGFloat const kSPKToggleMenuFooterGap = 0.0;   // the Done row is a choice row: same height, one hairline        // v1.4.1: sectioned gap before Done (lighter, slimmer)
 static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
 #pragma mark - Item

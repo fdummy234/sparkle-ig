@@ -1089,7 +1089,9 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         // configuration is applied a few lines below. Sized from the table's
         // width, which is known here — the cell's own bounds are not yet.
         CGFloat barHeight = row.barLegend.length > 0 ? SPKUI_RowHeight + 14.0 : SPKUI_RowHeight;
-        CGFloat barWidth = MAX(0.0, CGRectGetWidth(tableView.bounds) - SPKUI_RowLeading * 4.0);
+        // Left edge on the icon column: the accessory sits against the trailing
+        // margin, so the width is what places its start.
+        CGFloat barWidth = MAX(0.0, CGRectGetWidth(tableView.bounds) - SPKUI_RowLeading - 20.0);
         SPKStorageBarView *bar = [[SPKStorageBarView alloc] initWithFrame:CGRectMake(0, 0, barWidth, barHeight)];
         bar.tag = kSPKStorageBarTag;
         bar.fractions = row.barFractions;

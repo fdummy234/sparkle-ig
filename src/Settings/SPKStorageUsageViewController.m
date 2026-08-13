@@ -61,21 +61,56 @@
                                         nil)];
 
     [sections addObject:SPKTopicSection(@"Breakdown", @[
-                  [SPKSetting valueCellWithTitle:@"Gallery"
-                                        subtitle:[self formattedKey:@"gallery"]
-                                            icon:SPKSettingsIcon(@"sparkle_gallery")],
-                  [SPKSetting valueCellWithTitle:@"Downloads"
-                                        subtitle:[self formattedKey:@"downloads"]
-                                            icon:SPKSettingsIcon(@"download")],
-                  [SPKSetting valueCellWithTitle:@"Deleted Messages"
-                                        subtitle:[self formattedKey:@"deletedMessages"]
-                                            icon:SPKSettingsIcon(@"channels")],
-                  [SPKSetting valueCellWithTitle:@"Profile Analyzer"
-                                        subtitle:[self formattedKey:@"profileAnalyzer"]
-                                            icon:SPKSettingsIcon(@"profile_analyzer")],
-                  [SPKSetting valueCellWithTitle:@"Profile Pictures"
-                                        subtitle:[self formattedKey:@"avatars"]
-                                            icon:SPKSettingsIcon(@"user_circle")],
+                  ({
+                    SPKSetting *row = [SPKSetting valueCellWithTitle:@"Gallery"
+                                        subtitle:nil
+                                            icon:SPKSettingsIcon(@"sparkle_gallery")];
+                    NSString *value = [self formattedKey:@"gallery"];
+                    row.accessoryTextProvider = ^NSString * {
+                        return value;
+                    };
+                    row;
+                }),
+                  ({
+                    SPKSetting *row = [SPKSetting valueCellWithTitle:@"Downloads"
+                                        subtitle:nil
+                                            icon:SPKSettingsIcon(@"download")];
+                    NSString *value = [self formattedKey:@"downloads"];
+                    row.accessoryTextProvider = ^NSString * {
+                        return value;
+                    };
+                    row;
+                }),
+                  ({
+                    SPKSetting *row = [SPKSetting valueCellWithTitle:@"Deleted Messages"
+                                        subtitle:nil
+                                            icon:SPKSettingsIcon(@"channels")];
+                    NSString *value = [self formattedKey:@"deletedMessages"];
+                    row.accessoryTextProvider = ^NSString * {
+                        return value;
+                    };
+                    row;
+                }),
+                  ({
+                    SPKSetting *row = [SPKSetting valueCellWithTitle:@"Profile Analyzer"
+                                        subtitle:nil
+                                            icon:SPKSettingsIcon(@"profile_analyzer")];
+                    NSString *value = [self formattedKey:@"profileAnalyzer"];
+                    row.accessoryTextProvider = ^NSString * {
+                        return value;
+                    };
+                    row;
+                }),
+                  ({
+                    SPKSetting *row = [SPKSetting valueCellWithTitle:@"Profile Pictures"
+                                        subtitle:nil
+                                            icon:SPKSettingsIcon(@"user_circle")];
+                    NSString *value = [self formattedKey:@"avatars"];
+                    row.accessoryTextProvider = ^NSString * {
+                        return value;
+                    };
+                    row;
+                }),
               ],
                                         nil)];
 
