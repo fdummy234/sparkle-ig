@@ -216,7 +216,11 @@ typedef NS_ENUM(NSInteger, SPKPACategory) {
         // Grouped, not InsetGrouped: every other Sparkle screen uses it, with the
     // system separators cut and 6 pt bands drawn between groups.
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
+    // UIKit draws them, inset to the title like the settings screens — a hairline
+    // added to contentView is wiped when the content configuration is applied.
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+    self.tableView.separatorInset = UIEdgeInsetsMake(0, 51.0, 0, 0);
+    self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
@@ -692,14 +696,6 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     SPKPASectionKind kind = [self kindForSection:indexPath.section];
 
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
-    // Hairline drawn by hand, inset to the title like the settings screens.
-    NSInteger rowsInSection = [self tableView:tableView numberOfRowsInSection:indexPath.section];
-    if (indexPath.row < rowsInSection - 1) {
-        UIView *hairline = [[UIView alloc] initWithFrame:CGRectMake(51.0, 43.5, tableView.bounds.size.width - 51.0, 0.5)];
-        hairline.backgroundColor = [SPKUtils SPKColor_InstagramSeparator];
-        hairline.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
-        [cell.contentView addSubview:hairline];
-    }
     UIListContentConfiguration *content = cell.defaultContentConfiguration;
     // White cards on a grouped background, like every other Sparkle screen —
     // the grey fill made this page read as a different app.
