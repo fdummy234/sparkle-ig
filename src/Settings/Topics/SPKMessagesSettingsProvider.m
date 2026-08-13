@@ -400,8 +400,6 @@ SPKTopicSection(@"Notes", @[
                                         iconName:@"palette"
                                      defaultsKey:@"msgs_confirm_theme_change"],
             ]);
-                // Kept from the row this item replaced.
-                g.helpText = @"Inbox Refresh: refreshing reloads every thread and drops the messages kept above.";
                 g;
             })
         ],
