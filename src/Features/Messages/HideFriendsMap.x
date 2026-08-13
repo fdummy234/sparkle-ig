@@ -174,8 +174,10 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
 %end
 
 void SPKInstallHideFriendsMapHooksIfEnabled(void) {
-    if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
-        return;
+    // Installed unconditionally, like the other tray surfaces: every hook below
+    // re-reads its own pref at call time, so both toggles take effect without a
+    // restart. Gating installation on one pref is what kept the Instants entry
+    // visible whenever "Hide Friends Map" happened to be off.
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
