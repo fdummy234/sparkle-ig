@@ -619,7 +619,6 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     NSMutableArray *rows = [NSMutableArray arrayWithObject:@(SPKPAOptionTrackVisits)];
     if (self.trackVisits)
         [rows addObject:@(SPKPAOptionVisitedProfiles)];
-    [rows addObject:@(SPKPAOptionAbout)];
     return rows;
 }
 
@@ -640,7 +639,7 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     case SPKPASectionOptions:
         return [self optionRows].count;
     case SPKPASectionReset:
-        return 1;
+        return 2;   // About, then the destructive row — the final block.
     }
 }
 
@@ -655,6 +654,15 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     case SPKPASectionReset:
         return nil;
     }
+}
+
+// Same 44 pt pitch as every Sparkle settings screen; automatic sizing made
+// these rows taller than the rest of the tweak.
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    SPKPASectionKind kind = [self kindForSection:indexPath.section];
+    if (kind == SPKPASectionOptions || kind == SPKPASectionReset)
+        return 44.0;
+    return UITableViewAutomaticDimension;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -673,6 +681,14 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     content.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
 
     if (kind == SPKPASectionReset) {
+        if (indexPath.row == 0) {
+            content.text = @"About";
+            content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
+            content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            cell.contentConfiguration = content;
+            return cell;
+        }
         content.text = @"Reset Data";
         content.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
         content.image = [SPKAssetUtils instagramIconNamed:@"trash" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -764,7 +780,11 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     SPKPASectionKind kind = [self kindForSection:indexPath.section];
 
     if (kind == SPKPASectionReset) {
-        [self confirmReset];
+        // Row 0 is About, row 1 is the destructive one.
+        if (indexPath.row == 0)
+            [self showAbout];
+        else
+            [self confirmReset];
         return;
     }
 
