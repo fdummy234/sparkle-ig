@@ -216,15 +216,13 @@ typedef NS_ENUM(NSInteger, SPKPACategory) {
         // Grouped, not InsetGrouped: every other Sparkle screen uses it, with the
     // system separators cut and 6 pt bands drawn between groups.
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
-    // UIKit draws them, inset to the title like the settings screens — a hairline
-    // added to contentView is wiped when the content configuration is applied.
-    self.tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
-    self.tableView.separatorInset = UIEdgeInsetsMake(0, 51.0, 0, 0);
-    self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
+    // Like the rest of Sparkle: no hairline between rows at all — the grey bands
+    // between groups do the separating (SPKSettingsViewController.m:553).
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
+    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
     self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
     self.tableView.tintColor = [SPKUtils SPKColor_InstagramBlue];
     self.tableView.rowHeight = UITableViewAutomaticDimension;
@@ -681,7 +679,10 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
 
 - (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
     UIView *band = [UIView new];
-    band.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
+    // The exact band colour of the settings screens — the grouped background
+    // colour is white in this palette, which is why an earlier attempt showed
+    // nothing at all.
+    band.backgroundColor = [UIColor colorWithRed:0.937 green:0.937 blue:0.945 alpha:1.0];
     return band;
 }
 
