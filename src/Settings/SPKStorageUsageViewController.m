@@ -123,9 +123,10 @@
     clearAvatars.tintColor = [SPKUtils SPKColor_InstagramDestructive];
     clearAvatars.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
-    // No header: the destructive row closes the page, like everywhere else.
+    // A header, because the ⓘ lives in one: without a title it floats over an
+    // empty band.
     clearAvatars.helpText = @"Profile pictures are a shared cache reused across Sparkle. Clearing them frees space; they re-download as needed.";
-    [sections addObject:SPKTopicSection(@"", @[ clearAvatars ], nil)];
+    [sections addObject:SPKTopicSection(@"Cache", @[ clearAvatars ], nil)];
 
     [self replaceSections:sections];
 }

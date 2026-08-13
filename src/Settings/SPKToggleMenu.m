@@ -15,6 +15,8 @@ static CGFloat const kSPKToggleMenuIconSize = 22.0;
 static CGFloat const kSPKToggleMenuHPad = 14.0;
 static CGFloat const kSPKToggleMenuMargin = 20.0;
 static CGFloat const kSPKToggleMenuContentPadding = 6.0;   // v1.4: breathing room above/below items
+// The footer is a way out, not a choice: shorter than the rows above it.
+static CGFloat const kSPKToggleMenuFooterHeight = 38.0;
 static CGFloat const kSPKToggleMenuFooterGap = 0.0;   // the Done row is a choice row: same height, one hairline        // v1.4.1: sectioned gap before Done (lighter, slimmer)
 static CGFloat const kSPKToggleMenuAnchorGap = 6.0;
 
@@ -246,7 +248,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     CGFloat hairline = 1.0 / MAX(UIScreen.mainScreen.scale, 1.0);
     CGFloat menuHeight = 2.0 * kSPKToggleMenuContentPadding
         + items.count * kSPKToggleMenuItemHeight + (items.count - 1) * hairline
-        + (showsDone ? kSPKToggleMenuFooterGap + kSPKToggleMenuItemHeight : 0.0);
+        + (showsDone ? kSPKToggleMenuFooterGap + kSPKToggleMenuFooterHeight : 0.0);
 
     SPKToggleMenuOverlay *overlay = [[SPKToggleMenuOverlay alloc] initWithFrame:window.bounds];
     overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -299,7 +301,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         }
         control.frame = CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight);
         [blurView.contentView addSubview:control];
-        y += kSPKToggleMenuItemHeight;
+        y += kSPKToggleMenuFooterHeight;
     }
 
     if (showsDone) {
@@ -315,7 +317,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         [blurView.contentView addSubview:gapBand];
         y += kSPKToggleMenuFooterGap;
 
-        UIControl *doneControl = [[UIControl alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight)];
+        UIControl *doneControl = [[UIControl alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterHeight)];
         UILabel *doneLabel = [[UILabel alloc] initWithFrame:doneControl.bounds];
         doneLabel.text = @"Done";
         doneLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
