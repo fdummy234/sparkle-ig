@@ -291,8 +291,9 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     // Browsing, Grid and Preview asked the same question — what the grid shows
     // and how you move in it — under three headers.
     [sections addObject:SPKTopicSection(@"Browsing",
-                                        @[favoritesRow, pinFolderRow, flatBrowsingRow,
-                                          pinchRow, sourceUsernameRow, mediaInfoRow],
+                                        // What the grid shows, then how it behaves.
+                                        @[favoritesRow, flatBrowsingRow, sourceUsernameRow,
+                                          mediaInfoRow, pinFolderRow, pinchRow],
                                         nil)];
 
     NSMutableArray *lockRows = [NSMutableArray array];
@@ -305,6 +306,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     lockSwitch.switchChangeHandler = ^(BOOL isOn) {
         [weakSelf handleLockToggleEnabled:isOn];
     };
+    lockSwitch.reloadsTableOnSwitchChange = YES;
     [lockRows addObject:lockSwitch];
 
     SPKSetting *changePasscode = [SPKSetting buttonCellWithTitle:@"Change Passcode"
@@ -316,14 +318,16 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                                                              completion:^(BOOL success){
                                                                                              }];
                                                           }];
-    changePasscode.enabledProvider = ^BOOL {
-        return [SPKGalleryManager sharedManager].isLockEnabled;
+    changePasscode.hiddenProvider = ^BOOL {
+        return ![SPKGalleryManager sharedManager].isLockEnabled;
     };
     [lockRows addObject:changePasscode];
 
     // Visibility and Lock answered one question: who gets to see this gallery.
-    NSMutableArray *privacyRows = [@[accountFilterRow, hiddenSourcesRow] mutableCopy];
+    // R2: switches first, then the row that leads elsewhere.
+    NSMutableArray *privacyRows = [@[accountFilterRow] mutableCopy];
     [privacyRows addObjectsFromArray:lockRows];
+    [privacyRows addObject:hiddenSourcesRow];
     [sections addObject:SPKTopicSection(@"Privacy", privacyRows,
                                         nil)];
 
