@@ -114,9 +114,14 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
         [queue addObjectsFromArray:view.subviews];
     }
 
-    CGFloat centreY = titleLabel
-        ? CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self])
-        : CGRectGetMaxY(bounds) - 22.0;
+    // On the first layout pass the bar has no title yet. Rather than place the
+    // icon at a guessed height and let it jump when the title arrives, keep it
+    // hidden until there is something to align with.
+    if (!titleLabel) {
+        button.hidden = YES;
+        return;
+    }
+    CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
 
     // Mirror the leading inset of whatever sits on the other side of the title.
     CGFloat inset = kSPKSettingsEntryButtonInset;
