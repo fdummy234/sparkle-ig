@@ -1084,26 +1084,18 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         cell.accessoryType = UITableViewCellAccessoryNone;
 
-        SPKStorageBarView *bar = (SPKStorageBarView *)[cell.contentView viewWithTag:kSPKStorageBarTag];
-        if (![bar isKindOfClass:[SPKStorageBarView class]]) {
-            bar = [SPKStorageBarView new];
-            bar.tag = kSPKStorageBarTag;
-            // Constraints, not an autoresizing frame: at configuration time the
-            // content view has no size yet, and autoresizing cannot grow a frame
-            // that started at zero — which is why the bar only appeared after a
-            // scroll had resized a recycled cell.
-            bar.translatesAutoresizingMaskIntoConstraints = NO;
-            [cell.contentView addSubview:bar];
-            [NSLayoutConstraint activateConstraints:@[
-                [bar.leadingAnchor constraintEqualToAnchor:cell.contentView.leadingAnchor constant:SPKUI_RowLeading],
-                [bar.trailingAnchor constraintEqualToAnchor:cell.contentView.trailingAnchor constant:-SPKUI_RowLeading],
-                [bar.topAnchor constraintEqualToAnchor:cell.contentView.topAnchor],
-                [bar.bottomAnchor constraintEqualToAnchor:cell.contentView.bottomAnchor]
-            ]];
-        }
+        // Attached as the accessory view, like every other custom control in
+        // this table: a subview of contentView is wiped when the content
+        // configuration is applied a few lines below. Sized from the table's
+        // width, which is known here — the cell's own bounds are not yet.
+        CGFloat barHeight = row.barLegend.length > 0 ? SPKUI_RowHeight + 14.0 : SPKUI_RowHeight;
+        CGFloat barWidth = MAX(0.0, CGRectGetWidth(tableView.bounds) - SPKUI_RowLeading * 4.0);
+        SPKStorageBarView *bar = [[SPKStorageBarView alloc] initWithFrame:CGRectMake(0, 0, barWidth, barHeight)];
+        bar.tag = kSPKStorageBarTag;
         bar.fractions = row.barFractions;
         bar.value = SPKStorageValueText(row.barValue);
         bar.legend = row.barLegend;
+        cell.accessoryView = bar;
         break;
     }
     }
