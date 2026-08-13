@@ -161,6 +161,31 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
 // Same technique for the Instants entry: a section that reports zero items is
 // laid out as if it did not exist. This is what actually removes the friend map
 // above — the object filters are the belt, this is the braces.
+// Last lock, and the one that cannot be routed around: the cell itself. Whatever
+// section controller or data source produced it, a hidden cell of zero height
+// draws nothing. Read from the 441.0.0 binary: IGDirectNotesTrayInstantsCell.
+%hook _TtC24IGDirectNotesTrayUISwift29IGDirectNotesTrayInstantsCell
+
+- (void)layoutSubviews {
+    %orig;
+    if (SPKHideInstantsEntry()) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+        self.userInteractionEnabled = NO;
+    }
+}
+
+- (void)didMoveToWindow {
+    %orig;
+    if (SPKHideInstantsEntry()) {
+        self.hidden = YES;
+        self.alpha = 0.0;
+        self.userInteractionEnabled = NO;
+    }
+}
+
+%end
+
 %hook _TtC24IGDirectNotesTrayUISwift42IGDirectNotesTrayInstantsSectionController
 - (long long)numberOfItems {
     if (SPKHideInstantsEntry()) {
