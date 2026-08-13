@@ -62,18 +62,11 @@ static NSArray *SPKFilterFriendsMapObjects(NSArray *originalObjs) {
 // IGDirectNotesTrayFriendMapSectionController — true regardless of the (now
 // opaque) view-model's class or note PK. Filter those out of the objects array.
 static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapter, NSArray *originalObjs) {
-    if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
-        return originalObjs;
-    if (![originalObjs isKindOfClass:[NSArray class]])
-        return originalObjs;
-
-    Class friendMapSection = SPKFriendMapSectionControllerClass();
-    SEL scSelector = @selector(listAdapter:sectionControllerForObject:);
-
     // One-shot survey: prints every entry of the inbox tray with the section
     // controller IGListKit picks for it. That is what identifies the Instants
     // "+" — the same way the friend map is identified above. Remove once the
     // class name is known.
+    SEL scSelector = @selector(listAdapter:sectionControllerForObject:);
     static dispatch_once_t surveyToken;
     dispatch_once(&surveyToken, ^{
         if (!adapter || ![dataSource respondsToSelector:scSelector])
@@ -93,6 +86,14 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
         }
         SPKLog(@"TraySurvey", @"[Sparkle] --- end of tray ---");
     });
+
+    if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
+        return originalObjs;
+    if (![originalObjs isKindOfClass:[NSArray class]])
+        return originalObjs;
+
+    Class friendMapSection = SPKFriendMapSectionControllerClass();
+
     BOOL canResolveSection = friendMapSection && adapter &&
                              [dataSource respondsToSelector:scSelector];
 
