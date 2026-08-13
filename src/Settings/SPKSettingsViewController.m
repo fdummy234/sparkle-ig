@@ -39,6 +39,98 @@ static CGFloat const SPKUI_HeaderFontSize     = 14.0;  // full glyph height meas
 static CGFloat const SPKUI_FirstSectionTop    = 16.0;  // espace top bar → premier item
 static CGFloat const SPKUI_ValueFontSize      = 14.0;  // "11 active", menu values — native measures 31 px vs 34 at 15 pt: one step smaller than the title
 
+// Storage bar row: a view that lays itself out, so it is correct the first time
+// it appears — configuring frames from the cell's bounds only worked after a
+// scroll, when the cell had finally been sized.
+@interface SPKStorageBarView : UIView
+@property (nonatomic, copy) NSArray<NSNumber *> *fractions;
+@property (nonatomic, copy) NSAttributedString *value;
+@property (nonatomic, copy) NSString *legend;
+@end
+
+@implementation SPKStorageBarView {
+    UILabel *_valueLabel;
+    UILabel *_legendLabel;
+    UIView *_track;
+    NSMutableArray<UIView *> *_segments;
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        _segments = [NSMutableArray array];
+        _valueLabel = [UILabel new];
+        _valueLabel.textAlignment = NSTextAlignmentRight;
+        [self addSubview:_valueLabel];
+        _track = [UIView new];
+        _track.backgroundColor = [SPKUtils SPKColor_InstagramSeparator];
+        _track.layer.cornerRadius = 2.5;
+        _track.clipsToBounds = YES;
+        [self addSubview:_track];
+        _legendLabel = [UILabel new];
+        _legendLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
+        _legendLabel.textColor = [SPKUtils SPKColor_InstagramTertiaryText];
+        [self addSubview:_legendLabel];
+        self.userInteractionEnabled = NO;
+    }
+    return self;
+}
+
+- (void)setValue:(NSAttributedString *)value {
+    _value = [value copy];
+    _valueLabel.attributedText = value;
+    [self setNeedsLayout];
+}
+
+- (void)setLegend:(NSString *)legend {
+    _legend = [legend copy];
+    _legendLabel.text = legend;
+    [self setNeedsLayout];
+}
+
+- (void)setFractions:(NSArray<NSNumber *> *)fractions {
+    _fractions = [fractions copy];
+    for (UIView *segment in _segments)
+        [segment removeFromSuperview];
+    [_segments removeAllObjects];
+    // Three greys, not black: the bar reports, it does not shout.
+    NSArray<UIColor *> *shades = @[ [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.85],
+                                    [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.45],
+                                    [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.22] ];
+    for (NSUInteger idx = 0; idx < fractions.count; idx++) {
+        UIView *segment = [UIView new];
+        segment.backgroundColor = shades[MIN(idx, shades.count - 1)];
+        [_track addSubview:segment];
+        [_segments addObject:segment];
+    }
+    [self setNeedsLayout];
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGFloat width = CGRectGetWidth(self.bounds);
+    CGFloat barRow = _legendLabel.text.length > 0 ? CGRectGetHeight(self.bounds) - 16.0
+                                                  : CGRectGetHeight(self.bounds);
+    CGFloat valueWidth = MIN(width * 0.6, [_valueLabel.attributedText size].width + 2.0);
+    _valueLabel.frame = CGRectMake(width - valueWidth, 0, valueWidth, barRow);
+    _track.frame = CGRectMake(0, (barRow - 5.0) / 2.0, MAX(0.0, width - valueWidth - 14.0), 5.0);
+    _legendLabel.frame = CGRectMake(0, barRow - 2.0, width, 16.0);
+
+    CGFloat total = 0.0;
+    for (NSNumber *fraction in self.fractions)
+        total += MAX(0.0, fraction.doubleValue);
+    CGFloat x = 0.0;
+    for (NSUInteger idx = 0; idx < _segments.count; idx++) {
+        CGFloat share = total > 0.0 ? MAX(0.0, self.fractions[idx].doubleValue) / total
+                                    : (idx == 0 ? 1.0 : 0.0);
+        CGFloat segmentWidth = CGRectGetWidth(_track.bounds) * share;
+        _segments[idx].frame = CGRectMake(x, 0, segmentWidth, 5.0);
+        x += segmentWidth;
+    }
+}
+
+@end
+
 // Storage bar row: the strip is rebuilt on each configuration, found by tag.
 static NSInteger const kSPKStorageBarTag = 8801;
 
@@ -987,79 +1079,22 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     }
 
     case SPKTableCellStorageBar: {
-        // A figure that is read, not set: a proportional bar and the total,
-        // with no icon and nothing to tap.
+        // A figure that is read, not set: no icon, nothing to tap.
         cellContentConfig.text = @"";
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         cell.accessoryType = UITableViewCellAccessoryNone;
 
-        UIView *strip = [cell.contentView viewWithTag:kSPKStorageBarTag];
-        if (!strip) {
-            strip = [UIView new];
-            strip.tag = kSPKStorageBarTag;
-            strip.userInteractionEnabled = NO;
-            [cell.contentView addSubview:strip];
+        SPKStorageBarView *bar = (SPKStorageBarView *)[cell.contentView viewWithTag:kSPKStorageBarTag];
+        if (![bar isKindOfClass:[SPKStorageBarView class]]) {
+            bar = [SPKStorageBarView new];
+            bar.tag = kSPKStorageBarTag;
+            bar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            [cell.contentView addSubview:bar];
         }
-        for (UIView *old in strip.subviews)
-            [old removeFromSuperview];
-
-        UILabel *value = [UILabel new];
-        value.attributedText = SPKStorageValueText(row.barValue);
-        value.textAlignment = NSTextAlignmentRight;
-        [strip addSubview:value];
-
-        UIView *track = [UIView new];
-        track.backgroundColor = [SPKUtils SPKColor_InstagramSeparator];
-        track.layer.cornerRadius = 2.5;
-        track.clipsToBounds = YES;
-        [strip addSubview:track];
-
-        CGFloat total = 0.0;
-        for (NSNumber *fraction in row.barFractions)
-            total += MAX(0.0, fraction.doubleValue);
-        // Three greys, not black: the bar reports, it does not shout.
-        NSArray<UIColor *> *shades = @[ [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.85],
-                                        [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.45],
-                                        [[SPKUtils SPKColor_InstagramSecondaryText] colorWithAlphaComponent:0.22] ];
-        __block CGFloat offset = 0.0;
-        [row.barFractions enumerateObjectsUsingBlock:^(NSNumber *fraction, NSUInteger idx, BOOL *stop) {
-            CGFloat share = total > 0.0 ? MAX(0.0, fraction.doubleValue) / total : (idx == 0 ? 1.0 : 0.0);
-            UIView *segment = [UIView new];
-            segment.backgroundColor = shades[MIN(idx, shades.count - 1)];
-            segment.tag = (NSInteger)(offset * 10000) + 1;
-            [track addSubview:segment];
-            offset += share;
-        }];
-
-        UILabel *legend = nil;
-        if (row.barLegend.length > 0) {
-            legend = [UILabel new];
-            legend.text = row.barLegend;
-            legend.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
-            legend.textColor = [SPKUtils SPKColor_InstagramTertiaryText];
-            [strip addSubview:legend];
-        }
-
-        strip.frame = CGRectMake(SPKUI_RowLeading, 0,
-                                 CGRectGetWidth(cell.contentView.bounds) - SPKUI_RowLeading * 2.0,
-                                 SPKUI_RowHeight);
-        strip.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        CGFloat valueWidth = [value.attributedText size].width + 2.0;
-        CGFloat stripWidth = CGRectGetWidth(strip.bounds);
-        value.frame = CGRectMake(stripWidth - valueWidth, 0, valueWidth, SPKUI_RowHeight);
-        CGFloat barRow = legend ? SPKUI_RowHeight - 16.0 : SPKUI_RowHeight;
-        value.frame = CGRectMake(stripWidth - valueWidth, 0, valueWidth, barRow);
-        track.frame = CGRectMake(0, (barRow - 5.0) / 2.0,
-                                 MAX(0.0, stripWidth - valueWidth - 14.0), 5.0);
-        legend.frame = CGRectMake(0, barRow - 2.0, stripWidth, 16.0);
-        CGFloat x = 0.0;
-        for (NSUInteger idx = 0; idx < track.subviews.count; idx++) {
-            CGFloat share = total > 0.0 ? MAX(0.0, row.barFractions[idx].doubleValue) / total
-                                        : (idx == 0 ? 1.0 : 0.0);
-            CGFloat w = CGRectGetWidth(track.bounds) * share;
-            track.subviews[idx].frame = CGRectMake(x, 0, w, 5.0);
-            x += w;
-        }
+        bar.frame = CGRectInset(cell.contentView.bounds, SPKUI_RowLeading, 0);
+        bar.fractions = row.barFractions;
+        bar.value = SPKStorageValueText(row.barValue);
+        bar.legend = row.barLegend;
         break;
     }
     }

@@ -300,14 +300,13 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     if (showsDone) {
         // v1.4 footer — sectioned gap, then an explicit way out. Same dismissal
         // path as tapping outside (animation + onDismiss), with a light tick.
+        // A single hairline and clear air, not a filled slab: the footer reads as
+        // its own group without putting a grey bar through the menu.
         UIView *gapBand = [[UIView alloc] initWithFrame:CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuFooterGap)];
-        gapBand.backgroundColor = [UIColor.separatorColor colorWithAlphaComponent:0.18];
+        gapBand.backgroundColor = UIColor.clearColor;
         UIView *gapTop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, kSPKToggleMenuWidth, hairline)];
         gapTop.backgroundColor = UIColor.separatorColor;
-        UIView *gapBottom = [[UIView alloc] initWithFrame:CGRectMake(0, kSPKToggleMenuFooterGap - hairline, kSPKToggleMenuWidth, hairline)];
-        gapBottom.backgroundColor = UIColor.separatorColor;
         [gapBand addSubview:gapTop];
-        [gapBand addSubview:gapBottom];
         [blurView.contentView addSubview:gapBand];
         y += kSPKToggleMenuFooterGap;
 
