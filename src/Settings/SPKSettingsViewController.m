@@ -681,6 +681,11 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     if (![row isKindOfClass:[SPKSetting class]])
         return UITableViewAutomaticDimension;
 
+    // A value row puts its figure on the trailing side, not under the title:
+    // it keeps the standard pitch even though it carries a subtitle.
+    if (row.type == SPKTableCellValue)
+        return SPKUI_RowHeight;
+
     // The storage bar carries its legend inside the row, so it needs the extra
     // line — without it, everything else keeps the measured 44 pt pitch.
     if (row.type == SPKTableCellStorageBar)

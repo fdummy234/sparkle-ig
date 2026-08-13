@@ -301,7 +301,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         }
         control.frame = CGRectMake(0, y, kSPKToggleMenuWidth, kSPKToggleMenuItemHeight);
         [blurView.contentView addSubview:control];
-        y += kSPKToggleMenuFooterHeight;
+        y += kSPKToggleMenuItemHeight;
     }
 
     if (showsDone) {
@@ -327,7 +327,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         [doneControl addSubview:doneLabel];
         [doneControl addTarget:overlay action:@selector(spk_dismissFromDone) forControlEvents:UIControlEventTouchUpInside];
         [blurView.contentView addSubview:doneControl];
-        y += kSPKToggleMenuItemHeight;
+        y += kSPKToggleMenuFooterHeight;
     }
 
     // Placement: below the anchor when it fits, otherwise above — then clamp
