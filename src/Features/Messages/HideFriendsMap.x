@@ -69,6 +69,30 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
 
     Class friendMapSection = SPKFriendMapSectionControllerClass();
     SEL scSelector = @selector(listAdapter:sectionControllerForObject:);
+
+    // One-shot survey: prints every entry of the inbox tray with the section
+    // controller IGListKit picks for it. That is what identifies the Instants
+    // "+" — the same way the friend map is identified above. Remove once the
+    // class name is known.
+    static dispatch_once_t surveyToken;
+    dispatch_once(&surveyToken, ^{
+        if (!adapter || ![dataSource respondsToSelector:scSelector])
+            return;
+        SPKLog(@"TraySurvey", @"[Sparkle] --- inbox tray: %lu entries ---", (unsigned long)originalObjs.count);
+        NSUInteger index = 0;
+        for (id entry in originalObjs) {
+            NSString *sectionName = @"(unresolved)";
+            @try {
+                id controller = ((id (*)(id, SEL, id, id))objc_msgSend)(dataSource, scSelector, adapter, entry);
+                if (controller)
+                    sectionName = NSStringFromClass([controller class]);
+            } @catch (__unused NSException *exception) {
+            }
+            SPKLog(@"TraySurvey", @"[Sparkle] %lu · object %@ · section %@",
+                   (unsigned long)index++, NSStringFromClass([entry class]), sectionName);
+        }
+        SPKLog(@"TraySurvey", @"[Sparkle] --- end of tray ---");
+    });
     BOOL canResolveSection = friendMapSection && adapter &&
                              [dataSource respondsToSelector:scSelector];
 
