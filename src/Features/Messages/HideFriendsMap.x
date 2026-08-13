@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import <objc/message.h>
+#import <objc/runtime.h>
 
 static id SPKValueForSelectorOrKey(id object, NSString *name) {
     if (!object || name.length == 0)
@@ -34,6 +35,16 @@ static BOOL SPKHideInstantsEntry(void) {
     return [SPKUtils getBoolPref:@"instants_disable_creation"];
 }
 
+// The entry is recognisable by its own view model — IGDirectNotesTrayInstantsViewModel
+// in the 441.0.0 binary. Testing the object works on both filtering paths,
+// including the one that has no list adapter to ask for a section controller.
+static BOOL SPKShouldHideInstantsObject(id obj) {
+    if (!SPKHideInstantsEntry() || !obj)
+        return NO;
+    const char *name = class_getName(object_getClass(obj));
+    return name && strstr(name, "IGDirectNotesTrayInstants") != NULL;
+}
+
 static BOOL SPKShouldHideFriendsMapObject(id object) {
     if (![SPKUtils getBoolPref:@"msgs_hide_friends_map"])
         return NO;
@@ -61,6 +72,10 @@ static NSArray *SPKFilterFriendsMapObjects(NSArray *originalObjs) {
     for (id obj in originalObjs) {
         if (SPKShouldHideFriendsMapObject(obj)) {
             SPKLog(@"General", @"[Sparkle] Hiding friends map");
+            continue;
+        }
+        if (SPKShouldHideInstantsObject(obj)) {
+            SPKLog(@"General", @"[Sparkle] Hiding the Instants entry");
             continue;
         }
         [filteredObjs addObject:obj];
@@ -93,6 +108,10 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
     for (id obj in originalObjs) {
         if (hideFriendMap && SPKShouldHideFriendsMapObject(obj)) {
             SPKLog(@"General", @"[Sparkle] Hiding friends map");
+            continue;
+        }
+        if (SPKShouldHideInstantsObject(obj)) {
+            SPKLog(@"General", @"[Sparkle] Hiding the Instants entry (model match)");
             continue;
         }
         if (canResolveSection) {
@@ -133,6 +152,19 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
 - (long long)numberOfItems {
     if ([SPKUtils getBoolPref:@"msgs_hide_friends_map"]) {
         SPKLog(@"General", @"[Sparkle] Hiding friends map section");
+        return 0;
+    }
+    return %orig();
+}
+%end
+
+// Same technique for the Instants entry: a section that reports zero items is
+// laid out as if it did not exist. This is what actually removes the friend map
+// above — the object filters are the belt, this is the braces.
+%hook _TtC24IGDirectNotesTrayUISwift42IGDirectNotesTrayInstantsSectionController
+- (long long)numberOfItems {
+    if (SPKHideInstantsEntry()) {
+        SPKLog(@"General", @"[Sparkle] Hiding the Instants section");
         return 0;
     }
     return %orig();
