@@ -322,29 +322,28 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
         [doneControl addTarget:overlay action:@selector(spk_dismissFromDone) forControlEvents:UIControlEventTouchUpInside];
         [blurView.contentView addSubview:doneControl];
         y += kSPKToggleMenuItemHeight;
-
-        // Placement: below the anchor when it fits, otherwise above — then clamp
-        // both axes into the safe area so the menu can never leave the screen.
-        CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:overlay];
-        UIEdgeInsets safe = window.safeAreaInsets;
-        CGFloat minX = safe.left + kSPKToggleMenuMargin;
-        CGFloat maxX = window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth;
-        CGFloat minY = safe.top + kSPKToggleMenuMargin;
-        CGFloat maxY = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin - menuHeight;
-
-        CGFloat x = CGRectGetMaxX(anchorFrame) - kSPKToggleMenuWidth - kSPKToggleMenuMargin;
-        x = MAX(minX, MIN(x, maxX));
-
-        CGFloat belowY = CGRectGetMaxY(anchorFrame) + kSPKToggleMenuAnchorGap;
-        BOOL fitsBelow = belowY <= maxY;
-        CGFloat menuY = fitsBelow ? belowY
-                                  : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
-        menuY = MAX(minY, MIN(menuY, maxY));
-
-        container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
-        [overlay addSubview:container];
     }
 
+    // Placement: below the anchor when it fits, otherwise above — then clamp
+    // both axes into the safe area so the menu can never leave the screen.
+    CGRect anchorFrame = [anchorView convertRect:anchorView.bounds toView:overlay];
+    UIEdgeInsets safe = window.safeAreaInsets;
+    CGFloat minX = safe.left + kSPKToggleMenuMargin;
+    CGFloat maxX = window.bounds.size.width - safe.right - kSPKToggleMenuMargin - kSPKToggleMenuWidth;
+    CGFloat minY = safe.top + kSPKToggleMenuMargin;
+    CGFloat maxY = window.bounds.size.height - safe.bottom - kSPKToggleMenuMargin - menuHeight;
+
+    CGFloat x = CGRectGetMaxX(anchorFrame) - kSPKToggleMenuWidth - kSPKToggleMenuMargin;
+    x = MAX(minX, MIN(x, maxX));
+
+    CGFloat belowY = CGRectGetMaxY(anchorFrame) + kSPKToggleMenuAnchorGap;
+    BOOL fitsBelow = belowY <= maxY;
+    CGFloat menuY = fitsBelow ? belowY
+                              : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
+    menuY = MAX(minY, MIN(menuY, maxY));
+
+    container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
+    [overlay addSubview:container];
     [window addSubview:overlay];
 
     container.alpha = 0.0;
