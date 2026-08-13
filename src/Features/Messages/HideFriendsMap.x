@@ -169,18 +169,24 @@ static NSArray *SPKFilterFriendsMapObjectsForDataSource(id dataSource, id adapte
 - (void)layoutSubviews {
     %orig;
     if (SPKHideInstantsEntry()) {
-        self.hidden = YES;
-        self.alpha = 0.0;
-        self.userInteractionEnabled = NO;
+        // The class is only forward-declared here, so reach its UIView side
+        // through a cast rather than through the unknown interface.
+        UIView *cell = (UIView *)self;
+        cell.hidden = YES;
+        cell.alpha = 0.0;
+        cell.userInteractionEnabled = NO;
     }
 }
 
 - (void)didMoveToWindow {
     %orig;
     if (SPKHideInstantsEntry()) {
-        self.hidden = YES;
-        self.alpha = 0.0;
-        self.userInteractionEnabled = NO;
+        // The class is only forward-declared here, so reach its UIView side
+        // through a cast rather than through the unknown interface.
+        UIView *cell = (UIView *)self;
+        cell.hidden = YES;
+        cell.alpha = 0.0;
+        cell.userInteractionEnabled = NO;
     }
 }
 
