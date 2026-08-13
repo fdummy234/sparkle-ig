@@ -213,7 +213,10 @@ typedef NS_ENUM(NSInteger, SPKPACategory) {
         SPKMediaChromeSetLeadingTopBarItems(self.navigationItem, @[ SPKMediaChromeTopBarButtonItem(@"xmark", self, @selector(closeTapped)) ]);
     }
 
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleInsetGrouped];
+        // Grouped, not InsetGrouped: every other Sparkle screen uses it, with the
+    // system separators cut and 6 pt bands drawn between groups.
+    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
@@ -643,6 +646,14 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     }
 }
 
+// This controller has no ⓘ affordance of its own: the two explanations sit in
+// the section footer, which is where a plain grouped table puts them.
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if ([self kindForSection:section] == SPKPASectionOptions)
+        return @"Remember the profiles you open, so a scan can tell you who is new. The list stays on this device.";
+    return nil;
+}
+
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     switch ([self kindForSection:section]) {
     case SPKPASectionCurrent:
@@ -658,6 +669,18 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
 
 // Same 44 pt pitch as every Sparkle settings screen; automatic sizing made
 // these rows taller than the rest of the tweak.
+// The 6 pt grey band the rest of the tweak puts between groups, and again at
+// the end of the page.
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return 6.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    UIView *band = [UIView new];
+    band.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
+    return band;
+}
+
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
     SPKPASectionKind kind = [self kindForSection:indexPath.section];
     if (kind == SPKPASectionOptions || kind == SPKPASectionReset)
@@ -669,6 +692,14 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     SPKPASectionKind kind = [self kindForSection:indexPath.section];
 
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
+    // Hairline drawn by hand, inset to the title like the settings screens.
+    NSInteger rowsInSection = [self tableView:tableView numberOfRowsInSection:indexPath.section];
+    if (indexPath.row < rowsInSection - 1) {
+        UIView *hairline = [[UIView alloc] initWithFrame:CGRectMake(51.0, 43.5, tableView.bounds.size.width - 51.0, 0.5)];
+        hairline.backgroundColor = [SPKUtils SPKColor_InstagramSeparator];
+        hairline.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
+        [cell.contentView addSubview:hairline];
+    }
     UIListContentConfiguration *content = cell.defaultContentConfiguration;
     // White cards on a grouped background, like every other Sparkle screen —
     // the grey fill made this page read as a different app.
@@ -683,6 +714,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     if (kind == SPKPASectionReset) {
         if (indexPath.row == 0) {
             content.text = @"About";
+            content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -691,7 +725,10 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         }
         content.text = @"Reset Data";
         content.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
-        content.image = [SPKAssetUtils instagramIconNamed:@"trash" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
+        content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
+            content.image = [SPKAssetUtils instagramIconNamed:@"trash" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
         content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
         cell.contentConfiguration = content;
         return cell;
@@ -701,6 +738,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         SPKPAOptionRow opt = (SPKPAOptionRow)[[self optionRows][indexPath.row] integerValue];
         if (opt == SPKPAOptionTrackVisits) {
             content.text = @"Track Visited Profiles";
+            content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"eye" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
             SPKSwitch *toggle = [SPKSwitch new];
@@ -710,6 +750,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         } else if (opt == SPKPAOptionVisitedProfiles) {
             content.text = @"Visited Profiles";
+            content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"history" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
             content.secondaryText = [NSString stringWithFormat:@"%lu", (unsigned long)self.visits.count];
@@ -718,6 +761,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         } else { // About
             content.text = @"About";
+            content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -728,7 +774,10 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
 
     SPKPACategoryRow *r = (kind == SPKPASectionCurrent) ? self.currentRows[indexPath.row] : self.changeRows[indexPath.row];
     content.text = r.title;
-    content.image = [SPKAssetUtils instagramIconNamed:r.iconName pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
+    content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.imageToTextPadding = 14.0;
+            content.image = [SPKAssetUtils instagramIconNamed:r.iconName pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
     content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
 
     content.prefersSideBySideTextAndSecondaryText = YES;
