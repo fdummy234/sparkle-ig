@@ -712,7 +712,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         if (indexPath.row == 0) {
             content.text = @"About";
             content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
@@ -723,7 +725,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         content.text = @"Reset Data";
         content.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
         content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"trash" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
         content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
@@ -736,7 +740,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         if (opt == SPKPAOptionTrackVisits) {
             content.text = @"Track Visited Profiles";
             content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"eye" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
@@ -748,7 +754,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         } else if (opt == SPKPAOptionVisitedProfiles) {
             content.text = @"Visited Profiles";
             content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"history" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
@@ -759,7 +767,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         } else { // About
             content.text = @"About";
             content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
@@ -772,7 +782,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     SPKPACategoryRow *r = (kind == SPKPASectionCurrent) ? self.currentRows[indexPath.row] : self.changeRows[indexPath.row];
     content.text = r.title;
     content.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(0, 15.0, 0, 16.0);
+            content.textProperties.font =
+                [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+            content.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
             content.imageToTextPadding = 14.0;
             content.image = [SPKAssetUtils instagramIconNamed:r.iconName pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
     content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
