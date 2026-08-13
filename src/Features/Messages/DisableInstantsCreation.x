@@ -408,9 +408,38 @@ static void SPKHookInstanceMethod(const char *className, SEL selector, IMP repla
     MSHookMessageEx(cls, selector, replacement, original);
 }
 
+// The "+" in the inbox is not a tray cell: FLEX puts it at {400, 737, 120, 120},
+// an IGQuickSnapCornerStackView laid over the screen by the QuickSnap
+// presentation manager. Hiding that view removes the entry point, which is what
+// "Disable Instants Creation" claims to do.
+%group SPKInstantsCornerHooks
+%hook IGQuickSnapCornerStackView
+
+- (void)layoutSubviews {
+    %orig;
+    UIView *stack = (UIView *)self;
+    BOOL hidden = SPKQuickSnapCreationDisabled();
+    stack.hidden = hidden;
+    stack.userInteractionEnabled = !hidden;
+}
+
+- (void)didMoveToWindow {
+    %orig;
+    UIView *stack = (UIView *)self;
+    BOOL hidden = SPKQuickSnapCreationDisabled();
+    stack.hidden = hidden;
+    stack.userInteractionEnabled = !hidden;
+}
+
+%end
+%end
+
 void SPKInstallDisableInstantsCreationHooksIfEnabled(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
+        %init(SPKInstantsCornerHooks,
+              IGQuickSnapCornerStackView = objc_getClass("_TtC26IGQuickSnapCornerStackView26IGQuickSnapCornerStackView"));
+
 
         const char *cameraControlView = "_TtC34IGQuickSnapCameraControlController28IGQuickSnapCameraControlView";
 
