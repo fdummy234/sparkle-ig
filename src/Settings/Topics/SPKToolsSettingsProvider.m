@@ -44,6 +44,8 @@ static NSDictionary *SPKSettingsLockSection(void) {
     SPKSetting *lockSwitch = [SPKSetting switchCellWithTitle:@"Passcode Lock"
                                                         icon:SPKSettingsIcon(@"lock")
                                                  defaultsKey:@""];
+    lockSwitch.helpText = @"Ask for a passcode before opening Sparkle Settings.";
+    lockSwitch.reloadsTableOnSwitchChange = YES;
     lockSwitch.switchValueProvider = ^BOOL {
         return [SPKSettingsLockManager sharedManager].isLockEnabled;
     };
@@ -89,8 +91,9 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                                                              completion:^(__unused BOOL success){
                                                                                              }];
                                                           }];
-    changePasscode.enabledProvider = ^BOOL {
-        return [SPKSettingsLockManager sharedManager].isLockEnabled;
+    changePasscode.helpText = @"Replace the passcode that opens Sparkle Settings.";
+    changePasscode.hiddenProvider = ^BOOL {
+        return !([SPKSettingsLockManager sharedManager].isLockEnabled);
     };
 
     return SPKTopicSection(@"Settings Lock", @[ lockSwitch, changePasscode ], @"Require the independent Settings passcode or biometrics when opening Sparkle Settings, including topic sheets.");
@@ -132,10 +135,25 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
-    [instagramCells addObject:[SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
-                                                  defaultsKey:@"tools_fix_duplicate_notifications"]];
-    [instagramCells addObject:[SPKSetting switchCellWithTitle:@"Disable Safe Mode"
-                                                  defaultsKey:@"tools_disable_safe_mode"]];
+    SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
+                                                           icon:SPKSettingsIcon(@"notification")
+                                                    defaultsKey:@"tools_fix_duplicate_notifications"];
+    fixDuplicates.helpText = @"Drop the duplicate push notifications Instagram sends to sideloaded builds.";
+    [instagramCells addObject:fixDuplicates];
+    [instagramCells addObject:
+        [SPKSetting navigationCellWithTitle:@"FLEX"
+                                       subtitle:nil
+                                           icon:SPKSettingsIcon(@"toolbox")
+                                    navSections:@[
+                SPKTopicSection(@"", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter)
+                                    ]]];
+
+    // Safe mode is one subject: this row keeps it from engaging, "Clear Safe
+    // Mode" lifts it once it has. Both live in Recovery.
+    SPKSetting *disableSafeMode = [SPKSetting switchCellWithTitle:@"Disable Safe Mode"
+                                                             icon:SPKSettingsIcon(@"warning")
+                                                      defaultsKey:@"tools_disable_safe_mode"];
+    disableSafeMode.helpText = @"Stop Sparkle from disabling itself after a crash at launch. Leave it off unless you are debugging.";
 
 #if SPK_DEV
     NSString *instagramFooter =
@@ -150,54 +168,64 @@ static NSDictionary *SPKSettingsLockSection(void) {
 
     // Section order: everyday settings first, recovery and developer tooling
     // last — FLEX often is not even installed on regular builds.
+    // Protect, fix, replay, rescue: the lock guards everything else, the
+    // Instagram fixes come next, the intro screens are rarely reopened, and
+    // recovery closes with the destructive row.
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
+        SPKSettingsLockSection(),
+        SPKTopicSection(@"Instagram", instagramCells, instagramFooter),
         SPKTopicSection(@"Tweak", @[
-[SPKSetting buttonCellWithTitle:@"Show Onboarding"
+            ({
+                SPKSetting *row0 = [SPKSetting buttonCellWithTitle:@"Show Onboarding"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"compass")
                                      action:^(void) {
                                          [SPKOnboardingViewController presentFromViewController:nil onFinish:nil];
-                                     }],
-            [SPKSetting buttonCellWithTitle:@"Show What's New"
+                                     }];
+                row0.helpText = @"Replay the first-run introduction.";
+                row0;
+            }),
+            ({
+                SPKSetting *row1 = [SPKSetting buttonCellWithTitle:@"Show What's New"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"notes")
                                      action:^(void) {
                                          [SPKWhatsNewViewController presentFromViewController:nil onFinish:nil];
-                                     }],
+                                     }];
+                row1.helpText = @"Reopen the release notes for this version.";
+                row1;
+            }),
         ],
-                        @"1. Opens settings when long pressing the Home tab or the next visible tab if the Home tab is hidden.\n"
-                        @"2. Haptic feedback when the settings shortcut gesture fires.\n"
-                        @"3. Open Sparkle settings automatically every time Instagram launches."),
-        SPKSettingsLockSection(),
-        SPKTopicSection(@"Instagram", instagramCells, instagramFooter),
-
+                        nil),
         // "Recovery" — was the untitled section. Disable All Settings moved in
         // from Tweak: its own footer said "Use to isolate crashes."
-SPKTopicSection(@"", @[
-            [SPKSetting navigationCellWithTitle:@"FLEX"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"toolbox")
-                                    navSections:@[
-                SPKTopicSection(@"", @[ flexOpen, flexGesture, flexLaunch, flexFocus ], flexFooter)
-                                    ]],
-        ], nil),
+
 #if SPK_DEV
         SPKTopicSection(@"Diagnostics",
                         @[ [SPKHookBisectSettingsProvider rootSetting] ],
                         @"Skip individual hook installers at launch to isolate a crash or a slowdown to one feature."),
 #endif
         SPKTopicSection(@"Recovery", @[
-            [SPKSetting switchCellWithTitle:@"Turn Off All Features"
-                           icon:SPKSettingsIcon(@"circle_off")
-                                defaultsKey:@"tools_disable_all"
-                            requiresRestart:YES],
-            [SPKSetting buttonCellWithTitle:@"Clear Safe Mode"
+            disableSafeMode,
+            ({
+                SPKSetting *row2 = [SPKSetting buttonCellWithTitle:@"Clear Safe Mode"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"undo_circle")
                                      action:^(void) {
                                          SPKStabilityGuardReset();
                                          [SPKUtils showRestartConfirmation];
-                                     }],
+                                     }];
+                row2.helpText = @"Bring the features back after a crash put Sparkle to sleep.";
+                row2;
+            }),
+            ({
+                SPKSetting *row3 = [SPKSetting switchCellWithTitle:@"Turn Off All Features"
+                           icon:SPKSettingsIcon(@"circle_off")
+                                defaultsKey:@"tools_disable_all"
+                            requiresRestart:YES];
+                row3.helpText = @"Suspend every feature at once, keeping your settings.";
+                row3;
+            }),
 #if SPK_DEV
             // Dev builds only: wipe the intro-sheet state so the onboarding /
             // What's New gating fires from scratch on the next launch.

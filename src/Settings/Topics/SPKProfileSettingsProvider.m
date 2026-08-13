@@ -99,22 +99,23 @@ static BOOL SPKFollowIndicatorColorfulEnabled(void) {
 
 // No per-item icons: the menu is a plain title list. The cell keeps a static
 // leading icon instead of reflecting the selection.
-static UICommand *SPKFollowIndicatorModeCommand(NSString *title, NSString *value) {
+static UICommand *SPKFollowIndicatorModeCommand(NSString *title, NSString *value, NSString *iconName) {
     return [UICommand commandWithTitle:title
                                  image:nil
                                 action:@selector(menuChanged:)
                           propertyList:@{
                               @"defaultsKey" : kSPKFollowIndicatorModeKey,
-                              @"value" : value
+                              @"value" : value,
+                              @"iconName" : iconName
                           }];
 }
 
 static UIMenu *SPKFollowIndicatorModeMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKFollowIndicatorModeCommand(@"Off", kSPKFollowIndicatorModeOff),
-        SPKFollowIndicatorModeCommand(@"Icon", kSPKFollowIndicatorModeIcon),
-        SPKFollowIndicatorModeCommand(@"Text", kSPKFollowIndicatorModeText),
-        SPKFollowIndicatorModeCommand(@"Icon & Text", kSPKFollowIndicatorModeIconText)
+        SPKFollowIndicatorModeCommand(@"Off", kSPKFollowIndicatorModeOff, @"circle_off"),
+        SPKFollowIndicatorModeCommand(@"Icon", kSPKFollowIndicatorModeIcon, @"user_check"),
+        SPKFollowIndicatorModeCommand(@"Text", kSPKFollowIndicatorModeText, @"text"),
+        SPKFollowIndicatorModeCommand(@"Icon & Text", kSPKFollowIndicatorModeIconText, @"users")
     ]];
 }
 
@@ -122,23 +123,35 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
 
 + (SPKSetting *)rootSetting {
     return SPKTopicNavigationSetting(@"Profile", @"user_circle", 24.0, @[
-        // One row under "Profile Picture", four under "Indicators": both describe
-        // the profile screen.
-        // The page is already called Profile: a header repeating it says nothing.
-        SPKTopicSection(@"", @[
-            [SPKSetting switchCellWithTitle:@"Long Press to Zoom Photo"
+        // "Profile Screen" names what these rows change; a header repeating the
+        // page name would say nothing — and without a header there is no ⓘ.
+        SPKTopicSection(@"Profile Screen", @[
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Expand Photo"
                                        icon:SPKSettingsIcon(@"expand")
-                                defaultsKey:@"profile_photo_zoom"],
-            [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
+                                defaultsKey:@"profile_photo_zoom"];
+                row.helpText = @"Long-press a profile picture to open it full screen.";
+                row;
+            }),
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
                                        icon:SPKSettingsIcon(@"notes")
-                                defaultsKey:@"profile_hide_notes_bubble"],
-            [SPKSetting switchCellWithTitle:@"Hide Threads Button"
+                                defaultsKey:@"profile_hide_notes_bubble"];
+                row.helpText = @"Remove the note bubble above your own profile picture.";
+                row;
+            }),
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Threads Button"
                                        icon:SPKSettingsIcon(@"threads")
-                                defaultsKey:@"profile_hide_threads_btn"],
+                                defaultsKey:@"profile_hide_threads_btn"];
+                row.helpText = @"Remove the Threads badge from the profile header.";
+                row;
+            }),
             ({
                 SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following Indicator"
                                                             icon:SPKSettingsIcon(@"user_check")
                                                             menu:SPKFollowIndicatorModeMenu()];
+    mode.helpText = @"Mark profiles that already follow you, as an icon, a label, or both.";
                 mode.accessoryTextProvider = ^NSString * {
                     NSString *value = SPKFollowIndicatorEffectiveMode();
                     if ([value isEqualToString:kSPKFollowIndicatorModeText])
@@ -159,6 +172,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                 SPKSetting *colorful = [SPKSetting switchCellWithTitle:@"Colorful Indicator"
                                                                   icon:SPKSettingsIcon(@"palette")
                                                            defaultsKey:kSPKFollowIndicatorColorfulKey];
+    colorful.helpText = @"Tint that mark instead of showing it in grey.";
                 colorful.switchValueProvider = ^BOOL {
                     return SPKFollowIndicatorColorfulEnabled();
                 };

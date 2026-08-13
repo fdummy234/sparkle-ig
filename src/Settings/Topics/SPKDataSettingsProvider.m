@@ -156,12 +156,12 @@
 
     NSArray *sections = @[
         SPKTopicSection(@"Backup & Transfer", @[
-            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export"
+            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export Settings"
                                                                subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_up")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:NO]],
                                     [SPKUtils SPKColor_InstagramPrimaryText]),
-            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Import"
+            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Import Settings"
                                                                subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_down")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:YES]],
