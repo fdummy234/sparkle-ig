@@ -651,7 +651,7 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     case SPKPASectionChanges:
         return @"Changes";
     case SPKPASectionOptions:
-        return @"Options";
+        return @"Tracking";
     case SPKPASectionReset:
         return nil;
     }
@@ -662,7 +662,9 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
 
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     UIListContentConfiguration *content = cell.defaultContentConfiguration;
-    cell.backgroundColor = [SPKUtils SPKColor_InstagramSecondaryBackground];
+    // White cards on a grouped background, like every other Sparkle screen —
+    // the grey fill made this page read as a different app.
+    cell.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
     cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
     UIView *selected = [UIView new];
     selected.backgroundColor = [SPKUtils SPKColor_InstagramPressedBackground];
@@ -671,7 +673,7 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
     content.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
 
     if (kind == SPKPASectionReset) {
-        content.text = @"Reset Profile Analyzer Data";
+        content.text = @"Reset Data";
         content.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
         content.image = [SPKAssetUtils instagramIconNamed:@"trash" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
         content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
@@ -699,7 +701,7 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
             content.secondaryTextProperties.font = [UIFont systemFontOfSize:[UIFont preferredFontForTextStyle:UIFontTextStyleBody].pointSize weight:UIFontWeightMedium];
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         } else { // About
-            content.text = @"About Profile Analyzer";
+            content.text = @"About";
             content.image = [SPKAssetUtils instagramIconNamed:@"info" pointSize:24.0 renderingMode:UIImageRenderingModeAlwaysTemplate];
             content.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
