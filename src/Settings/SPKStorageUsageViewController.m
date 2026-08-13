@@ -31,20 +31,34 @@
     [self rebuildSections];
 }
 
+// A dash reads as "nothing"; "Zero KB" reads as a measurement that happens to
+// be zero.
+- (unsigned long long)bytesForKey:(NSString *)key {
+    return [self.breakdown[key] unsignedLongLongValue];
+}
+
 - (NSString *)formattedKey:(NSString *)key {
-    unsigned long long bytes = [self.breakdown[key] unsignedLongLongValue];
+    unsigned long long bytes = [self bytesForKey:key];
+    if (bytes == 0)
+        return @"—";
     return [NSByteCountFormatter stringFromByteCount:(long long)bytes countStyle:NSByteCountFormatterCountStyleFile];
 }
 
 - (void)rebuildSections {
     NSMutableArray *sections = [NSMutableArray array];
 
-    [sections addObject:SPKTopicSection(@"Overview", @[
-                  [SPKSetting valueCellWithTitle:@"Total"
-                                        subtitle:[self formattedKey:@"total"]
-                                            icon:SPKSettingsIcon(@"info")],
+    // The total is read, not set: a proportional bar in place of a section, the
+    // same component the Gallery page uses.
+    [sections addObject:SPKTopicSection(@"", @[
+                  [SPKSetting storageBarCellWithFractions:@[ @([self bytesForKey:@"gallery"]),
+                                                            @([self bytesForKey:@"avatars"]),
+                                                            @([self bytesForKey:@"downloads"] +
+                                                              [self bytesForKey:@"deletedMessages"] +
+                                                              [self bytesForKey:@"profileAnalyzer"]) ]
+                                                    value:[self formattedKey:@"total"]
+                                                   legend:@"Gallery · Profile Pictures · everything else"]
               ],
-                                        @"On-device storage used by all Sparkle data. Instagram's own cache is not included.")];
+                                        nil)];
 
     [sections addObject:SPKTopicSection(@"Breakdown", @[
                   [SPKSetting valueCellWithTitle:@"Gallery"
@@ -65,7 +79,7 @@
               ],
                                         nil)];
 
-    SPKSetting *clearAvatars = [SPKSetting buttonCellWithTitle:@"Clear Cached Profile Pictures"
+    SPKSetting *clearAvatars = [SPKSetting buttonCellWithTitle:@"Clear Cached Pictures"
                                                       subtitle:nil
                                                           icon:SPKSettingsIcon(@"user_circle")
                                                         action:^{
@@ -74,8 +88,9 @@
     clearAvatars.tintColor = [SPKUtils SPKColor_InstagramDestructive];
     clearAvatars.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
-    [sections addObject:SPKTopicSection(@"Profile Pictures", @[ clearAvatars ],
-                                        @"Profile pictures are a shared cache reused across Sparkle. Clearing them frees space; they re-download as needed.")];
+    // No header: the destructive row closes the page, like everywhere else.
+    clearAvatars.helpText = @"Profile pictures are a shared cache reused across Sparkle. Clearing them frees space; they re-download as needed.";
+    [sections addObject:SPKTopicSection(@"", @[ clearAvatars ], nil)];
 
     [self replaceSections:sections];
 }

@@ -104,13 +104,18 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     [super layoutSubviews];
     CGFloat h = self.bounds.size.height;
     CGFloat w = self.bounds.size.width;
-    self.iconView.frame = CGRectMake(kSPKToggleMenuHPad,
-                                     (h - kSPKToggleMenuIconSize) / 2.0,
-                                     kSPKToggleMenuIconSize, kSPKToggleMenuIconSize);
+    // An item that declares no icon reserves no column: the title starts at the
+    // margin instead of sitting beside an "unknown glyph" placeholder.
+    BOOL hasIcon = (self.iconView.image != nil);
+    self.iconView.hidden = !hasIcon;
+    self.iconView.frame = hasIcon
+        ? CGRectMake(kSPKToggleMenuHPad, (h - kSPKToggleMenuIconSize) / 2.0,
+                     kSPKToggleMenuIconSize, kSPKToggleMenuIconSize)
+        : CGRectMake(kSPKToggleMenuHPad, h / 2.0, 0.0, 0.0);
     CGFloat checkW = 18.0;
     self.checkView.frame = CGRectMake(w - kSPKToggleMenuHPad - checkW,
                                       (h - checkW) / 2.0, checkW, checkW);
-    CGFloat titleX = CGRectGetMaxX(self.iconView.frame) + 12.0;
+    CGFloat titleX = hasIcon ? CGRectGetMaxX(self.iconView.frame) + 12.0 : kSPKToggleMenuHPad;
     self.titleLabel.frame = CGRectMake(titleX, 0,
                                        CGRectGetMinX(self.checkView.frame) - 8.0 - titleX, h);
 }
