@@ -110,7 +110,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                            icon:SPKSettingsIcon(@"eye_off")
                                  viewController:[SPKGalleryHiddenSourcesViewController new]]
         ],
-                        @"Pin favorites above other files inside the current sort and folder context."),
+                        @"Pin favorites above other files in the current folder."),
         SPKTopicSection(@"Editing", @[
             [SPKSetting switchCellWithTitle:@"Ask to Replace Original"
                                        icon:SPKSettingsIcon(@"left_right")
@@ -202,7 +202,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
 
     
     SPKSetting *favoritesRow = [SPKSetting switchCellWithTitle:@"Show Favorites at Top" icon:SPKSettingsIcon(@"heart") defaultsKey:kFavoritesAtTopKey];
-    favoritesRow.helpText = @"Pin favorites above other files inside the current sort and folder context.";
+    favoritesRow.helpText = @"Pin favorites above other files in the current folder.";
     favoritesRow.action = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:@"SPKGalleryFavoritesSortPreferenceChanged" object:nil];
     };
@@ -217,7 +217,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
         [[NSNotificationCenter defaultCenter] postNotificationName:kSPKGalleryGridControlsChangedNotification object:nil];
     };
     SPKSetting *flatBrowsingRow = [SPKSetting switchCellWithTitle:@"Show Files From Subfolders" icon:SPKSettingsIcon(@"folder") defaultsKey:kSPKGalleryFlatBrowsingKey];
-    flatBrowsingRow.helpText = @"Show files from all folders instead of only the current folder's files. The folders stay in the bar above and still narrow the list.";
+    flatBrowsingRow.helpText = @"Show files from every folder, not only the one you're in.";
     flatBrowsingRow.action = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:kSPKGalleryBrowsingScopeChangedNotification object:nil];
     };
@@ -242,7 +242,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     SPKSetting *replaceOriginalRow = [SPKSetting switchCellWithTitle:@"Ask to Replace Original"
                                                                 icon:SPKSettingsIcon(@"left_right")
                                                          defaultsKey:@"trim_gallery_prompt_replace"];
-    replaceOriginalRow.helpText = @"When you trim or edit a Gallery item, ask whether to replace the original or save a copy. Off always saves a copy.";
+    replaceOriginalRow.helpText = @"When you edit an item, ask whether to replace the original. Off always keeps it.";
 
     SPKSetting *accountFilterRow = [SPKSetting switchCellWithTitle:@"This Account Only" icon:SPKSettingsIcon(@"user_circle") defaultsKey:@"gallery_filter_current_account"];
     accountFilterRow.helpText = @"Show only media saved while logged into the current account.";
@@ -257,7 +257,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                               subtitle:@""
                                                                   icon:SPKSettingsIcon(@"eye_off")
                                                         viewController:[SPKGalleryHiddenSourcesViewController new]];
-    hiddenSourcesRow.helpText = @"Sources you hide stay stored and stay available to maintenance and duplicate detection — they just leave the grid.";
+    hiddenSourcesRow.helpText = @"Keep sources out of the grid without deleting anything.";
 
     // Grid section: pinch-to-zoom toggle. Defaults ON; the backing pref stores
     // the *disabled* state, so the switch inverts.
@@ -286,7 +286,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     SPKSetting *mediaInfoRow = [SPKSetting switchCellWithTitle:@"Show Media Info"
                                                           icon:SPKSettingsIcon(@"info")
                                                    defaultsKey:@"gallery_preview_show_metadata"];
-    mediaInfoRow.helpText = @"Overlay the username, source, and saved/posted dates on the expanded photo preview. Tap the media to hide it along with the controls.";
+    mediaInfoRow.helpText = @"Overlay the username, source and dates on the expanded preview.";
 
     // Browsing, Grid and Preview asked the same question — what the grid shows
     // and how you move in it — under three headers.
@@ -334,7 +334,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                          SPKGalleryImportViewController *vc = [[SPKGalleryImportViewController alloc] initWithDestinationFolderPath:self.importDestinationFolderPath];
                                                          [self.navigationController pushViewController:vc animated:YES];
                                                      }];
-    importRow.helpText = @"Import media from the Files app with full editable metadata. Coming from Regram? Pick your exported folder or MediaVault.zip here.";
+    importRow.helpText = @"Import from the Files app with editable metadata — including a Regram export or MediaVault.zip.";
 
 
     SPKSetting *deleteRow = [SPKSetting buttonCellWithTitle:@"Delete Files"
