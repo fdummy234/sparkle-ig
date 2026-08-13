@@ -142,10 +142,32 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
         }
     }];
 
+    // AB3: two questions, two sections — where the button appears, and what its
+    // menu does. A single untitled section left the ⓘ floating over nothing.
+    NSMutableArray<SPKSetting *> *buttonRows = [NSMutableArray array];
+    NSMutableArray<SPKSetting *> *menuRows = [NSMutableArray array];
+    NSMutableArray<SPKSetting *> *finalRows = [NSMutableArray array];
+    for (SPKSetting *entry in rows) {
+        if ([entry.title isEqualToString:@"Default Tap Action"] ||
+            [entry.title isEqualToString:@"Configure Actions"])
+            [menuRows addObject:entry];
+        else if ([entry.title isEqualToString:@"Reset to Default"])
+            [finalRows addObject:entry];   // AB4: destructive closes the page
+        else
+            [buttonRows addObject:entry];
+    }
+
+    NSMutableArray *navSections = [NSMutableArray array];
+    [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
+    if (menuRows.count > 0)
+        [navSections addObject:SPKTopicSection(@"Its Menu", menuRows, nil)];
+    if (finalRows.count > 0)
+        [navSections addObject:SPKTopicSection(@"", finalRows, footer)];
+
     SPKSetting *row = [SPKSetting navigationCellWithTitle:@"Action Button"
                                                  subtitle:nil
                                                      icon:SPKSettingsIcon(@"action")
-                                              navSections:@[ SPKTopicSection(@"", rows, footer) ]];
+                                              navSections:navSections];
     row.accessoryTextProvider = ^NSString * {
         return [SPKUtils getBoolPref:enabledKey] ? @"On" : @"Off";
     };

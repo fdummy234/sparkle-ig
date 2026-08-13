@@ -79,14 +79,17 @@ static char kSPKSectionEditSwitchAssocKey;
     [super viewDidLoad];
     self.navigationController.navigationBar.prefersLargeTitles = NO;
     self.view.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleInsetGrouped];
+    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
     self.tableView.dragInteractionEnabled = YES;
     self.tableView.dragDelegate = self;
     self.tableView.dropDelegate = self;
-    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
+    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
+    // No hairline between rows: the bands do the separating, like every other
+    // Sparkle screen (SPKSettingsViewController.m:553).
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
     self.tableView.tintColor = [SPKUtils SPKColor_InstagramBlue];
     [self.view addSubview:self.tableView];
@@ -111,6 +114,18 @@ static char kSPKSectionEditSwitchAssocKey;
     return self.configuration.supportedActions.count;
 }
 
+// The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
+// SPKColor_InstagramGroupedBackground returns white in this palette.
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return 6.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    UIView *band = [UIView new];
+    band.backgroundColor = [UIColor colorWithRed:0.937 green:0.937 blue:0.945 alpha:1.0];
+    return band;
+}
+
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == 0)
         return @"Section";
@@ -130,12 +145,17 @@ static char kSPKSectionEditSwitchAssocKey;
     return nil;
 }
 
+// The 44 pt pitch of the rest of the tweak.
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    return 44.0;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     SPKActionMenuSection *section = [self currentSection];
     UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
     UIListContentConfiguration *config = cell.defaultContentConfiguration;
     UIImage *deferredIconAccessoryImage = nil;
-    cell.backgroundColor = [SPKUtils SPKColor_InstagramSecondaryBackground];
+    cell.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
     cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
     cell.selectedBackgroundView = [self selectionBackgroundView];
     config.textProperties.color = [SPKUtils SPKColor_InstagramPrimaryText];
