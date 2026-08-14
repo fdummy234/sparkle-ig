@@ -18,7 +18,7 @@ static NSArray *SPKInstantsSettingsSections(void);
 
 @implementation SPKInstantsSettingsViewController
 - (instancetype)init {
-    return [super initWithTitle:@"Instants" sections:SPKInstantsSettingsSections() reduceMargin:NO];
+    return [super initWithTitle:@"Camera" sections:SPKInstantsSettingsSections() reduceMargin:NO];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -31,7 +31,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
     return @[
         // "Privacy" held a single row; screenshots are part of what the camera
         // does, so the two sections become one.
-        SPKTopicSection(@"Camera", @[
+        SPKTopicSection(@"Instants", @[
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
                                        icon:SPKSettingsIcon(@"warning")
@@ -42,6 +42,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants Creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
     s.helpText = @"Block capture in the Instants camera.";
+                s.reloadsTableOnSwitchChange = YES;
     s.searchKeywords = @"disable camera control";
                 s.switchChangeHandler = ^(BOOL isOn) {
                     SPKPreferenceSetObject(@(isOn), @"instants_disable_creation");
@@ -50,20 +51,27 @@ static NSArray *SPKInstantsSettingsSections(void) {
                 s;
             }),
             ({
+                // R5: extends the master to the inbox, so it exists only while
+                // the master is on — the shape of "Also Show on Chat Media".
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide in Messages"
+                                                             icon:SPKSettingsIcon(@"comment")
+                                                      defaultsKey:@"instants_hide_inbox_entry"];
+                row.helpText = @"Remove the + from the inbox as well, not just the shutter.";
+                row.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:@"instants_disable_creation"];
+                };
+                row;
+            })
+        ],
+                        nil),
+        // The capture screen itself: what happens once you are in the camera.
+        SPKTopicSection(@"Capture Screen", @[
+            ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Skip Camera After Sending"
                                        icon:SPKSettingsIcon(@"photo")
                                 defaultsKey:@"instants_skip_camera_after_viewing"];
                 row.helpText = @"Return to the conversation instead of staying on the camera.";
                 row;
-            }),
-            ({
-                BOOL cameraControlAvailable = SPKPrefIsAvailable(@"instants_disable_camera_control");
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Ignore Camera Button"
-                                                       subtitle:cameraControlAvailable ? @"" : @"Requires an iPhone with Camera Control"
-                                                           icon:SPKSettingsSystemIcon(@"button.vertical.right.press", SPKSettingsCellIconPointSize, UIImageSymbolWeightSemibold)
-                                                    defaultsKey:@"instants_disable_camera_control"];
-                s.helpText = @"Stop the iPhone's Camera Control from opening the Instants camera.";
-                s;
             }),
             // Same glyph the button itself wears: the global "Open Menu Icon" choice.
             // Merged in from its own untitled one-row section — it is a camera
@@ -74,13 +82,18 @@ static NSArray *SPKInstantsSettingsSections(void) {
                                 defaultsKey:@"instants_camera_btn"];
                 row.helpText = @"Add the Sparkle button to the camera, for the actions you picked in Action Button.";
                 row;
+            }),
+            ({
+                BOOL cameraControlAvailable = SPKPrefIsAvailable(@"instants_disable_camera_control");
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Ignore Camera Button"
+                                                       subtitle:cameraControlAvailable ? @"" : @"Requires an iPhone with Camera Control"
+                                                           icon:SPKSettingsSystemIcon(@"button.vertical.right.press", SPKSettingsCellIconPointSize, UIImageSymbolWeightSemibold)
+                                                    defaultsKey:@"instants_disable_camera_control"];
+                s.helpText = @"Stop the iPhone's Camera Control from opening the Instants camera.";
+                s;
             })
         ],
-                        @"1. Bypass screenshot and screen recording detection in the Instants viewer.\n"
-                        @"2. Blocks Instant capture (photo and video) without disabling received Instants. The shutter is darkened.\n"
-                        @"3. Skips the camera page Instagram opens after viewing the last Instant.\n"
-                        @"4. Stops the hardware Camera Control button (iPhone 16/17) from taking an Instant.\n"
-                        @"5. Adds a Sparkle button to the Instants camera view to upload a photo from Photos, Files, or Gallery, and to browse the Instants you have saved."),
+                        nil),
         // Convention v1.2 gate row — see SPKToggleMenu.h. "Instants ›
         // Confirmations › Capture": both dropped words sit right above.
         // Capture keeps its disabled state (feature suspended).
@@ -121,10 +134,11 @@ static NSArray *SPKInstantsSettingsSections(void) {
 }
 
 + (SPKSetting *)rootSetting {
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Instants"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Camera"
                                                      subtitle:nil
                                                          icon:SPKSettingsIcon(@"instants")
                                                viewController:[[SPKInstantsSettingsViewController alloc] init]];
+    setting.searchKeywords = @"instants quick snap camera";
     setting.searchSectionsProvider = ^NSArray * {
         return SPKInstantsSettingsSections();
     };
