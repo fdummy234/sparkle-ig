@@ -125,6 +125,7 @@ static NSDictionary *SPKFeatureDefaults(void) {
         @"instants_action_btn_default_action" : @"none",
         @"instants_allow_screenshot" : @(NO),
         @"instants_confirm_reaction" : @(NO),
+        @"instants_hide_inbox_entry" : @(YES),
         @"instants_camera_btn" : @(YES),
         @"msgs_disable_vanish_swipe_up" : @(NO),
         @"msgs_hide_vanish_screenshot" : @(NO),
