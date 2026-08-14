@@ -28,9 +28,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<SPKActionMenuSection *> *)submenuSections;
 - (nullable SPKActionMenuSection *)bulkSection;
 - (NSArray<NSString *> *)catalogActions;
-- (NSArray<NSString *> *)excludedBulkActionsInReach;
 - (BOOL)isBulkActionIdentifier:(NSString *)identifier;
-- (void)setBulkActionIdentifier:(NSString *)identifier excluded:(BOOL)excluded;
+- (NSArray<NSString *> *)bulkActionsInOrder;
+- (void)setBulkActionIdentifier:(NSString *)identifier included:(BOOL)included;
+- (void)moveBulkActionFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex;
 - (SPKActionMenuSection *)addSubmenu;
 - (void)moveSubmenuFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex;
 - (NSDictionary *)dictionaryRepresentation;

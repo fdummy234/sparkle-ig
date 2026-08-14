@@ -2223,21 +2223,6 @@ static UIMenuElement *SPKSubmenuOrSingleElement(NSString *title, UIImage *image,
                         children:children];
 }
 
-static UIMenuElement *SPKBulkActionMenuElementForContext(SPKActionButtonContext *context,
-                                                         NSArray<SPKResolvedMediaEntry *> *entries,
-                                                         NSString *username,
-                                                         id media,
-                                                         NSArray<NSString *> *configuredIdentifiers,
-                                                         NSString *title,
-                                                         NSString *iconIdentifier) {
-    UIMenu *menu = SPKBulkActionMenuForContext(context, entries, username, media, configuredIdentifiers);
-    if (!menu)
-        return nil;
-    return SPKSubmenuOrSingleElement(title,
-                                     SPKActionButtonMenuIconForContext(iconIdentifier ?: kSPKActionDownloadAll, context, 22.0),
-                                     menu.children);
-}
-
 static NSString *SPKResolvedBulkUsernameForContext(SPKActionButtonContext *context, NSArray<SPKResolvedMediaEntry *> *entries, id media) {
     NSString *username = (context.source == SPKActionButtonSourceDirect)
                              ? SPKDirectUsernameFromController(context.controller)
@@ -3452,19 +3437,13 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
         return @[];
 
     NSString *bulkUsername = SPKResolvedBulkUsernameForContext(context, bulkEntries, bulkMedia);
-    NSArray<NSString *> *configuredBulkDownloadIdentifiers = SPKActionButtonConfiguredBulkDownloadActionsForSource(context.source);
-    NSArray<NSString *> *configuredBulkCopyIdentifiers = SPKActionButtonConfiguredBulkCopyActionsForSource(context.source);
 
+    // What he put in the Bulk zone, in the order he put it — one row per action,
+    // no Download All / Copy All branches in between. The zone is the menu.
     NSMutableArray<UIMenuElement *> *children = [NSMutableArray array];
-    // Flat, like the menu that holds it: an inline group per entry is what gave
-    // each row its own divider and padding. Download All / Copy All carry the
-    // download / copy icons (not the generic "more" icon).
-    UIMenuElement *downloadAll = SPKBulkActionMenuElementForContext(context, bulkEntries, bulkUsername, bulkMedia, configuredBulkDownloadIdentifiers, @"Download All", kSPKActionDownloadAllLibrary);
-    if (downloadAll)
-        [children addObject:downloadAll];
-    UIMenuElement *copyAll = SPKBulkActionMenuElementForContext(context, bulkEntries, bulkUsername, bulkMedia, configuredBulkCopyIdentifiers, @"Copy All", kSPKActionDownloadAllClipboard);
-    if (copyAll)
-        [children addObject:copyAll];
+    UIMenu *flatBulkMenu = SPKBulkActionMenuForContext(context, bulkEntries, bulkUsername, bulkMedia, [configuration bulkActionsInOrder]);
+    if (flatBulkMenu.children.count > 0)
+        [children addObjectsFromArray:flatBulkMenu.children];
 
     // "Select Media" picker — destinations are the configured bulk actions, in a
     // fixed order: Save to Photos, Share, Copy, Save to Gallery, Copy URLs.
@@ -3536,8 +3515,9 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
         return @[];
     // Present the bulk actions as their own section, styled like the other
     // collapsible sections. Title carries the carousel item count.
-    NSString *baseTitle = sectionTitle.length > 0 ? sectionTitle : @"Bulk";
-    NSString *title = [NSString stringWithFormat:@"%@ • %lu", baseTitle, (unsigned long)bulkEntries.count];
+    // The row says "Bulk", not "Bulk • 3": the number counted carousel items,
+    // which is not what the word next to it suggests.
+    NSString *title = sectionTitle.length > 0 ? sectionTitle : @"Bulk";
     // imageWithTintColor: redraws, and a redraw undoes the scale relabelling that
     // menuSizedIcon: uses to reach 22pt — the glyph comes back at its native
     // 24pt and UIKit grows the row. Size it again after the tint.

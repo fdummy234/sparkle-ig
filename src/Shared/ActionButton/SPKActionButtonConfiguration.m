@@ -219,8 +219,7 @@ static NSArray<NSString *> *SPKDerivedBulkActionsForSource(SPKActionButtonSource
     for (SPKActionMenuSection *section in [configuration visibleSections]) {
         for (NSString *identifier in section.actions) {
             NSString *bulk = SPKBulkAllIdentifierForBaseAction(identifier);
-            if (bulk && [supportedBulk containsObject:bulk] &&
-                ![configuration.excludedBulkActions containsObject:bulk]) {
+            if (bulk && [supportedBulk containsObject:bulk]) {
                 [result addObject:bulk];
             }
         }
@@ -382,6 +381,7 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     if (storedVersion.integerValue < kSPKActionConfigModelVersion)
         [configuration migrateToConfigureMenuModel];
 
+    [configuration seedBulkSectionIfNeeded];
     [configuration normalize];
     return configuration;
 }
@@ -488,6 +488,23 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         if (section.iconName.length == 0)
             section.iconName = @"more";
 
+        // Bulk holds bulk identifiers, which are not in supportedActions — it is
+        // filtered against its own supported list, and its entries never join
+        // the `seen` set that de-duplicates the single-item zones.
+        if ([section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier]) {
+            NSMutableArray<NSString *> *supportedBulk = [NSMutableArray array];
+            [supportedBulk addObjectsFromArray:SPKActionButtonBulkDownloadSupportedActionsForSource(self.source)];
+            [supportedBulk addObjectsFromArray:SPKActionButtonBulkCopySupportedActionsForSource(self.source)];
+            NSMutableArray<NSString *> *keptBulk = [NSMutableArray array];
+            for (NSString *identifier in section.actions) {
+                if ([supportedBulk containsObject:identifier] && ![keptBulk containsObject:identifier])
+                    [keptBulk addObject:identifier];
+            }
+            section.actions = keptBulk;
+            [normalizedSections addObject:section];
+            continue;
+        }
+
         NSArray<NSString *> *filteredActions = SPKFilteredActionArray(section.actions, supported);
         NSMutableArray<NSString *> *uniqueActions = [NSMutableArray array];
         for (NSString *identifier in filteredActions) {
@@ -555,26 +572,16 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
             continue;
         [catalog addObject:identifier];
     }
-    [catalog addObjectsFromArray:[self excludedBulkActionsInReach]];
-    return catalog;
-}
-
-// A bulk row the user removed, whose single-item counterpart is still in the
-// menu — so putting it back means something. This is what the "+" offers.
-- (NSArray<NSString *> *)excludedBulkActionsInReach {
-    NSMutableOrderedSet<NSString *> *reachable = [NSMutableOrderedSet orderedSet];
-    NSMutableArray<NSString *> *supportedBulk = [NSMutableArray array];
-    [supportedBulk addObjectsFromArray:SPKActionButtonBulkDownloadSupportedActionsForSource(self.source)];
-    [supportedBulk addObjectsFromArray:SPKActionButtonBulkCopySupportedActionsForSource(self.source)];
-
-    for (SPKActionMenuSection *section in [self visibleSections]) {
-        for (NSString *identifier in section.actions) {
-            NSString *bulk = SPKBulkAllIdentifierForBaseAction(identifier);
-            if (bulk && [supportedBulk containsObject:bulk] && [self.excludedBulkActions containsObject:bulk])
-                [reachable addObject:bulk];
-        }
+    NSArray<NSString *> *inBulk = [self bulkActionsInOrder];
+    for (NSString *identifier in SPKActionButtonBulkDownloadSupportedActionsForSource(self.source)) {
+        if (![inBulk containsObject:identifier])
+            [catalog addObject:identifier];
     }
-    return reachable.array;
+    for (NSString *identifier in SPKActionButtonBulkCopySupportedActionsForSource(self.source)) {
+        if (![inBulk containsObject:identifier])
+            [catalog addObject:identifier];
+    }
+    return catalog;
 }
 
 - (BOOL)isBulkActionIdentifier:(NSString *)identifier {
@@ -584,15 +591,47 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
            [SPKActionButtonBulkCopySupportedActionsForSource(self.source) containsObject:identifier];
 }
 
-- (void)setBulkActionIdentifier:(NSString *)identifier excluded:(BOOL)excluded {
-    if (![self isBulkActionIdentifier:identifier])
+// Bulk is now an ordered list the user owns, exactly like the other zones: what
+// is in it, in the order it is in, is what the menu shows. Seeded once from the
+// old derived order so nothing changes under him on the first launch.
+- (NSArray<NSString *> *)bulkActionsInOrder {
+    SPKActionMenuSection *bulk = [self bulkSection];
+    return bulk ? [bulk.actions copy] : @[];
+}
+
+- (void)seedBulkSectionIfNeeded {
+    SPKActionMenuSection *bulk = [self bulkSection];
+    if (!bulk || bulk.actions.count > 0)
         return;
-    if (excluded) {
-        if (![self.excludedBulkActions containsObject:identifier])
-            [self.excludedBulkActions addObject:identifier];
+    NSMutableArray<NSString *> *seed = [NSMutableArray array];
+    [seed addObjectsFromArray:SPKDerivedBulkActionsForSource(self.source, SPKActionButtonBulkDownloadSupportedActionsForSource(self.source))];
+    [seed addObjectsFromArray:SPKDerivedBulkActionsForSource(self.source, SPKActionButtonBulkCopySupportedActionsForSource(self.source))];
+    // Anything he had already taken out yesterday stays out.
+    for (NSString *identifier in self.excludedBulkActions)
+        [seed removeObject:identifier];
+    bulk.actions = seed;
+}
+
+- (void)setBulkActionIdentifier:(NSString *)identifier included:(BOOL)included {
+    SPKActionMenuSection *bulk = [self bulkSection];
+    if (!bulk || ![self isBulkActionIdentifier:identifier])
+        return;
+    if (included) {
+        if (![bulk.actions containsObject:identifier])
+            [bulk.actions addObject:identifier];
     } else {
-        [self.excludedBulkActions removeObject:identifier];
+        [bulk.actions removeObject:identifier];
     }
+}
+
+- (void)moveBulkActionFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex {
+    SPKActionMenuSection *bulk = [self bulkSection];
+    if (!bulk || sourceIndex < 0 || destinationIndex < 0 ||
+        sourceIndex >= (NSInteger)bulk.actions.count || destinationIndex >= (NSInteger)bulk.actions.count)
+        return;
+    NSString *moved = bulk.actions[(NSUInteger)sourceIndex];
+    [bulk.actions removeObjectAtIndex:(NSUInteger)sourceIndex];
+    [bulk.actions insertObject:moved atIndex:(NSUInteger)destinationIndex];
 }
 
 - (SPKActionMenuSection *)addSubmenu {
@@ -640,8 +679,9 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     NSMutableArray<SPKActionMenuSection *> *visible = [NSMutableArray array];
     for (SPKActionMenuSection *section in self.sections) {
         NSMutableArray<NSString *> *actions = [NSMutableArray array];
+        BOOL isBulk = [section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier];
         for (NSString *identifier in section.actions) {
-            if (![self.disabledActions containsObject:identifier] && ![self.unassignedActions containsObject:identifier]) {
+            if (isBulk || (![self.disabledActions containsObject:identifier] && ![self.unassignedActions containsObject:identifier])) {
                 [actions addObject:identifier];
             }
         }
