@@ -1,4 +1,5 @@
 #import "SPKEditActionsListViewController.h"
+#import "SPKToggleMenu.h"
 #include <UIKit/UIKit.h>
 
 #import "../AssetUtils.h"
@@ -367,7 +368,7 @@
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
 
     if (indexPath.section == [self resetSectionIndex]) {
-        [self confirmReset];
+        [self resetConfigurationTapped];
         return;
     }
     if (indexPath.section == [self bulkEditorSectionIndex]) {
@@ -386,7 +387,7 @@
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    return indexPath.section == [self groupsSectionIndex];
+    return indexPath.section < (NSInteger)self.groups.count;
 }
 
 - (void)removeSectionAtIndexPath:(NSIndexPath *)indexPath {
