@@ -41,6 +41,7 @@ typedef NS_ENUM(NSInteger, SPKResolvedImageSource) {
 // size (no downscale); this reinterprets its scale to 22pt with no redraw, so
 // it stays renderable in iOS 16's UIMenu. Returns an AlwaysTemplate image.
 + (nullable UIImage *)menuSizedIcon:(nullable UIImage *)image;
++ (nullable UIImage *)menuSizedIcon:(nullable UIImage *)image pointSize:(CGFloat)pointSize;
 
 + (nullable UIImage *)resolvedImageNamed:(NSString *)name
                                pointSize:(CGFloat)pointSize

@@ -598,6 +598,14 @@ static UIImage *SPKAssetLookupInstagramIcon(NSString *name, CGFloat pointSize, S
 }
 
 + (UIImage *)menuSizedIcon:(UIImage *)image {
+    return [self menuSizedIcon:image pointSize:22.0];
+}
+
+// Same relabelling, at a caller-chosen point size. The action button's menu asks
+// for a smaller glyph than the settings rows: the width of that image column is
+// what holds the title away from the edge, and the column is the only part of a
+// native UIMenu row we get to set.
++ (UIImage *)menuSizedIcon:(UIImage *)image pointSize:(CGFloat)pointSize {
     if (!image) {
         return nil;
     }
@@ -607,7 +615,7 @@ static UIImage *SPKAssetLookupInstagramIcon(NSString *name, CGFloat pointSize, S
     // reinterpret the image's scale: relabelling its existing pixels at a higher
     // scale makes the same bitmap map to a smaller point size, with no redraw —
     // so it renders like the native image does, just at 22pt.
-    static const CGFloat kSPKMenuIconPointSize = 22.0;
+    CGFloat kSPKMenuIconPointSize = pointSize > 0.0 ? pointSize : 22.0;
     CGFloat maxDimension = MAX(image.size.width, image.size.height);
     CGImageRef cgImage = image.CGImage;
     if (cgImage && maxDimension > kSPKMenuIconPointSize + 0.01) {
