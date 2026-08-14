@@ -128,10 +128,10 @@ static char kSPKSectionEditSwitchAssocKey;
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
     if (section == 0)
-        return @"Section";
+        return @"Shape";
     if (section == 1)
-        return @"Actions in This Section";
-    return @"Available Actions";
+        return @"In This Group";
+    return @"Add to This Group";
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
@@ -187,7 +187,7 @@ static char kSPKSectionEditSwitchAssocKey;
 
             cell.selectionStyle = UITableViewCellSelectionStyleDefault;
         } else if (indexPath.row == 2) {
-            config.text = @"Collapsible";
+            config.text = @"Show as Submenu";
             SPKSwitch *toggle = [[SPKSwitch alloc] init];
             toggle.on = section.collapsible;
             objc_setAssociatedObject(toggle, &kSPKSectionEditSwitchAssocKey, self, OBJC_ASSOCIATION_ASSIGN);

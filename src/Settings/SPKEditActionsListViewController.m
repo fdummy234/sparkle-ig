@@ -79,12 +79,18 @@ static char kSPKActionsListSwitchAssocKey;
     return [self bulkEditorKinds].count > 0;
 }
 
-- (NSInteger)bulkEditorSectionIndex {
-    return [self hasBulkEditorSection] ? 1 : NSNotFound;
+// CA1: what exists comes before how it is grouped. Section 0 is the action
+// list, section 1 the menu groups, then the optional bulk editor and reset.
+- (NSInteger)actionsSectionIndex {
+    return 0;
 }
 
-- (NSInteger)unassignedSectionIndex {
-    return [self hasBulkEditorSection] ? 2 : 1;
+- (NSInteger)groupsSectionIndex {
+    return 1;
+}
+
+- (NSInteger)bulkEditorSectionIndex {
+    return [self hasBulkEditorSection] ? 2 : NSNotFound;
 }
 
 - (NSInteger)availableSectionIndex {
@@ -92,7 +98,7 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSInteger)resetSectionIndex {
-    return [self hasBulkEditorSection] ? 4 : 3;
+    return [self hasBulkEditorSection] ? 3 : 2;
 }
 
 - (NSString *)bulkEditorKindForRow:(NSInteger)row {
@@ -130,19 +136,17 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return ([self hasBulkEditorSection] ? 4 : 3) + 1;
+    return [self hasBulkEditorSection] ? 4 : 3;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0)
+    if (section == [self groupsSectionIndex])
         return self.configuration.sections.count;
     if (section == [self bulkEditorSectionIndex])
         return [self bulkEditorKinds].count;
-    if (section == [self unassignedSectionIndex])
-        return self.configuration.unassignedActions.count;
     if (section == [self resetSectionIndex])
         return 1;
-    return self.configuration.supportedActions.count;
+    return self.configuration.supportedActions.count;   // actionsSectionIndex
 }
 
 // The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
@@ -158,22 +162,18 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section == 0)
-        return @"Menu Sections";
+    if (section == [self groupsSectionIndex])
+        return @"Menu Groups";
     if (section == [self bulkEditorSectionIndex])
         return @"All Menus";
-    if (section == [self unassignedSectionIndex])
-        return @"Unassigned Actions";
     if (section == [self resetSectionIndex])
         return nil;
-    return @"Available Actions";
+    return @"Actions";
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section == 0)
+    if (section == [self groupsSectionIndex])
         return @"Long press and drag to reorder sections.";
-    if (section == [self unassignedSectionIndex])
-        return @"Actions here are supported but do not appear in the runtime menu.";
     if (section == [self availableSectionIndex])
         return @"Disabled actions are hidden even if they remain assigned to a section.";
     if (section == [self resetSectionIndex])
@@ -205,10 +205,14 @@ static char kSPKActionsListSwitchAssocKey;
     config.textProperties.color = [SPKUtils SPKColor_InstagramPrimaryText];
     config.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
 
-    if (indexPath.section == 0) {
+    if (indexPath.section == [self groupsSectionIndex]) {
         SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
         config.text = section.title;
-        NSString *stateText = section.collapsible ? @"Collapsible" : @"Inline";
+        // CA3: how many actions the group holds, then its shape — an empty
+        // group is visible without entering it.
+        NSString *shapeText = section.collapsible ? @"Submenu" : @"Inline";
+        NSString *stateText = [NSString stringWithFormat:@"%lu · %@",
+                               (unsigned long)section.actions.count, shapeText];
         if ([self sectionHasDisabledAction:section]) {
             // Prefix the Collapsible/Inline subtitle with an amber warning triangle so
             // it's obvious — while arranging sections — that this section contains an
@@ -250,22 +254,43 @@ static char kSPKActionsListSwitchAssocKey;
         config.image = SPKSettingsIcon(@"arrow_ccw");
         config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-    } else if (indexPath.section == [self unassignedSectionIndex]) {
-        NSString *identifier = self.configuration.unassignedActions[indexPath.row];
-        config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
-        config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
     } else {
         NSString *identifier = self.configuration.supportedActions[indexPath.row];
         config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
         config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
         config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
 
+        // CA2: the row says where the action is filed, so the two lists stop
+        // looking alike and the orphan section is no longer needed.
+        NSString *groupTitle = nil;
+        for (SPKActionMenuSection *group in self.configuration.sections) {
+            if ([group.actions containsObject:identifier]) {
+                groupTitle = group.title;
+                break;
+            }
+        }
+        UILabel *groupLabel = [UILabel new];
+        groupLabel.font = [UIFont systemFontOfSize:14.0];
+        groupLabel.text = groupTitle ?: @"Unassigned";
+        groupLabel.textColor = groupTitle ? [SPKUtils SPKColor_InstagramSecondaryText]
+                                          : [SPKUtils SPKColor_InstagramDestructive];
+        [groupLabel sizeToFit];
+
         SPKSwitch *toggle = [[SPKSwitch alloc] init];
         toggle.on = ![self.configuration.disabledActions containsObject:identifier];
         objc_setAssociatedObject(toggle, &kSPKActionsListSwitchAssocKey, identifier, OBJC_ASSOCIATION_COPY_NONATOMIC);
         [toggle addTarget:self action:@selector(disabledSwitchChanged:) forControlEvents:UIControlEventValueChanged];
-        cell.accessoryView = toggle;
+
+        UIView *trailing = [[UIView alloc] initWithFrame:CGRectMake(0, 0,
+            CGRectGetWidth(groupLabel.bounds) + 8.0 + CGRectGetWidth(toggle.bounds),
+            MAX(CGRectGetHeight(toggle.bounds), CGRectGetHeight(groupLabel.bounds)))];
+        groupLabel.center = CGPointMake(CGRectGetWidth(groupLabel.bounds) / 2.0,
+                                        CGRectGetHeight(trailing.bounds) / 2.0);
+        toggle.center = CGPointMake(CGRectGetWidth(trailing.bounds) - CGRectGetWidth(toggle.bounds) / 2.0,
+                                    CGRectGetHeight(trailing.bounds) / 2.0);
+        [trailing addSubview:groupLabel];
+        [trailing addSubview:toggle];
+        cell.accessoryView = trailing;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
 
@@ -274,11 +299,11 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    return indexPath.section == 0;
+    return indexPath.section == [self groupsSectionIndex];
 }
 
 - (NSArray<UIDragItem *> *)tableView:(UITableView *)tableView itemsForBeginningDragSession:(id<UIDragSession>)session atIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section != 0)
+    if (indexPath.section != [self groupsSectionIndex])
         return @[];
     SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
     UIDragItem *item = [[UIDragItem alloc] initWithItemProvider:[[NSItemProvider alloc] initWithObject:section.identifier]];
@@ -340,7 +365,7 @@ static char kSPKActionsListSwitchAssocKey;
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
         return;
     }
-    if (indexPath.section == 0) {
+    if (indexPath.section == [self groupsSectionIndex]) {
         SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
         __weak typeof(self) weakSelf = self;
         SPKActionSectionEditViewController *controller = [[SPKActionSectionEditViewController alloc] initWithConfiguration:self.configuration
@@ -355,7 +380,7 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
-    return indexPath.section == 0;
+    return indexPath.section == [self groupsSectionIndex];
 }
 
 - (void)removeSectionAtIndexPath:(NSIndexPath *)indexPath {
