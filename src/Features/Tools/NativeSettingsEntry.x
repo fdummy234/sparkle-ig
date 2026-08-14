@@ -24,6 +24,24 @@ static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssoc
 // 1 = not the settings screen · 2 = settings screen, no title yet · 3 = placed.
 // Logged only when it CHANGES, so the log says which branch took the icon away
 // instead of repeating on every layout pass.
+// A single layout pass during a transition used to blink the icon away and the
+// return switched it back on — that was the flash. Instead of hiding on the
+// spot, confirm on the next runloop turn: a transient pass never survives it,
+// and a real departure does.
+static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *button) {
+    if (!button || button.hidden)
+        return;
+    __weak UINavigationBar *weakBar = bar;
+    __weak UIButton *weakButton = button;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UINavigationBar *strongBar = weakBar;
+        if (!strongBar)
+            return;
+        if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(strongBar)))
+            weakButton.hidden = YES;
+    });
+}
+
 static void SPKLogSettingsEntryState(UINavigationBar *bar, NSInteger state) {
     NSNumber *previous = objc_getAssociatedObject(bar, kSPKSettingsEntryStateAssocKey);
     if (previous.integerValue == state)
@@ -87,7 +105,7 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(self))) {
         if (button)
             SPKLogSettingsEntryState(self, 1);
-        button.hidden = YES;
+        SPKSettingsEntryHideAfterConfirm(self, button);
         return;
     }
 
@@ -142,7 +160,10 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     // settings screen (checked at the top of this method).
     if (!titleLabel) {
         SPKLogSettingsEntryState(self, 2);
-        button.hidden = YES;
+        // Already placed: leave it where it is rather than blink it off while
+        // the title is between two passes. Only a never-placed button hides.
+        if (button.hidden || CGRectIsEmpty(button.frame))
+            button.hidden = YES;
         NSNumber *attempts = objc_getAssociatedObject(self, kSPKSettingsEntryRetryAssocKey);
         if (attempts.integerValue < kSPKSettingsEntryMaxTitleRetries) {
             objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(attempts.integerValue + 1), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
