@@ -269,6 +269,18 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         moreActions = @[ kSPKActionOpenTopicSettings ];
     }
 
+    // Download, Copy, More: what people reach for, in that order. Audio and Zoom
+    // follow when the surface has them.
+    [sections addObject:[SPKActionMenuSection sectionWithIdentifier:@"download"
+                                                              title:@"Download"
+                                                           iconName:@"download"
+                                                        collapsible:YES
+                                                            actions:downloadActions]];
+    [sections addObject:[SPKActionMenuSection sectionWithIdentifier:@"copy"
+                                                              title:@"Copy"
+                                                           iconName:@"copy"
+                                                        collapsible:YES
+                                                            actions:copyActions]];
     if (moreActions.count > 0) {
         [sections addObject:[SPKActionMenuSection sectionWithIdentifier:@"more"
                                                                   title:@"More"
@@ -290,16 +302,6 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
                                                             collapsible:YES
                                                                 actions:zoomActions]];
     }
-    [sections addObject:[SPKActionMenuSection sectionWithIdentifier:@"copy"
-                                                              title:@"Copy"
-                                                           iconName:@"copy"
-                                                        collapsible:YES
-                                                            actions:copyActions]];
-    [sections addObject:[SPKActionMenuSection sectionWithIdentifier:@"download"
-                                                              title:@"Download"
-                                                           iconName:@"download"
-                                                        collapsible:YES
-                                                            actions:downloadActions]];
     return sections;
 }
 
