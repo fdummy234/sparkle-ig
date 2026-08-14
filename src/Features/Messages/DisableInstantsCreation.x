@@ -418,7 +418,10 @@ static void SPKHookInstanceMethod(const char *className, SEL selector, IMP repla
 - (void)layoutSubviews {
     %orig;
     UIView *stack = (UIView *)self;
-    BOOL hidden = SPKQuickSnapCreationDisabled();
+    // Two prefs now: the master blocks the shutter, this one takes the entry
+    // point away as well.
+    BOOL hidden = SPKQuickSnapCreationDisabled() &&
+                  [SPKUtils getBoolPref:@"instants_hide_inbox_entry"];
     stack.hidden = hidden;
     stack.userInteractionEnabled = !hidden;
 }
@@ -426,7 +429,10 @@ static void SPKHookInstanceMethod(const char *className, SEL selector, IMP repla
 - (void)didMoveToWindow {
     %orig;
     UIView *stack = (UIView *)self;
-    BOOL hidden = SPKQuickSnapCreationDisabled();
+    // Two prefs now: the master blocks the shutter, this one takes the entry
+    // point away as well.
+    BOOL hidden = SPKQuickSnapCreationDisabled() &&
+                  [SPKUtils getBoolPref:@"instants_hide_inbox_entry"];
     stack.hidden = hidden;
     stack.userInteractionEnabled = !hidden;
 }
