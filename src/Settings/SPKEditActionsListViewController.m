@@ -4,7 +4,6 @@
 #import "../AssetUtils.h"
 #import "../Shared/ActionButton/SPKActionDescriptor.h"
 #import "../Shared/UI/SPKMediaChrome.h"
-#import "../Shared/UI/SPKSwitch.h"
 #import "../Utils.h"
 #import "SPKActionSectionEditViewController.h"
 #import "SPKBulkActionMenuEditViewController.h"
@@ -12,9 +11,10 @@
 #import "SPKSettingsTransferManager.h"
 #import "SPKTopicSettingsSupport.h"
 
-static char kSPKActionsListSwitchAssocKey;
 
-@interface SPKEditActionsListViewController () <UITableViewDataSource, UITableViewDelegate, UITableViewDragDelegate, UITableViewDropDelegate>
+@interface SPKEditActionsListViewController () <UITableViewDataSource, UITableViewDelegate>
+// Where each action came from, so "Add" can put it back without asking.
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSString *> *lastGroupForAction;
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) SPKActionButtonConfiguration *configuration;
@@ -45,6 +45,11 @@ static char kSPKActionsListSwitchAssocKey;
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.lastGroupForAction = [NSMutableDictionary dictionary];
+    // Always in editing mode so the reorder grip is there without a long press
+    // first — the swipes keep working alongside it.
+    self.tableView.editing = YES;
+    self.tableView.allowsSelectionDuringEditing = YES;
     self.navigationController.navigationBar.prefersLargeTitles = NO;
     self.view.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
     SPKMediaChromeSetTrailingTopBarItems(self.navigationItem, @[ SPKMediaChromeTopBarButtonItem(@"plus", self, @selector(addSectionTapped)) ]);
@@ -52,9 +57,6 @@ static char kSPKActionsListSwitchAssocKey;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.tableView.dragInteractionEnabled = YES;
-    self.tableView.dragDelegate = self;
-    self.tableView.dropDelegate = self;
     self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
     // No hairline between rows: the bands do the separating, like every other
     // Sparkle screen (SPKSettingsViewController.m:553).
@@ -81,16 +83,36 @@ static char kSPKActionsListSwitchAssocKey;
 
 // CA1: what exists comes before how it is grouped. Section 0 is the action
 // list, section 1 the menu groups, then the optional bulk editor and reset.
-- (NSInteger)actionsSectionIndex {
-    return 0;
+// The screen mirrors the menu: one table section per group, in the user's order,
+// then everything that is not in the menu. An action has a single state now —
+// filed in a group, or not — so the disabled set is kept in step with the
+// assignment instead of living its own life.
+- (NSArray<SPKActionMenuSection *> *)groups {
+    return self.configuration.sections;
 }
 
-- (NSInteger)groupsSectionIndex {
-    return 1;
+- (NSArray<NSString *> *)actionsInGroupAtIndex:(NSInteger)index {
+    if (index < 0 || index >= (NSInteger)self.groups.count)
+        return @[];
+    return self.groups[index].actions;
+}
+
+// Supported, but filed nowhere: the single "not in the menu" bucket.
+- (NSArray<NSString *> *)actionsOutsideMenu {
+    NSMutableArray<NSString *> *out = [NSMutableArray array];
+    for (NSString *identifier in self.configuration.supportedActions) {
+        if (![self.configuration sectionIdentifierForAction:identifier])
+            [out addObject:identifier];
+    }
+    return out;
+}
+
+- (NSInteger)outsideSectionIndex {
+    return (NSInteger)self.groups.count;
 }
 
 - (NSInteger)bulkEditorSectionIndex {
-    return [self hasBulkEditorSection] ? 2 : NSNotFound;
+    return [self hasBulkEditorSection] ? [self outsideSectionIndex] + 1 : NSNotFound;
 }
 
 - (NSInteger)availableSectionIndex {
@@ -98,7 +120,7 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSInteger)resetSectionIndex {
-    return [self hasBulkEditorSection] ? 3 : 2;
+    return [self outsideSectionIndex] + ([self hasBulkEditorSection] ? 2 : 1);
 }
 
 - (NSString *)bulkEditorKindForRow:(NSInteger)row {
@@ -136,17 +158,17 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return [self hasBulkEditorSection] ? 4 : 3;
+    return [self resetSectionIndex] + 1;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == [self groupsSectionIndex])
-        return self.configuration.sections.count;
+    if (section < (NSInteger)self.groups.count)
+        return [self actionsInGroupAtIndex:section].count;
+    if (section == [self outsideSectionIndex])
+        return [self actionsOutsideMenu].count;
     if (section == [self bulkEditorSectionIndex])
         return [self bulkEditorKinds].count;
-    if (section == [self resetSectionIndex])
-        return 1;
-    return self.configuration.supportedActions.count;   // actionsSectionIndex
+    return 1;   // resetSectionIndex
 }
 
 // The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
@@ -162,34 +184,27 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section == [self groupsSectionIndex])
-        return @"Menu Groups";
+    if (section < (NSInteger)self.groups.count)
+        return self.groups[section].title;
+    if (section == [self outsideSectionIndex])
+        return @"Not in the Menu";
     if (section == [self bulkEditorSectionIndex])
         return @"All Menus";
-    if (section == [self resetSectionIndex])
-        return nil;
-    return @"Actions";
+    return nil;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if (section == [self groupsSectionIndex])
-        return @"Long press and drag to reorder sections.";
-    if (section == [self availableSectionIndex])
-        return @"Disabled actions are hidden even if they remain assigned to a section.";
+    // The band view below covers these, so they are kept short and factual for
+    // the day this controller grows an ⓘ of its own.
+    if (section == [self outsideSectionIndex])
+        return @"These actions are supported but do not appear in the menu. Swipe right to put one back.";
     if (section == [self resetSectionIndex])
-        return @"Restores this surface's menu sections, default action, and bulk menus to their defaults. Other surfaces are unaffected.";
+        return @"Restores this surface's menu groups, tap action, and bulk menus to their defaults. Other surfaces are unaffected.";
     return nil;
 }
 
 // YES when the section still holds an action whose enable switch is off — that action
 // stays assigned but is hidden from the runtime menu, so we flag the section row.
-- (BOOL)sectionHasDisabledAction:(SPKActionMenuSection *)section {
-    for (NSString *identifier in section.actions) {
-        if ([self.configuration.disabledActions containsObject:identifier])
-            return YES;
-    }
-    return NO;
-}
 
 // The 44 pt pitch of the rest of the tweak.
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -197,186 +212,177 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
-    UIListContentConfiguration *config = cell.defaultContentConfiguration;
+    UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil];
     cell.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
-    cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
     cell.selectedBackgroundView = [self selectionBackgroundView];
-    config.textProperties.color = [SPKUtils SPKColor_InstagramPrimaryText];
-    config.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
+    cell.accessoryView = nil;
+    cell.accessoryType = UITableViewCellAccessoryNone;
 
-    if (indexPath.section == [self groupsSectionIndex]) {
-        SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
-        config.text = section.title;
-        // CA3: how many actions the group holds, then its shape — an empty
-        // group is visible without entering it.
-        NSString *shapeText = section.collapsible ? @"Submenu" : @"Inline";
-        NSString *stateText = [NSString stringWithFormat:@"%lu · %@",
-                               (unsigned long)section.actions.count, shapeText];
-        if ([self sectionHasDisabledAction:section]) {
-            // Prefix the Collapsible/Inline subtitle with an amber warning triangle so
-            // it's obvious — while arranging sections — that this section contains an
-            // action switched off in "Available Actions" (hidden from the runtime menu).
-            UIFont *font = config.secondaryTextProperties.font ?: [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
-            UIImage *warning = [[SPKAssetUtils instagramIconNamed:@"warning_filled" pointSize:16.0]
-                imageWithTintColor:[UIColor systemOrangeColor]
-                     renderingMode:UIImageRenderingModeAlwaysOriginal];
-            NSTextAttachment *attachment = [[NSTextAttachment alloc] init];
-            attachment.image = warning;
-            CGFloat yOffset = (font.capHeight - warning.size.height) / 2.0;
-            attachment.bounds = CGRectMake(0.0, round(yOffset), warning.size.width, warning.size.height);
-            NSMutableAttributedString *subtitle = [[NSMutableAttributedString alloc] init];
-            [subtitle appendAttributedString:[NSAttributedString attributedStringWithAttachment:attachment]];
-            [subtitle appendAttributedString:[[NSAttributedString alloc] initWithString:[@"  " stringByAppendingString:stateText]
-                                                                             attributes:@{
-                                                                                 NSForegroundColorAttributeName : [SPKUtils SPKColor_InstagramSecondaryText],
-                                                                                 NSFontAttributeName : font
-                                                                             }]];
-            config.secondaryAttributedText = subtitle;
-        } else {
-            config.secondaryText = stateText;
-        }
-        config.image = SPKSettingsIcon(section.iconName);
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-        cell.showsReorderControl = YES;
-    } else if (indexPath.section == [self bulkEditorSectionIndex]) {
-        NSString *kind = [self bulkEditorKindForRow:indexPath.row];
-        config.text = [self bulkEditorTitleForKind:kind];
-        config.secondaryText = [self bulkEditorSubtitleForKind:kind];
-        config.image = SPKSettingsIcon([kind isEqualToString:@"download"] ? @"download" : @"copy");
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-    } else if (indexPath.section == [self resetSectionIndex]) {
+    UIListContentConfiguration *config = [UIListContentConfiguration cellConfiguration];
+    config.textProperties.font =
+        [[UIFontMetrics metricsForTextStyle:UIFontTextStyleBody] scaledFontForFont:[UIFont systemFontOfSize:17.0]];
+    config.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
+    config.imageToTextPadding = 14.0;
+    config.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
+
+    if (indexPath.section == [self resetSectionIndex]) {
         config.text = @"Reset to Default";
         config.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
         config.image = SPKSettingsIcon(@"arrow_ccw");
         config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
         cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-    } else {
-        NSString *identifier = self.configuration.supportedActions[indexPath.row];
-        config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
-        config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-
-        // CA2: the row says where the action is filed, so the two lists stop
-        // looking alike and the orphan section is no longer needed.
-        NSString *groupTitle = nil;
-        for (SPKActionMenuSection *group in self.configuration.sections) {
-            if ([group.actions containsObject:identifier]) {
-                groupTitle = group.title;
-                break;
-            }
-        }
-        UILabel *groupLabel = [UILabel new];
-        groupLabel.font = [UIFont systemFontOfSize:14.0];
-        groupLabel.text = groupTitle ?: @"Unassigned";
-        groupLabel.textColor = groupTitle ? [SPKUtils SPKColor_InstagramSecondaryText]
-                                          : [SPKUtils SPKColor_InstagramDestructive];
-        [groupLabel sizeToFit];
-
-        SPKSwitch *toggle = [[SPKSwitch alloc] init];
-        toggle.on = ![self.configuration.disabledActions containsObject:identifier];
-        objc_setAssociatedObject(toggle, &kSPKActionsListSwitchAssocKey, identifier, OBJC_ASSOCIATION_COPY_NONATOMIC);
-        [toggle addTarget:self action:@selector(disabledSwitchChanged:) forControlEvents:UIControlEventValueChanged];
-
-        UIView *trailing = [[UIView alloc] initWithFrame:CGRectMake(0, 0,
-            CGRectGetWidth(groupLabel.bounds) + 8.0 + CGRectGetWidth(toggle.bounds),
-            MAX(CGRectGetHeight(toggle.bounds), CGRectGetHeight(groupLabel.bounds)))];
-        groupLabel.center = CGPointMake(CGRectGetWidth(groupLabel.bounds) / 2.0,
-                                        CGRectGetHeight(trailing.bounds) / 2.0);
-        toggle.center = CGPointMake(CGRectGetWidth(trailing.bounds) - CGRectGetWidth(toggle.bounds) / 2.0,
-                                    CGRectGetHeight(trailing.bounds) / 2.0);
-        [trailing addSubview:groupLabel];
-        [trailing addSubview:toggle];
-        cell.accessoryView = trailing;
-        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        cell.contentConfiguration = config;
+        return cell;
     }
 
+    if (indexPath.section == [self bulkEditorSectionIndex]) {
+        NSString *kind = [self bulkEditorKindForRow:indexPath.row];
+        config.text = [self bulkEditorTitleForKind:kind];
+        config.secondaryText = [self bulkEditorSubtitleForKind:kind];
+        config.image = SPKSettingsIcon(@"stack");
+        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+        cell.contentConfiguration = config;
+        return cell;
+    }
+
+    BOOL outsideMenu = (indexPath.section == [self outsideSectionIndex]);
+    NSArray<NSString *> *rows = outsideMenu ? [self actionsOutsideMenu]
+                                            : [self actionsInGroupAtIndex:indexPath.section];
+    if (indexPath.row >= (NSInteger)rows.count)
+        return cell;
+
+    NSString *identifier = rows[indexPath.row];
+    config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
+    config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
+    // Outside the menu, the row is dimmed rather than switched off: there is no
+    // switch left to explain, only a place.
+    config.textProperties.color = outsideMenu ? [SPKUtils SPKColor_InstagramSecondaryText]
+                                              : [SPKUtils SPKColor_InstagramPrimaryText];
+    config.imageProperties.tintColor = config.textProperties.color;
+    cell.selectionStyle = UITableViewCellSelectionStyleDefault;
+    cell.showsReorderControl = YES;
     cell.contentConfiguration = config;
     return cell;
 }
 
-- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    return indexPath.section == [self groupsSectionIndex];
+// One place where an action changes hands. The disabled set is kept in step so
+// the runtime menu, which still reads it, agrees with what this screen shows.
+- (void)moveAction:(NSString *)identifier toSectionIdentifier:(NSString *)sectionIdentifier {
+    NSString *previous = [self.configuration sectionIdentifierForAction:identifier];
+    if (previous)
+        self.lastGroupForAction[identifier] = previous;
+
+    [self.configuration setAction:identifier assignedToSectionIdentifier:sectionIdentifier];
+    if (sectionIdentifier)
+        [self.configuration.disabledActions removeObject:identifier];
+    else if (![self.configuration.disabledActions containsObject:identifier])
+        [self.configuration.disabledActions addObject:identifier];
+
+    [self.configuration normalize];
+    [self.configuration save];
+    [self.tableView reloadData];
 }
 
-- (NSArray<UIDragItem *> *)tableView:(UITableView *)tableView itemsForBeginningDragSession:(id<UIDragSession>)session atIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section != [self groupsSectionIndex])
-        return @[];
-    SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
-    UIDragItem *item = [[UIDragItem alloc] initWithItemProvider:[[NSItemProvider alloc] initWithObject:section.identifier]];
-    item.localObject = section.identifier;
-    return @[ item ];
-}
+// The picker Sparkle uses everywhere else: the groups, then the way out.
+- (void)presentGroupPickerForAction:(NSString *)identifier fromView:(UIView *)view {
+    NSString *current = [self.configuration sectionIdentifierForAction:identifier];
+    NSMutableArray<SPKToggleMenuItem *> *items = [NSMutableArray array];
+    __weak typeof(self) weakSelf = self;
 
-- (BOOL)tableView:(UITableView *)tableView dragSessionAllowsMoveOperation:(id<UIDragSession>)session {
-    return YES;
-}
+    // The picker reads its checkmark from a defaults key, so the current group
+    // is written to a scratch key that only exists for the duration of the menu.
+    NSString *scratchKey = @"actionbtn_group_pick_scratch";
+    SPKPreferenceSetObject(current ?: @"", scratchKey);
 
-- (BOOL)tableView:(UITableView *)tableView dragSessionIsRestrictedToDraggingApplication:(id<UIDragSession>)session {
-    return YES;
-}
-
-- (UITableViewDropProposal *)tableView:(UITableView *)tableView dropSessionDidUpdate:(id<UIDropSession>)session withDestinationIndexPath:(NSIndexPath *)destinationIndexPath {
-    if (session.localDragSession == nil || destinationIndexPath.section != 0) {
-        return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
+    for (SPKActionMenuSection *group in self.groups) {
+        NSString *groupIdentifier = group.identifier;
+        SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:group.title
+                                                          iconName:group.iconName
+                                                       defaultsKey:scratchKey];
+        item.pickValue = groupIdentifier;
+        item.pickHandler = ^{
+            [weakSelf moveAction:identifier toSectionIdentifier:groupIdentifier];
+        };
+        [items addObject:item];
     }
-    return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationMove intent:UITableViewDropIntentInsertAtDestinationIndexPath];
+
+    SPKToggleMenuItem *none = [SPKToggleMenuItem itemWithTitle:@"Not in the Menu"
+                                                      iconName:@""
+                                                   defaultsKey:scratchKey];
+    none.pickValue = @"";
+    none.pickHandler = ^{
+        [weakSelf moveAction:identifier toSectionIdentifier:nil];
+    };
+    [items addObject:none];
+
+    [SPKToggleMenu presentWithChoices:items
+                             fromView:view
+                     inViewController:self
+                            onDismiss:nil];
 }
 
-- (void)tableView:(UITableView *)tableView performDropWithCoordinator:(id<UITableViewDropCoordinator>)coordinator {
-    NSIndexPath *destinationIndexPath = coordinator.destinationIndexPath;
-    id<UITableViewDropItem> dropItem = coordinator.items.firstObject;
-    NSIndexPath *sourceIndexPath = dropItem.sourceIndexPath;
-    if (!destinationIndexPath ||
-        !sourceIndexPath ||
-        sourceIndexPath.section != 0 ||
-        destinationIndexPath.section != 0)
+- (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
+    return indexPath.section <= [self outsideSectionIndex];
+}
+
+// Dragging is kept for both jobs: order inside a group, and moving between
+// groups — including in and out of "Not in the Menu".
+- (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
+    if (sourceIndexPath.section > [self outsideSectionIndex] ||
+        destinationIndexPath.section > [self outsideSectionIndex])
         return;
 
-    NSInteger rowCount = self.configuration.sections.count;
-    NSInteger destinationRow = MIN(MAX(0, destinationIndexPath.row), MAX(0, rowCount - 1));
-    NSIndexPath *target = [NSIndexPath indexPathForRow:destinationRow inSection:0];
+    BOOL fromOutside = (sourceIndexPath.section == [self outsideSectionIndex]);
+    NSArray<NSString *> *sourceRows = fromOutside ? [self actionsOutsideMenu]
+                                                  : [self actionsInGroupAtIndex:sourceIndexPath.section];
+    if (sourceIndexPath.row >= (NSInteger)sourceRows.count)
+        return;
+    NSString *identifier = sourceRows[sourceIndexPath.row];
 
-    [tableView
-        performBatchUpdates:^{
-            [self.configuration moveSectionFromIndex:sourceIndexPath.row toIndex:target.row];
-            [self.configuration save];
-            [tableView moveRowAtIndexPath:sourceIndexPath toIndexPath:target];
-        }
-                 completion:nil];
-    [coordinator dropItem:dropItem.dragItem toRowAtIndexPath:target];
+    if (sourceIndexPath.section == destinationIndexPath.section) {
+        if (fromOutside)
+            return;   // the out-of-menu bucket has no order of its own
+        SPKActionMenuSection *group = self.groups[sourceIndexPath.section];
+        [self.configuration moveActionInSectionIdentifier:group.identifier
+                                                fromIndex:sourceIndexPath.row
+                                                  toIndex:destinationIndexPath.row];
+        [self.configuration save];
+        [self.tableView reloadData];
+        return;
+    }
+
+    BOOL toOutside = (destinationIndexPath.section == [self outsideSectionIndex]);
+    [self moveAction:identifier
+ toSectionIdentifier:toOutside ? nil : self.groups[destinationIndexPath.section].identifier];
 }
 
+
+
+
+
+
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
     if (indexPath.section == [self resetSectionIndex]) {
-        [self resetConfigurationTapped];
-        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        [self confirmReset];
         return;
     }
     if (indexPath.section == [self bulkEditorSectionIndex]) {
         NSString *kind = [self bulkEditorKindForRow:indexPath.row];
-        UIViewController *controller = [self bulkEditorControllerForKind:kind];
-        if (controller) {
-            [self.navigationController pushViewController:controller animated:YES];
-        }
-        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        [self.navigationController pushViewController:[self bulkEditorControllerForKind:kind] animated:YES];
         return;
     }
-    if (indexPath.section == [self groupsSectionIndex]) {
-        SPKActionMenuSection *section = self.configuration.sections[indexPath.row];
-        __weak typeof(self) weakSelf = self;
-        SPKActionSectionEditViewController *controller = [[SPKActionSectionEditViewController alloc] initWithConfiguration:self.configuration
-                                                                                                         sectionIdentifier:section.identifier
-                                                                                                                  onChange:^{
-                                                                                                                      [weakSelf.configuration save];
-                                                                                                                      [weakSelf.tableView reloadData];
-                                                                                                                  }];
-        [self.navigationController pushViewController:controller animated:YES];
-    }
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
+    BOOL outsideMenu = (indexPath.section == [self outsideSectionIndex]);
+    NSArray<NSString *> *rows = outsideMenu ? [self actionsOutsideMenu]
+                                            : [self actionsInGroupAtIndex:indexPath.section];
+    if (indexPath.row >= (NSInteger)rows.count)
+        return;
+    [self presentGroupPickerForAction:rows[indexPath.row]
+                             fromView:[tableView cellForRowAtIndexPath:indexPath] ?: tableView];
 }
 
 - (BOOL)tableView:(UITableView *)tableView canEditRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -405,20 +411,63 @@ static char kSPKActionsListSwitchAssocKey;
 }
 
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (![self tableView:tableView canEditRowAtIndexPath:indexPath])
+    if (indexPath.section >= (NSInteger)self.groups.count)
         return nil;
-
+    NSArray<NSString *> *rows = [self actionsInGroupAtIndex:indexPath.section];
+    if (indexPath.row >= (NSInteger)rows.count)
+        return nil;
+    NSString *identifier = rows[indexPath.row];
     __weak typeof(self) weakSelf = self;
-    UIContextualAction *deleteAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive
-                                                                               title:nil
-                                                                             handler:^(__unused UIContextualAction *action, __unused UIView *sourceView, void (^completionHandler)(BOOL)) {
-                                                                                 [weakSelf removeSectionAtIndexPath:indexPath];
-                                                                                 completionHandler(YES);
-                                                                             }];
-    deleteAction.image = [SPKAssetUtils menuIconNamed:@"trash"];
-    deleteAction.backgroundColor = [SPKUtils SPKColor_InstagramDestructive];
-    deleteAction.accessibilityLabel = @"Remove Section";
-    return [UISwipeActionsConfiguration configurationWithActions:@[ deleteAction ]];
+
+    UIContextualAction *remove =
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive
+                                                title:@"Remove"
+                                              handler:^(UIContextualAction *action, UIView *view, void (^done)(BOOL)) {
+        [weakSelf moveAction:identifier toSectionIdentifier:nil];
+        done(YES);
+    }];
+    remove.image = SPKSettingsIcon(@"trash");
+
+    UIContextualAction *move =
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                title:@"Move"
+                                              handler:^(UIContextualAction *action, UIView *view, void (^done)(BOOL)) {
+        [weakSelf presentGroupPickerForAction:identifier fromView:view];
+        done(YES);
+    }];
+    move.image = SPKSettingsIcon(@"arrow_right");
+    move.backgroundColor = [SPKUtils SPKColor_InstagramSecondaryText];
+
+    return [UISwipeActionsConfiguration configurationWithActions:@[ remove, move ]];
+}
+
+// Swipe the other way on an action that is out of the menu: it goes back where
+// it was, or asks where to go if it has never been filed.
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView leadingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section != [self outsideSectionIndex])
+        return nil;
+    NSArray<NSString *> *rows = [self actionsOutsideMenu];
+    if (indexPath.row >= (NSInteger)rows.count)
+        return nil;
+    NSString *identifier = rows[indexPath.row];
+    __weak typeof(self) weakSelf = self;
+
+    UIContextualAction *add =
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                title:@"Add"
+                                              handler:^(UIContextualAction *action, UIView *view, void (^done)(BOOL)) {
+        typeof(self) strongSelf = weakSelf;
+        NSString *lastGroup = strongSelf.lastGroupForAction[identifier];
+        if (lastGroup && [strongSelf.configuration sectionWithIdentifier:lastGroup])
+            [strongSelf moveAction:identifier toSectionIdentifier:lastGroup];
+        else
+            [strongSelf presentGroupPickerForAction:identifier fromView:view];
+        done(YES);
+    }];
+    add.image = SPKSettingsIcon(@"arrow_left");
+    add.backgroundColor = [SPKUtils SPKColor_InstagramPrimaryText];
+
+    return [UISwipeActionsConfiguration configurationWithActions:@[ add ]];
 }
 
 - (void)addSectionTapped {
@@ -478,22 +527,5 @@ static char kSPKActionsListSwitchAssocKey;
                                       }];
 }
 
-- (void)disabledSwitchChanged:(UISwitch *)sender {
-    NSString *identifier = objc_getAssociatedObject(sender, &kSPKActionsListSwitchAssocKey);
-    if (identifier.length == 0)
-        return;
-
-    if (sender.isOn) {
-        [self.configuration.disabledActions removeObject:identifier];
-    } else if (![self.configuration.disabledActions containsObject:identifier]) {
-        [self.configuration.disabledActions addObject:identifier];
-    }
-    [self.configuration save];
-
-    // Refresh the section rows so the "disabled action" warning triangle appears/clears
-    // as this action is toggled. Reloading section 0 (the switch lives in a different
-    // section, so its toggle animation is untouched).
-    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationNone];
-}
 
 @end
