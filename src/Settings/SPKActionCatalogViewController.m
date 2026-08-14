@@ -82,6 +82,12 @@
 // menu — and they leave the catalogue, which only ever offers what is nowhere.
 - (void)addTapped {
     for (NSString *identifier in self.selection) {
+        // A bulk row has nowhere else to live: putting it back means lifting the
+        // exclusion, and it reappears under Bulk.
+        if ([self.configuration isBulkActionIdentifier:identifier]) {
+            [self.configuration setBulkActionIdentifier:identifier excluded:NO];
+            continue;
+        }
         if (![self.configuration.unassignedActions containsObject:identifier])
             [self.configuration.unassignedActions addObject:identifier];
     }
@@ -131,7 +137,7 @@
     config.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
 
     if (self.catalog.count == 0) {
-        config.text = @"Every action is already placed.";
+        config.text = @"Everything is placed. Remove something to see it here.";
         config.textProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
         cell.contentConfiguration = config;

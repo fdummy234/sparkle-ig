@@ -415,7 +415,7 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
         NSArray<NSString *> *actions = [self bulkActions];
         if (actions.count == 0)
             return [self hintCellWithText:@"Follows your Download and Copy actions."];
-        return [self actionCellForIdentifier:actions[(NSUInteger)indexPath.row] indented:NO dimmed:YES];
+        return [self actionCellForIdentifier:actions[(NSUInteger)indexPath.row] indented:NO dimmed:NO];
     }
 
     if (section == [self outsideSectionIndex]) {
@@ -542,6 +542,10 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
 // The action a swipe would act on, or nil where no swipe applies: Bulk is
 // derived, and the hint rows, parent rows and New Submenu hold no action.
 - (NSString *)identifierForSwipeAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == [self bulkSectionIndex]) {
+        NSArray<NSString *> *actions = [self bulkActions];
+        return indexPath.row < (NSInteger)actions.count ? actions[(NSUInteger)indexPath.row] : nil;
+    }
     if (indexPath.section == [self menuSectionIndex]) {
         NSArray<NSString *> *actions = [self menuActions];
         return indexPath.row < (NSInteger)actions.count ? actions[(NSUInteger)indexPath.row] : nil;
@@ -560,18 +564,33 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
 
 // Swipe left, in the menu: Remove — the action drops to "Not in the Menu".
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
-    if (indexPath.section == [self outsideSectionIndex])
-        return nil;
     NSString *identifier = [self identifierForSwipeAtIndexPath:indexPath];
     if (!identifier)
         return nil;
 
+    BOOL fromBulk = (indexPath.section == [self bulkSectionIndex]);
+    BOOL fromOutside = (indexPath.section == [self outsideSectionIndex]);
     __weak typeof(self) weakSelf = self;
+
     UIContextualAction *remove =
         [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive
                                                 title:@"Remove"
                                               handler:^(UIContextualAction *action, UIView *view, void (^done)(BOOL)) {
-        [weakSelf moveAction:identifier toSectionIdentifier:nil atIndex:NSNotFound];
+        typeof(self) strongSelf = weakSelf;
+        if (fromBulk) {
+            // Bulk stays derived from the single-item actions; taking a row out
+            // is the one thing about it that is stored, and the "+" gives it back.
+            [strongSelf.configuration setBulkActionIdentifier:identifier excluded:YES];
+            [strongSelf.configuration save];
+            [strongSelf.tableView reloadData];
+        } else if (fromOutside) {
+            // Off the screen entirely, back into the catalogue behind the "+".
+            [strongSelf.configuration.unassignedActions removeObject:identifier];
+            [strongSelf.configuration save];
+            [strongSelf.tableView reloadData];
+        } else {
+            [strongSelf moveAction:identifier toSectionIdentifier:nil atIndex:NSNotFound];
+        }
         done(YES);
     }];
     remove.image = SPKSettingsIcon(@"arrow_right");
