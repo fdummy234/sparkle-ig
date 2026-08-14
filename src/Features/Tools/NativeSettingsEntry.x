@@ -19,6 +19,18 @@ static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAss
 static const void *kSPKSettingsEntryRetryAssocKey = &kSPKSettingsEntryRetryAssocKey;
 // Bounded so a bar that genuinely never gets a title cannot spin on layout.
 static NSInteger const kSPKSettingsEntryMaxTitleRetries = 12;
+static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssocKey;
+
+// 1 = not the settings screen · 2 = settings screen, no title yet · 3 = placed.
+// Logged only when it CHANGES, so the log says which branch took the icon away
+// instead of repeating on every layout pass.
+static void SPKLogSettingsEntryState(UINavigationBar *bar, NSInteger state) {
+    NSNumber *previous = objc_getAssociatedObject(bar, kSPKSettingsEntryStateAssocKey);
+    if (previous.integerValue == state)
+        return;
+    objc_setAssociatedObject(bar, kSPKSettingsEntryStateAssocKey, @(state), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SPKLog(@"Settings", @"[Sparkle] entry state %ld (1=off-screen 2=no-title 3=placed)", (long)state);
+}
 static CGFloat const kSPKSettingsEntryButtonSize = 40.0;
 static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
 @interface SPKNativeSettingsEntryTarget : NSObject
@@ -73,6 +85,8 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
 
     UIButton *button = objc_getAssociatedObject(self, kSPKSettingsEntryButtonAssocKey);
     if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(self))) {
+        if (button)
+            SPKLogSettingsEntryState(self, 1);
         button.hidden = YES;
         return;
     }
@@ -127,6 +141,7 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     // rather than giving up — bounded, and only while this really is the
     // settings screen (checked at the top of this method).
     if (!titleLabel) {
+        SPKLogSettingsEntryState(self, 2);
         button.hidden = YES;
         NSNumber *attempts = objc_getAssociatedObject(self, kSPKSettingsEntryRetryAssocKey);
         if (attempts.integerValue < kSPKSettingsEntryMaxTitleRetries) {
@@ -140,6 +155,7 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     }
     // Placed successfully: the next disappearance gets a fresh set of retries.
     objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(0), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SPKLogSettingsEntryState(self, 3);
     CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
 
     // Mirror the leading inset of whatever sits on the other side of the title.
@@ -164,6 +180,27 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
                               centreY - size / 2.0,
                               size,
                               size);
+}
+
+%end
+
+// The retry added last time only covered the "no title yet" branch. Coming back
+// from a swipe can instead leave the bar's LAST layout pass reading a different
+// top controller, and nothing lays it out again — so the icon stayed away until
+// Instagram restarted. This is the event that says "the screen is on screen
+// again", and it asks the bar for one more pass.
+%hook UIViewController
+
+- (void)viewDidAppear:(BOOL)animated {
+    %orig;
+    if (!SPKIsNativeSettingsController(self))
+        return;
+    UINavigationBar *bar = self.navigationController.navigationBar;
+    [bar setNeedsLayout];
+    // The SwiftUI screen finishes installing its own bar content a beat later.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [bar setNeedsLayout];
+    });
 }
 
 %end
