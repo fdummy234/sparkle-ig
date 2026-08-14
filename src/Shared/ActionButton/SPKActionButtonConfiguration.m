@@ -599,16 +599,51 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     return bulk ? [bulk.actions copy] : @[];
 }
 
+// Derived from THIS configuration and nothing else.
+//
+// The first version called SPKDerivedBulkActionsForSource, which builds a fresh
+// configuration, which seeds again, which derives again: configurationForSource
+// -> seedBulkSectionIfNeeded -> SPKDerivedBulkActionsForSource -> back to the
+// top. Unbounded recursion, stack guard hit, Instagram down. Nothing in this
+// method may load a configuration.
 - (void)seedBulkSectionIfNeeded {
     SPKActionMenuSection *bulk = [self bulkSection];
     if (!bulk || bulk.actions.count > 0)
         return;
+
+    NSArray<NSString *> *supportedDownload = SPKActionButtonBulkDownloadSupportedActionsForSource(self.source);
+    NSArray<NSString *> *supportedCopy = SPKActionButtonBulkCopySupportedActionsForSource(self.source);
+
+    // Walk the zones already parsed into self, in their own order.
+    NSMutableOrderedSet<NSString *> *derived = [NSMutableOrderedSet orderedSet];
+    for (SPKActionMenuSection *section in self.sections) {
+        if ([section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier])
+            continue;
+        for (NSString *identifier in section.actions) {
+            if ([self.disabledActions containsObject:identifier] ||
+                [self.unassignedActions containsObject:identifier])
+                continue;
+            NSString *bulkIdentifier = SPKBulkAllIdentifierForBaseAction(identifier);
+            if (bulkIdentifier.length == 0)
+                continue;
+            if ([self.excludedBulkActions containsObject:bulkIdentifier])
+                continue;   // taken out before this model existed: it stays out
+            if ([supportedDownload containsObject:bulkIdentifier] || [supportedCopy containsObject:bulkIdentifier])
+                [derived addObject:bulkIdentifier];
+        }
+    }
+
+    // Same shape as the list he sees today: the download family first, then the
+    // copy family, each in menu order.
     NSMutableArray<NSString *> *seed = [NSMutableArray array];
-    [seed addObjectsFromArray:SPKDerivedBulkActionsForSource(self.source, SPKActionButtonBulkDownloadSupportedActionsForSource(self.source))];
-    [seed addObjectsFromArray:SPKDerivedBulkActionsForSource(self.source, SPKActionButtonBulkCopySupportedActionsForSource(self.source))];
-    // Anything he had already taken out yesterday stays out.
-    for (NSString *identifier in self.excludedBulkActions)
-        [seed removeObject:identifier];
+    for (NSString *identifier in derived.array) {
+        if ([supportedDownload containsObject:identifier])
+            [seed addObject:identifier];
+    }
+    for (NSString *identifier in derived.array) {
+        if (![supportedDownload containsObject:identifier] && [supportedCopy containsObject:identifier])
+            [seed addObject:identifier];
+    }
     bulk.actions = seed;
 }
 
