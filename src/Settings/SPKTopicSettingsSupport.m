@@ -165,6 +165,14 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
             [buttonRows addObject:entry];
     }
 
+    // Sparkle's own menu, off by default: the native menu stays until he turns
+    // this on, so a fault here is one switch away from being undone.
+    SPKSetting *sparkleMenuRow = [SPKSetting switchCellWithTitle:@"Sparkle Menu"
+                                                            icon:SPKSettingsIcon(@"sparkle")
+                                                     defaultsKey:@"action_button_sparkle_menu"];
+    sparkleMenuRow.helpText = @"Draws the action button's menu the way Sparkle draws its own: a line between every row, tighter margins. Off keeps the iPhone's menu.";
+    [menuRows addObject:sparkleMenuRow];
+
     NSMutableArray *navSections = [NSMutableArray array];
     [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
     if (menuRows.count > 0)
