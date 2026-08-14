@@ -30,6 +30,7 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) SPKActionButtonConfiguration *configuration;
 @property (nonatomic, assign) SPKActionButtonSource source;
+@property (nonatomic, assign) BOOL dragStartedInBulk;
 
 @end
 
@@ -124,13 +125,10 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     return [self.configuration.unassignedActions copy];
 }
 
-// Bulk is derived from the single-item Download and Copy actions, so the rows
-// here are a preview of what the carousel menu will hold, not a stored list.
+// Bulk is his own ordered list now: these rows ARE the carousel menu, in this
+// order, one for one.
 - (NSArray<NSString *> *)bulkActions {
-    NSMutableArray<NSString *> *actions = [NSMutableArray array];
-    [actions addObjectsFromArray:SPKActionButtonConfiguredBulkDownloadActionsForSource(self.source)];
-    [actions addObjectsFromArray:SPKActionButtonConfiguredBulkCopyActionsForSource(self.source)];
-    return actions;
+    return [self.configuration bulkActionsInOrder];
 }
 
 - (NSArray<NSDictionary *> *)submenuRows {
@@ -578,9 +576,8 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
                                               handler:^(UIContextualAction *action, UIView *view, void (^done)(BOOL)) {
         typeof(self) strongSelf = weakSelf;
         if (fromBulk) {
-            // Bulk stays derived from the single-item actions; taking a row out
-            // is the one thing about it that is stored, and the "+" gives it back.
-            [strongSelf.configuration setBulkActionIdentifier:identifier excluded:YES];
+            // Out of his Bulk list, back into the catalogue behind the "+".
+            [strongSelf.configuration setBulkActionIdentifier:identifier included:NO];
             [strongSelf.configuration save];
             [strongSelf.tableView reloadData];
         } else if (fromOutside) {
@@ -634,7 +631,9 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     }
     if (indexPath.section == [self outsideSectionIndex])
         return [self outsideActions].count > 0;
-    return NO;   // Bulk is derived, and the final block does not move
+    if (indexPath.section == [self bulkSectionIndex])
+        return [self bulkActions].count > 0;
+    return NO;   // the final block does not move
 }
 
 - (BOOL)rowIsSubmenuParentAtIndexPath:(NSIndexPath *)indexPath {
@@ -656,7 +655,11 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     }
 
     NSInteger destination = proposedDestinationIndexPath.section;
-    if (destination == [self bulkSectionIndex] || destination == [self resetSectionIndex])
+    if (destination == [self resetSectionIndex])
+        return sourceIndexPath;
+    // Bulk actions and single-item actions are different identifiers: a row can
+    // be reordered inside Bulk, never dragged in or out of it.
+    if ((destination == [self bulkSectionIndex]) != (sourceIndexPath.section == [self bulkSectionIndex]))
         return sourceIndexPath;
     // The "New Submenu" row closes the zone: an action dropped on it belongs to
     // the last submenu, not after the row.
@@ -733,6 +736,7 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
                          atIndexPath:(NSIndexPath *)indexPath {
     if (![self tableView:tableView canMoveRowAtIndexPath:indexPath])
         return @[];
+    self.dragStartedInBulk = (indexPath.section == [self bulkSectionIndex]);
     NSString *carried = [self identifierForSwipeAtIndexPath:indexPath] ?: @"submenu";
     UIDragItem *item = [[UIDragItem alloc] initWithItemProvider:[[NSItemProvider alloc] initWithObject:carried]];
     item.localObject = carried;
@@ -764,7 +768,9 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     if (session.localDragSession == nil || destinationIndexPath == nil)
         return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
     NSInteger destination = destinationIndexPath.section;
-    if (destination == [self bulkSectionIndex] || destination == [self resetSectionIndex])
+    if (destination == [self resetSectionIndex])
+        return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
+    if ((destination == [self bulkSectionIndex]) != (session.localDragSession != nil && [self dragStartedInBulk]))
         return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
     // An empty zone holds one hint row, and it will still hold one row once the
     // action lands — the count does not grow. Promising UIKit an insertion it
@@ -805,6 +811,12 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     }
 
     NSInteger destination = destinationIndexPath.section;
+    if (destination == [self bulkSectionIndex] && sourceIndexPath.section == [self bulkSectionIndex]) {
+        [self.configuration moveBulkActionFromIndex:sourceIndexPath.row toIndex:destinationIndexPath.row];
+        [self.configuration save];
+        [self.tableView reloadData];
+        return;
+    }
     if (destination == [self menuSectionIndex]) {
         [self moveAction:identifier
             toSectionIdentifier:[self.configuration topLevelSection].identifier

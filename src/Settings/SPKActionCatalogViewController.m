@@ -85,7 +85,7 @@
         // A bulk row has nowhere else to live: putting it back means lifting the
         // exclusion, and it reappears under Bulk.
         if ([self.configuration isBulkActionIdentifier:identifier]) {
-            [self.configuration setBulkActionIdentifier:identifier excluded:NO];
+            [self.configuration setBulkActionIdentifier:identifier included:YES];
             continue;
         }
         if (![self.configuration.unassignedActions containsObject:identifier])
