@@ -29,6 +29,7 @@
 #import "../UI/SPKIGAlertPresenter.h"
 #import "../UI/SPKNotificationCenter.h"
 #import "ActionButtonCore.h"
+#import "../UI/SPKActionMenu.h"
 #import "SPKActionButtonConfiguration.h"
 #import "SPKActionDescriptor.h"
 #import "SPKBulkMediaSelectionViewController.h"
@@ -1217,19 +1218,14 @@ static SPKMediaPreviewPlaybackBlock SPKResumePlaybackBlockForContext(SPKActionBu
     } copy];
 }
 
-// The glyph the action button's menu asks for. Smaller than the 22 pt of the
-// settings rows: in a native UIMenu the image column is the only thing we set,
-// and its width is what holds every title away from the edge.
-static CGFloat const kSPKActionMenuGlyphPointSize = 18.0;
-
-// Load at native size (0 = no downscale) and reinterpret via
-// menuSizedIcon:pointSize:. Requesting a sub-native size here would send the icon through
+// Load at native size (0 = no downscale) and reinterpret to 22pt via
+// menuSizedIcon:. Requesting a sub-native size here would send the icon through
 // SPKAssetScaleImage's UIGraphicsImageRenderer pass, which iOS 16's UIMenu
 // renders blank for vector-backed (.svg) glyphs. `size` is kept for API compat.
 UIImage *SPKActionButtonMenuIconForIdentifier(NSString *identifier, CGFloat size) {
     (void)size;
     UIImage *icon = SPKIconForActionIdentifier(identifier, SPKActionButtonSourceFeed, 0, nil);
-    return [SPKAssetUtils menuSizedIcon:icon pointSize:kSPKActionMenuGlyphPointSize];
+    return [SPKAssetUtils menuSizedIcon:icon];
 }
 
 static UIImage *SPKActionButtonMenuIconForContext(NSString *identifier, SPKActionButtonContext *context, CGFloat size) {
@@ -1238,7 +1234,7 @@ static UIImage *SPKActionButtonMenuIconForContext(NSString *identifier, SPKActio
                                            ? SPKActionButtonSourceFeed
                                            : context.source;
     UIImage *icon = SPKIconForActionIdentifier(identifier, menuSource, 0, context);
-    return [SPKAssetUtils menuSizedIcon:icon pointSize:kSPKActionMenuGlyphPointSize];
+    return [SPKAssetUtils menuSizedIcon:icon];
 }
 
 static NSInteger SPKClampedIndex(NSInteger index, NSInteger count) {
@@ -3431,27 +3427,11 @@ SPKActionButtonContext *SPKActionButtonContextFromButton(UIButton *button) {
 // the menu opens, not whatever was available when the button was first
 // configured (which is stale on the first story of a reel, etc.). Returns an
 // empty array when there is no bulk media.
-static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfiguration *configuration,
-                                                          SPKActionButtonContext *context,
-                                                          NSString *sectionTitle,
-                                                          NSString *sectionIconName,
-                                                          BOOL collapsible) {
-    id bulkMedia = SPKResolveBulkMediaForContext(context);
-    NSArray<SPKResolvedMediaEntry *> *bulkEntries = SPKDownloadableEntries(SPKEntriesFromMedia(bulkMedia));
-    if (bulkEntries.count <= 1)
-        return @[];
-
-    NSString *bulkUsername = SPKResolvedBulkUsernameForContext(context, bulkEntries, bulkMedia);
-
-    // What he put in the Bulk zone, in the order he put it — one row per action,
-    // no Download All / Copy All branches in between. The zone is the menu.
-    NSMutableArray<UIMenuElement *> *children = [NSMutableArray array];
-    UIMenu *flatBulkMenu = SPKBulkActionMenuForContext(context, bulkEntries, bulkUsername, bulkMedia, [configuration bulkActionsInOrder]);
-    if (flatBulkMenu.children.count > 0)
-        [children addObjectsFromArray:flatBulkMenu.children];
-
-    // "Select Media" picker — destinations are the configured bulk actions, in a
-    // fixed order: Save to Photos, Share, Copy, Save to Gallery, Copy URLs.
+// "Select Media" destinations — the configured bulk actions, in a fixed order:
+// Save to Photos, Share, Copy, Save to Gallery, Copy URLs. Named so both menus
+// offer the same list.
+static NSArray<SPKBulkSelectionDestination *> *SPKBulkSelectionDestinationsForContext(SPKActionButtonContext *context,
+                                                                                       SPKActionButtonConfiguration *configuration) {
     id media = SPKResolveMediaForContext(context);
     NSArray<SPKResolvedMediaEntry *> *entries = SPKEntriesFromMedia(media);
     NSInteger currentIndex = SPKResolveCurrentIndexForContext(context);
@@ -3473,11 +3453,13 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
                                                                                   iconName:SPKActionDescriptorIconName(identifier)]];
         }
     }
-    if (destinations.count > 0) {
-        UIAction *selectMediaAction = [UIAction actionWithTitle:@"Select Media"
-                                                          image:[SPKAssetUtils menuIconNamed:@"circle_check"]
-                                                     identifier:nil
-                                                        handler:^(__unused UIAction *action) {
+    return destinations;
+}
+
+// The Select Media flow, named so both menus run the exact same code.
+static void SPKPresentBulkMediaSelection(SPKActionButtonContext *context,
+                                         NSArray<SPKBulkSelectionDestination *> *destinations) {
+
                                                             // Re-resolve at tap time as well, in case the carousel changed.
                                                             id tapBulkMedia = SPKResolveBulkMediaForContext(context);
                                                             NSArray<SPKResolvedMediaEntry *> *tapBulkEntries = SPKDownloadableEntries(SPKEntriesFromMedia(tapBulkMedia));
@@ -3512,6 +3494,34 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
                                                                                                                     SPKDownloadSourceSurface surface = [SPKDownloadHelpers sourceSurfaceForActionButtonSource:context.source];
                                                                                                                     SPKPerformBatchDownloadWithQualityPrompt(selectedEntries, context.source, tapBulkUsername, tapBulkMedia, dest, destinationIdentifier, presenter, anchorView, surface);
                                                                                                                 }];
+                                                        }
+
+static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfiguration *configuration,
+                                                          SPKActionButtonContext *context,
+                                                          NSString *sectionTitle,
+                                                          NSString *sectionIconName,
+                                                          BOOL collapsible) {
+    id bulkMedia = SPKResolveBulkMediaForContext(context);
+    NSArray<SPKResolvedMediaEntry *> *bulkEntries = SPKDownloadableEntries(SPKEntriesFromMedia(bulkMedia));
+    if (bulkEntries.count <= 1)
+        return @[];
+
+    NSString *bulkUsername = SPKResolvedBulkUsernameForContext(context, bulkEntries, bulkMedia);
+
+    // What he put in the Bulk zone, in the order he put it — one row per action,
+    // no Download All / Copy All branches in between. The zone is the menu.
+    NSMutableArray<UIMenuElement *> *children = [NSMutableArray array];
+    UIMenu *flatBulkMenu = SPKBulkActionMenuForContext(context, bulkEntries, bulkUsername, bulkMedia, [configuration bulkActionsInOrder]);
+    if (flatBulkMenu.children.count > 0)
+        [children addObjectsFromArray:flatBulkMenu.children];
+
+    NSArray<SPKBulkSelectionDestination *> *destinations = SPKBulkSelectionDestinationsForContext(context, configuration);
+    if (destinations.count > 0) {
+        UIAction *selectMediaAction = [UIAction actionWithTitle:@"Select Media"
+                                                          image:[SPKAssetUtils menuIconNamed:@"circle_check"]
+                                                     identifier:nil
+                                                        handler:^(__unused UIAction *action) {
+                                                            SPKPresentBulkMediaSelection(context, destinations);
                                                         }];
         [children addObject:selectMediaAction];
     }
@@ -3526,7 +3536,7 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
     // imageWithTintColor: redraws, and a redraw undoes the scale relabelling that
     // menuSizedIcon: uses to reach 22pt — the glyph comes back at its native
     // 24pt and UIKit grows the row. Size it again after the tint.
-    UIImage *bulkIcon = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal] pointSize:kSPKActionMenuGlyphPointSize];
+    UIImage *bulkIcon = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
     UIMenuElement *section = collapsible
                                  ? SPKSubmenuOrSingleElement(title, bulkIcon, children)
                                  : [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:children];
@@ -3540,6 +3550,209 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
 // reflect the visible item instead of whatever slide 0 was when the button was
 // first configured. Non-feed surfaces call it once (their menus are built
 // eagerly, as before).
+
+#pragma mark - Sparkle's own menu
+
+// The same tree the native menu shows, expressed as SPKActionMenu nodes. One
+// walk over the same configuration: what the user put in a zone comes out as a
+// row, in that order, one for one.
+static NSArray<SPKActionMenuNode *> *SPKBuildActionMenuNodes(SPKActionButtonContext *context,
+                                                             SPKActionButtonConfiguration *configuration,
+                                                             __weak UIButton *weakButton) {
+    id media = SPKResolveMediaForContext(context);
+    NSArray<SPKResolvedMediaEntry *> *entries = SPKEntriesFromMedia(media);
+    NSInteger currentIndex = SPKResolveCurrentIndexForContext(context);
+    SPKResolvedMediaEntry *currentEntry = nil;
+    if (entries.count > 0)
+        currentEntry = entries[SPKClampedIndex(currentIndex, (NSInteger)entries.count)];
+    NSArray<NSString *> *visibleActions = SPKVisibleActionsForContext(context, media, entries, currentIndex);
+
+    NSMutableArray<SPKActionMenuNode *> *nodes = [NSMutableArray array];
+
+    SPKActionMenuNode * (^leafForIdentifier)(NSString *) = ^SPKActionMenuNode *(NSString *identifier) {
+        return [SPKActionMenuNode leafWithTitle:SPKActionButtonDisplayTitleForContext(identifier, context, currentEntry)
+                                          image:SPKActionButtonMenuIconForContext(identifier, context, 22.0)
+                                        handler:^{
+            UIButton *strongButton = weakButton;
+            if (strongButton)
+                objc_setAssociatedObject(strongButton, kSPKActionButtonLastMenuActionAssocKey, identifier, OBJC_ASSOCIATION_COPY_NONATOMIC);
+            SPKExecuteActionIdentifier(identifier, context, NO);
+        }];
+    };
+
+    NSArray<SPKActionMenuSection *> *visibleSectionsList = [configuration visibleSections];
+    NSMutableDictionary<NSString *, SPKActionMenuSection *> *visibleSectionsByID = [NSMutableDictionary dictionary];
+    for (SPKActionMenuSection *visibleSection in visibleSectionsList) {
+        if (visibleSection.identifier)
+            visibleSectionsByID[visibleSection.identifier] = visibleSection;
+    }
+
+    for (SPKActionMenuSection *orderedSection in configuration.sections) {
+        if ([orderedSection.identifier isEqualToString:@"bulk"]) {
+            id bulkMedia = SPKResolveBulkMediaForContext(context);
+            NSArray<SPKResolvedMediaEntry *> *bulkEntries = SPKDownloadableEntries(SPKEntriesFromMedia(bulkMedia));
+            if (bulkEntries.count <= 1)
+                continue;   // Bulk exists on carousels only.
+            NSMutableArray<SPKActionMenuNode *> *bulkNodes = [NSMutableArray array];
+            for (NSString *bulkIdentifier in [configuration bulkActionsInOrder]) {
+                [bulkNodes addObject:[SPKActionMenuNode leafWithTitle:SPKActionButtonTitleForIdentifier(bulkIdentifier)
+                                                                image:SPKActionButtonMenuIconForIdentifier(bulkIdentifier, 22.0)
+                                                              handler:^{
+                    SPKExecuteActionIdentifier(bulkIdentifier, context, NO);
+                }]];
+            }
+            NSArray<SPKBulkSelectionDestination *> *destinations = SPKBulkSelectionDestinationsForContext(context, configuration);
+            if (destinations.count > 0) {
+                [bulkNodes addObject:[SPKActionMenuNode leafWithTitle:@"Select Media"
+                                                                image:[SPKAssetUtils menuIconNamed:@"circle_check"]
+                                                              handler:^{
+                    SPKPresentBulkMediaSelection(context, destinations);
+                }]];
+            }
+            if (bulkNodes.count > 0) {
+                [nodes addObject:[SPKActionMenuNode branchWithTitle:(orderedSection.title.length > 0 ? orderedSection.title : @"Bulk")
+                                                              image:[SPKAssetUtils menuIconNamed:(orderedSection.iconName.length > 0 ? orderedSection.iconName : @"carousel")]
+                                                           children:bulkNodes]];
+            }
+            continue;
+        }
+
+        SPKActionMenuSection *group = visibleSectionsByID[orderedSection.identifier];
+        if (!group || group.actions.count == 0)
+            continue;
+
+        NSMutableArray<SPKActionMenuNode *> *groupNodes = [NSMutableArray array];
+        for (NSString *identifier in group.actions) {
+            if (![visibleActions containsObject:identifier])
+                continue;
+            if (context.source == SPKActionButtonSourceProfile && [identifier isEqualToString:kSPKActionProfileCopyInfo]) {
+                NSMutableArray<SPKActionMenuNode *> *copyNodes = [NSMutableArray array];
+                for (NSString *copyIdentifier in SPKProfileConfiguredCopyInfoActions()) {
+                    [copyNodes addObject:[SPKActionMenuNode leafWithTitle:SPKActionButtonTitleForIdentifier(copyIdentifier)
+                                                                    image:SPKActionButtonMenuIconForContext(copyIdentifier, context, 22.0)
+                                                                  handler:^{
+                        SPKExecuteActionIdentifier(copyIdentifier, context, NO);
+                    }]];
+                }
+                if (copyNodes.count == 1)
+                    [groupNodes addObject:copyNodes.firstObject];
+                else if (copyNodes.count > 1)
+                    [groupNodes addObject:[SPKActionMenuNode branchWithTitle:SPKActionButtonDisplayTitleForContext(identifier, context, currentEntry)
+                                                                       image:SPKActionButtonMenuIconForContext(identifier, context, 22.0)
+                                                                    children:copyNodes]];
+                continue;
+            }
+            [groupNodes addObject:leafForIdentifier(identifier)];
+        }
+        if (groupNodes.count == 0)
+            continue;
+
+        // A collapsible group is a submenu; the "menu" zone sits at the first
+        // level. One action alone never earns a level of its own.
+        if (group.collapsible && groupNodes.count > 1) {
+            [nodes addObject:[SPKActionMenuNode branchWithTitle:(group.title.length > 0 ? group.title : @"More")
+                                                          image:[SPKAssetUtils menuIconNamed:(group.iconName.length > 0 ? group.iconName : @"more")]
+                                                       children:groupNodes]];
+        } else {
+            [nodes addObjectsFromArray:groupNodes];
+        }
+    }
+
+    // Profile: the read-only lines under everything else.
+    if (context.source == SPKActionButtonSourceProfile) {
+        id user = SPKResolveMediaForContext(context);
+        NSString *privacyText = SPKProfilePrivacyText(user);
+        if (privacyText.length > 0) {
+            [nodes addObject:[SPKActionMenuNode leafWithTitle:privacyText
+                                                        image:[SPKAssetUtils menuIconNamed:([privacyText containsString:@"Private"] ? @"lock" : @"unlock")]
+                                                      handler:nil]];
+        }
+        NSString *followers = SPKProfileInfoString(SPKProfileFollowerCount(user));
+        if (followers.length > 0) {
+            [nodes addObject:[SPKActionMenuNode leafWithTitle:[NSString stringWithFormat:@"Followers: %@", followers]
+                                                        image:[SPKAssetUtils menuIconNamed:@"users"]
+                                                      handler:nil]];
+        }
+        NSString *following = SPKProfileInfoString(SPKProfileFollowingCount(user));
+        if (following.length > 0) {
+            [nodes addObject:[SPKActionMenuNode leafWithTitle:[NSString stringWithFormat:@"Following: %@", following]
+                                                        image:[SPKAssetUtils menuIconNamed:@"users"]
+                                                      handler:nil]];
+        }
+    }
+
+    return nodes;
+}
+
+
+static NSString *const kSPKActionButtonSparkleMenuPref = @"action_button_sparkle_menu";
+static const void *kSPKActionButtonSparkleMenuAssocKey = &kSPKActionButtonSparkleMenuAssocKey;
+
+static BOOL SPKActionButtonUsesSparkleMenu(void) {
+    return [SPKUtils getBoolPref:kSPKActionButtonSparkleMenuPref];
+}
+
+// Opens Sparkle's own menu under the button. Everything is resolved here, at
+// open time, so a carousel that finished loading is reflected — the job the
+// native menu needed UIDeferredMenuElement for.
+static void SPKPresentSparkleActionMenu(UIButton *button) {
+    SPKActionButtonContext *context = SPKActionButtonContextFromButton(button);
+    if (!context)
+        return;
+    SPKActionButtonConfiguration *configuration =
+        [SPKActionButtonConfiguration configurationForSource:context.source
+                                                  topicTitle:context.settingsTitle ?: SPKActionButtonTopicTitleForSource(context.source)
+                                            supportedActions:context.supportedActions ?: SPKActionButtonSupportedActionsForSource(context.source)
+                                             defaultSections:SPKActionButtonDefaultSectionsForSource(context.source)];
+    __weak UIButton *weakButton = button;
+    NSArray<SPKActionMenuNode *> *nodes = SPKBuildActionMenuNodes(context, configuration, weakButton);
+    if (nodes.count == 0)
+        return;
+    [SPKActionMenu presentNodes:nodes fromView:button onDismiss:nil];
+}
+
+@interface SPKActionButtonSparkleMenuTrigger : NSObject
+@end
+
+@implementation SPKActionButtonSparkleMenuTrigger
+
+- (void)openFromButton:(UIButton *)button {
+    SPKPresentSparkleActionMenu(button);
+}
+
+- (void)openFromLongPress:(UILongPressGestureRecognizer *)recognizer {
+    if (recognizer.state != UIGestureRecognizerStateBegan)
+        return;
+    if ([recognizer.view isKindOfClass:[UIButton class]])
+        SPKPresentSparkleActionMenu((UIButton *)recognizer.view);
+}
+
+@end
+
+// Replaces the native attachment. `opensOnTap` mirrors shouldOpenMenuOnTap: the
+// menu is the tap when the default action is Open Menu, and the long press
+// otherwise — the same two gestures the native menu offered.
+static void SPKInstallSparkleMenuOnButton(UIButton *button, BOOL opensOnTap) {
+    button.menu = nil;
+    button.showsMenuAsPrimaryAction = NO;
+
+    SPKActionButtonSparkleMenuTrigger *trigger = objc_getAssociatedObject(button, kSPKActionButtonSparkleMenuAssocKey);
+    if (!trigger) {
+        trigger = [SPKActionButtonSparkleMenuTrigger new];
+        objc_setAssociatedObject(button, kSPKActionButtonSparkleMenuAssocKey, trigger, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        UILongPressGestureRecognizer *longPress =
+            [[UILongPressGestureRecognizer alloc] initWithTarget:trigger action:@selector(openFromLongPress:)];
+        longPress.minimumPressDuration = 0.35;
+        [button addGestureRecognizer:longPress];
+    }
+
+    // Re-armed on every configure pass: the default action can change between
+    // two posts, and with it which gesture opens the menu.
+    [button removeTarget:trigger action:@selector(openFromButton:) forControlEvents:UIControlEventTouchUpInside];
+    if (opensOnTap)
+        [button addTarget:trigger action:@selector(openFromButton:) forControlEvents:UIControlEventTouchUpInside];
+}
+
 static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonContext *context,
                                                             SPKActionButtonConfiguration *configuration,
                                                             __weak UIButton *weakButton) {
@@ -3633,7 +3846,7 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
                 // Same as the bulk icon above: the tint redraws, so the 22 pt
                 // sizing has to be re-applied or this row stands taller than
                 // the plain action rows next to it.
-                sectionImage = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal] pointSize:kSPKActionMenuGlyphPointSize];
+                sectionImage = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
             }
             UIMenu *submenu = [UIMenu menuWithTitle:title ?: @""
                                               image:sectionImage
@@ -3739,6 +3952,13 @@ void SPKConfigureActionButton(UIButton *button, SPKActionButtonContext *context)
     NSArray<SPKResolvedMediaEntry *> *bulkEntries = SPKDownloadableEntries(SPKEntriesFromMedia(bulkMedia));
     NSString *menuSignature = SPKActionButtonMenuSignature(context, configuration, visibleActions, defaultIdentifier, bulkEntries.count);
     NSString *existingSignature = objc_getAssociatedObject(button, kSPKActionButtonMenuSignatureAssocKey);
+    if (SPKActionButtonUsesSparkleMenu()) {
+        // Nothing to cache: our menu is built when it opens, so the signature
+        // reuse path that exists for UIMenu has nothing to do here.
+        SPKInstallSparkleMenuOnButton(button, shouldOpenMenuOnTap);
+        objc_setAssociatedObject(button, kSPKActionButtonContextAssocKey, context, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        return;
+    }
     if ([existingSignature isEqualToString:menuSignature] && button.menu != nil) {
         button.showsMenuAsPrimaryAction = shouldOpenMenuOnTap;
         objc_setAssociatedObject(button, kSPKActionButtonContextAssocKey, context, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -3812,8 +4032,12 @@ void SPKConfigureActionButton(UIButton *button, SPKActionButtonContext *context)
     } else {
         fullMenu = [UIMenu menuWithTitle:menuTitle children:SPKBuildActionMenuElements(context, configuration, weakButton)];
     }
-    button.menu = fullMenu;
-    button.showsMenuAsPrimaryAction = shouldOpenMenuOnTap;
+    if (SPKActionButtonUsesSparkleMenu()) {
+        SPKInstallSparkleMenuOnButton(button, shouldOpenMenuOnTap);
+    } else {
+        button.menu = fullMenu;
+        button.showsMenuAsPrimaryAction = shouldOpenMenuOnTap;
+    }
     objc_setAssociatedObject(button, kSPKActionButtonContextAssocKey, context, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(button, kSPKActionButtonMenuSignatureAssocKey, menuSignature, OBJC_ASSOCIATION_COPY_NONATOMIC);
     if (legacyDiagnostics) {
