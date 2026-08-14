@@ -1217,14 +1217,19 @@ static SPKMediaPreviewPlaybackBlock SPKResumePlaybackBlockForContext(SPKActionBu
     } copy];
 }
 
-// Load at native size (0 = no downscale) and reinterpret to 22pt via
-// menuSizedIcon:. Requesting a sub-native size here would send the icon through
+// The glyph the action button's menu asks for. Smaller than the 22 pt of the
+// settings rows: in a native UIMenu the image column is the only thing we set,
+// and its width is what holds every title away from the edge.
+static CGFloat const kSPKActionMenuGlyphPointSize = 18.0;
+
+// Load at native size (0 = no downscale) and reinterpret via
+// menuSizedIcon:pointSize:. Requesting a sub-native size here would send the icon through
 // SPKAssetScaleImage's UIGraphicsImageRenderer pass, which iOS 16's UIMenu
 // renders blank for vector-backed (.svg) glyphs. `size` is kept for API compat.
 UIImage *SPKActionButtonMenuIconForIdentifier(NSString *identifier, CGFloat size) {
     (void)size;
     UIImage *icon = SPKIconForActionIdentifier(identifier, SPKActionButtonSourceFeed, 0, nil);
-    return [SPKAssetUtils menuSizedIcon:icon];
+    return [SPKAssetUtils menuSizedIcon:icon pointSize:kSPKActionMenuGlyphPointSize];
 }
 
 static UIImage *SPKActionButtonMenuIconForContext(NSString *identifier, SPKActionButtonContext *context, CGFloat size) {
@@ -1233,7 +1238,7 @@ static UIImage *SPKActionButtonMenuIconForContext(NSString *identifier, SPKActio
                                            ? SPKActionButtonSourceFeed
                                            : context.source;
     UIImage *icon = SPKIconForActionIdentifier(identifier, menuSource, 0, context);
-    return [SPKAssetUtils menuSizedIcon:icon];
+    return [SPKAssetUtils menuSizedIcon:icon pointSize:kSPKActionMenuGlyphPointSize];
 }
 
 static NSInteger SPKClampedIndex(NSInteger index, NSInteger count) {
@@ -3521,7 +3526,7 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
     // imageWithTintColor: redraws, and a redraw undoes the scale relabelling that
     // menuSizedIcon: uses to reach 22pt — the glyph comes back at its native
     // 24pt and UIKit grows the row. Size it again after the tint.
-    UIImage *bulkIcon = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
+    UIImage *bulkIcon = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal] pointSize:kSPKActionMenuGlyphPointSize];
     UIMenuElement *section = collapsible
                                  ? SPKSubmenuOrSingleElement(title, bulkIcon, children)
                                  : [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:children];
@@ -3628,7 +3633,7 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
                 // Same as the bulk icon above: the tint redraws, so the 22 pt
                 // sizing has to be re-applied or this row stands taller than
                 // the plain action rows next to it.
-                sectionImage = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
+                sectionImage = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal] pointSize:kSPKActionMenuGlyphPointSize];
             }
             UIMenu *submenu = [UIMenu menuWithTitle:title ?: @""
                                               image:sectionImage
