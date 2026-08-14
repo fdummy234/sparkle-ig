@@ -66,7 +66,9 @@ static char kSPKSectionEditSwitchAssocKey;
         _configuration = configuration;
         _sectionIdentifier = [sectionIdentifier copy];
         _onChange = [onChange copy];
-        self.title = section.title ?: @"Group";
+        // currentSection is available now that the identifier is set; the title
+        // is refreshed in viewWillAppear in case it is renamed here.
+        self.title = [self currentSection].title ?: @"Group";
     }
     return self;
 }
@@ -312,6 +314,7 @@ static char kSPKSectionEditSwitchAssocKey;
 - (void)titleFieldChanged:(UITextField *)sender {
     SPKActionMenuSection *section = [self currentSection];
     section.title = sender.text.length > 0 ? sender.text : @"Section";
+    self.title = section.title;
     [self.configuration save];
     if (self.onChange)
         self.onChange();
