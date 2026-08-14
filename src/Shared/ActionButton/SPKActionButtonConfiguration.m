@@ -219,7 +219,8 @@ static NSArray<NSString *> *SPKDerivedBulkActionsForSource(SPKActionButtonSource
     for (SPKActionMenuSection *section in [configuration visibleSections]) {
         for (NSString *identifier in section.actions) {
             NSString *bulk = SPKBulkAllIdentifierForBaseAction(identifier);
-            if (bulk && [supportedBulk containsObject:bulk]) {
+            if (bulk && [supportedBulk containsObject:bulk] &&
+                ![configuration.excludedBulkActions containsObject:bulk]) {
                 [result addObject:bulk];
             }
         }
@@ -327,6 +328,7 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     configuration.sections = [NSMutableArray array];
     configuration.disabledActions = [NSMutableArray array];
     configuration.unassignedActions = [NSMutableArray array];
+    configuration.excludedBulkActions = [NSMutableArray array];
 
     id storedValue = SPKPreferenceObjectForKey([configuration configDefaultsKey]);
     NSDictionary *stored = [storedValue isKindOfClass:[NSDictionary class]] ? storedValue : nil;
@@ -339,6 +341,10 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         }
         [configuration.disabledActions addObjectsFromArray:SPKFilteredActionArray(stored[@"disabled_actions"], configuration.supportedActions)];
         [configuration.unassignedActions addObjectsFromArray:SPKFilteredActionArray(stored[@"unassigned_actions"], configuration.supportedActions)];
+        for (id value in ([stored[@"excluded_bulk_actions"] isKindOfClass:[NSArray class]] ? stored[@"excluded_bulk_actions"] : @[])) {
+            if ([value isKindOfClass:[NSString class]] && ![configuration.excludedBulkActions containsObject:value])
+                [configuration.excludedBulkActions addObject:value];
+        }
     }
 
     if (configuration.sections.count == 0) {
@@ -444,6 +450,7 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         @"sections" : sectionDictionaries,
         @"disabled_actions" : [self.disabledActions copy] ?: @[],
         @"unassigned_actions" : [self.unassignedActions copy] ?: @[],
+        @"excluded_bulk_actions" : [self.excludedBulkActions copy] ?: @[],
         kSPKActionConfigModelVersionKey : @(kSPKActionConfigModelVersion)
     };
 }
@@ -548,7 +555,44 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
             continue;
         [catalog addObject:identifier];
     }
+    [catalog addObjectsFromArray:[self excludedBulkActionsInReach]];
     return catalog;
+}
+
+// A bulk row the user removed, whose single-item counterpart is still in the
+// menu — so putting it back means something. This is what the "+" offers.
+- (NSArray<NSString *> *)excludedBulkActionsInReach {
+    NSMutableOrderedSet<NSString *> *reachable = [NSMutableOrderedSet orderedSet];
+    NSMutableArray<NSString *> *supportedBulk = [NSMutableArray array];
+    [supportedBulk addObjectsFromArray:SPKActionButtonBulkDownloadSupportedActionsForSource(self.source)];
+    [supportedBulk addObjectsFromArray:SPKActionButtonBulkCopySupportedActionsForSource(self.source)];
+
+    for (SPKActionMenuSection *section in [self visibleSections]) {
+        for (NSString *identifier in section.actions) {
+            NSString *bulk = SPKBulkAllIdentifierForBaseAction(identifier);
+            if (bulk && [supportedBulk containsObject:bulk] && [self.excludedBulkActions containsObject:bulk])
+                [reachable addObject:bulk];
+        }
+    }
+    return reachable.array;
+}
+
+- (BOOL)isBulkActionIdentifier:(NSString *)identifier {
+    if (identifier.length == 0)
+        return NO;
+    return [SPKActionButtonBulkDownloadSupportedActionsForSource(self.source) containsObject:identifier] ||
+           [SPKActionButtonBulkCopySupportedActionsForSource(self.source) containsObject:identifier];
+}
+
+- (void)setBulkActionIdentifier:(NSString *)identifier excluded:(BOOL)excluded {
+    if (![self isBulkActionIdentifier:identifier])
+        return;
+    if (excluded) {
+        if (![self.excludedBulkActions containsObject:identifier])
+            [self.excludedBulkActions addObject:identifier];
+    } else {
+        [self.excludedBulkActions removeObject:identifier];
+    }
 }
 
 - (SPKActionMenuSection *)addSubmenu {

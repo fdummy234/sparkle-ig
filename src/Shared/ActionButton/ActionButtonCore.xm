@@ -3538,7 +3538,10 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
     // collapsible sections. Title carries the carousel item count.
     NSString *baseTitle = sectionTitle.length > 0 ? sectionTitle : @"Bulk";
     NSString *title = [NSString stringWithFormat:@"%@ • %lu", baseTitle, (unsigned long)bulkEntries.count];
-    UIImage *bulkIcon = [[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+    // imageWithTintColor: redraws, and a redraw undoes the scale relabelling that
+    // menuSizedIcon: uses to reach 22pt — the glyph comes back at its native
+    // 24pt and UIKit grows the row. Size it again after the tint.
+    UIImage *bulkIcon = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:(sectionIconName.length > 0 ? sectionIconName : @"carousel")] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
     UIMenuElement *section = collapsible
                                  ? SPKSubmenuOrSingleElement(title, bulkIcon, children)
                                  : [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:children];
@@ -3655,7 +3658,10 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
         if (group.collapsible && groupElements.count > 1) {
             UIImage *sectionImage = nil;
             if (group.iconName.length > 0) {
-                sectionImage = [[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal];
+                // Same as the bulk icon above: the tint redraws, so the 22 pt
+                // sizing has to be re-applied or this row stands taller than
+                // the plain action rows next to it.
+                sectionImage = [SPKAssetUtils menuSizedIcon:[[[SPKAssetUtils menuIconNamed:group.iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] imageWithTintColor:[UIColor labelColor] renderingMode:UIImageRenderingModeAlwaysOriginal]];
             }
             UIMenu *submenu = [UIMenu menuWithTitle:title ?: @""
                                               image:sectionImage

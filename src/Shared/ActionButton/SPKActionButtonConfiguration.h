@@ -14,6 +14,9 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableArray<SPKActionMenuSection *> *sections;
 @property (nonatomic, strong) NSMutableArray<NSString *> *disabledActions;
 @property (nonatomic, strong) NSMutableArray<NSString *> *unassignedActions;
+// Bulk rows the user took out. Bulk itself stays derived from the single-item
+// actions; this is the one thing about it that is stored.
+@property (nonatomic, strong) NSMutableArray<NSString *> *excludedBulkActions;
 
 + (instancetype)configurationForSource:(SPKActionButtonSource)source
                             topicTitle:(NSString *)topicTitle
@@ -25,6 +28,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<SPKActionMenuSection *> *)submenuSections;
 - (nullable SPKActionMenuSection *)bulkSection;
 - (NSArray<NSString *> *)catalogActions;
+- (NSArray<NSString *> *)excludedBulkActionsInReach;
+- (BOOL)isBulkActionIdentifier:(NSString *)identifier;
+- (void)setBulkActionIdentifier:(NSString *)identifier excluded:(BOOL)excluded;
 - (SPKActionMenuSection *)addSubmenu;
 - (void)moveSubmenuFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex;
 - (NSDictionary *)dictionaryRepresentation;
