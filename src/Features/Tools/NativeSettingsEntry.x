@@ -16,6 +16,9 @@
 // whether this is the settings screen.
 
 static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
+static const void *kSPKSettingsEntryRetryAssocKey = &kSPKSettingsEntryRetryAssocKey;
+// Bounded so a bar that genuinely never gets a title cannot spin on layout.
+static NSInteger const kSPKSettingsEntryMaxTitleRetries = 12;
 static CGFloat const kSPKSettingsEntryButtonSize = 40.0;
 static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
 @interface SPKNativeSettingsEntryTarget : NSObject
@@ -117,10 +120,26 @@ static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
     // On the first layout pass the bar has no title yet. Rather than place the
     // icon at a guessed height and let it jump when the title arrives, keep it
     // hidden until there is something to align with.
+    //
+    // Hiding alone was not enough: during a tab or back swipe the title leaves
+    // for a pass, and if that pass is the LAST one the bar performs, the icon
+    // stayed hidden until Instagram was restarted. So ask for another pass
+    // rather than giving up — bounded, and only while this really is the
+    // settings screen (checked at the top of this method).
     if (!titleLabel) {
         button.hidden = YES;
+        NSNumber *attempts = objc_getAssociatedObject(self, kSPKSettingsEntryRetryAssocKey);
+        if (attempts.integerValue < kSPKSettingsEntryMaxTitleRetries) {
+            objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(attempts.integerValue + 1), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            __weak UINavigationBar *weakBar = self;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakBar setNeedsLayout];
+            });
+        }
         return;
     }
+    // Placed successfully: the next disappearance gets a fresh set of retries.
+    objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(0), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
 
     // Mirror the leading inset of whatever sits on the other side of the title.
