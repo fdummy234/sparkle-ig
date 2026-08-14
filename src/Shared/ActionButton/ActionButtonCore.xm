@@ -3456,15 +3456,15 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
     NSArray<NSString *> *configuredBulkCopyIdentifiers = SPKActionButtonConfiguredBulkCopyActionsForSource(context.source);
 
     NSMutableArray<UIMenuElement *> *children = [NSMutableArray array];
-    // Each bulk entry sits in its own inline group so they read as separate rows
-    // divided by separator lines. Download All / Copy All carry the download / copy
-    // icons (not the generic "more" icon).
+    // Flat, like the menu that holds it: an inline group per entry is what gave
+    // each row its own divider and padding. Download All / Copy All carry the
+    // download / copy icons (not the generic "more" icon).
     UIMenuElement *downloadAll = SPKBulkActionMenuElementForContext(context, bulkEntries, bulkUsername, bulkMedia, configuredBulkDownloadIdentifiers, @"Download All", kSPKActionDownloadAllLibrary);
     if (downloadAll)
-        [children addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ downloadAll ]]];
+        [children addObject:downloadAll];
     UIMenuElement *copyAll = SPKBulkActionMenuElementForContext(context, bulkEntries, bulkUsername, bulkMedia, configuredBulkCopyIdentifiers, @"Copy All", kSPKActionDownloadAllClipboard);
     if (copyAll)
-        [children addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ copyAll ]]];
+        [children addObject:copyAll];
 
     // "Select Media" picker — destinations are the configured bulk actions, in a
     // fixed order: Save to Photos, Share, Copy, Save to Gallery, Copy URLs.
@@ -3529,7 +3529,7 @@ static NSArray<UIMenuElement *> *SPKBuildBulkMenuChildren(SPKActionButtonConfigu
                                                                                                                     SPKPerformBatchDownloadWithQualityPrompt(selectedEntries, context.source, tapBulkUsername, tapBulkMedia, dest, destinationIdentifier, presenter, anchorView, surface);
                                                                                                                 }];
                                                         }];
-        [children addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ selectMediaAction ]]];
+        [children addObject:selectMediaAction];
     }
 
     if (children.count == 0)
@@ -3574,7 +3574,6 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
         if (visibleSection.identifier)
             visibleSectionsByID[visibleSection.identifier] = visibleSection;
     }
-    BOOL firstGroup = YES;
     for (SPKActionMenuSection *orderedSection in configuration.sections) {
         if ([orderedSection.identifier isEqualToString:@"bulk"]) {
             NSString *bulkTitle = orderedSection.title;
@@ -3583,11 +3582,7 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
             UIDeferredMenuElement *bulkDeferred = [UIDeferredMenuElement elementWithUncachedProvider:^(void (^completion)(NSArray<UIMenuElement *> *)) {
                 completion(SPKBuildBulkMenuChildren(configuration, context, bulkTitle, bulkIconName, bulkCollapsible));
             }];
-            if (!firstGroup) {
-                [menuElements addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[]]];
-            }
-            [menuElements addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ bulkDeferred ]]];
-            firstGroup = NO;
+            [menuElements addObject:bulkDeferred];
             continue;
         }
         SPKActionMenuSection *group = visibleSectionsByID[orderedSection.identifier];
@@ -3638,23 +3633,15 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
 
         // On profile, divide the "Copy Info" submenu from the rest of the Copy
         // section with a separator line (two inline groups).
+        // Copy Info used to be split off with its own inline group to draw a
+        // separator. With the menu flat there are no separators to draw, so it
+        // simply closes the Copy group.
         if (profileCopyInfoElement) {
-            if (groupElements.count > 0) {
-                UIMenu *restGroup = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:[groupElements copy]];
-                UIMenu *infoGroup = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ profileCopyInfoElement ]];
-                [groupElements removeAllObjects];
-                [groupElements addObject:restGroup];
-                [groupElements addObject:infoGroup];
-            } else {
-                [groupElements addObject:profileCopyInfoElement];
-            }
+            [groupElements addObject:profileCopyInfoElement];
         }
 
         if (groupElements.count == 0)
             continue;
-        if (!firstGroup) {
-            [menuElements addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[]]];
-        }
         if (group.collapsible && groupElements.count > 1) {
             UIImage *sectionImage = nil;
             if (group.iconName.length > 0) {
@@ -3668,15 +3655,14 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
                                          identifier:nil
                                             options:0
                                            children:groupElements];
-            [menuElements addObject:[UIMenu menuWithTitle:@""
-                                                    image:nil
-                                               identifier:nil
-                                                  options:UIMenuOptionsDisplayInline
-                                                 children:@[ submenu ]]];
+            // One flat block: every group used to be its own inline UIMenu, and
+            // UIKit gives each block a divider and vertical padding of its own.
+            // That, not the glyph size, is what made a submenu row stand taller
+            // than the plain rows above it and the whole menu run long.
+            [menuElements addObject:submenu];
         } else {
-            [menuElements addObject:[UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:groupElements]];
+            [menuElements addObjectsFromArray:groupElements];
         }
-        firstGroup = NO;
     }
 
     if (context.source == SPKActionButtonSourceProfile) {
@@ -3684,11 +3670,7 @@ static NSArray<UIMenuElement *> *SPKBuildActionMenuElements(SPKActionButtonConte
             id freshMedia = SPKResolveMediaForContext(context);
             completion(SPKProfileInfoMenuElements(freshMedia));
         }];
-        [menuElements addObject:[UIMenu menuWithTitle:@""
-                                                image:nil
-                                           identifier:nil
-                                              options:UIMenuOptionsDisplayInline
-                                             children:@[ deferred ]]];
+        [menuElements addObject:deferred];
     }
 
     if (menuElements.count == 0) {
