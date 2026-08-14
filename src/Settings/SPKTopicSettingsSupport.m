@@ -149,8 +149,16 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray<SPKSetting *> *finalRows = [NSMutableArray array];
     for (SPKSetting *entry in rows) {
         if ([entry.title isEqualToString:@"On Tap"] ||
-            [entry.title isEqualToString:@"Configure Menu"])
+            [entry.title isEqualToString:@"Configure Menu"]) {
+            // The tweak explains a row through the section's help sheet, never
+            // through footer text (SPKSettingsViewController.m:1219). Per row it
+            // also reads better than one line trying to cover both.
+            if ([entry.title isEqualToString:@"On Tap"])
+                entry.helpText = @"What a single tap on the action button does. Open Menu opens the whole menu instead of running an action.";
+            else
+                entry.helpText = @"Everything the action button opens. Swipe an action left to take it out of the menu, right to put it back, and hold to drag it \u2014 between the first level, a submenu, or a new one.";
             [menuRows addObject:entry];
+        }
         else if ([entry.title isEqualToString:@"Reset to Default"])
             [finalRows addObject:entry];   // AB4: destructive closes the page
         else
@@ -160,8 +168,9 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray *navSections = [NSMutableArray array];
     [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
     if (menuRows.count > 0)
-        // The footer belongs to the section, so it speaks for both rows. The two
-        // swipes are the part nobody discovers on their own, so they are named.
+        // Not shown on screen — this file's footers only feed the search index
+        // (SPKSettingsViewController.m:1488). It earns its place by making the
+        // section findable on "swipe", "reorder" and "submenu".
         [navSections addObject:SPKTopicSection(@"Its Menu", menuRows,
             @"On Tap is what a single tap does. Configure Menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
     if (finalRows.count > 0)
