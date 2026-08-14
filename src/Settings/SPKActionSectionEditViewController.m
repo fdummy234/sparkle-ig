@@ -1,5 +1,4 @@
 #import "SPKActionSectionEditViewController.h"
-#import "../Shared/UI/SPKSwitch.h"
 #import "SPKActionSectionIconPickerViewController.h"
 #import "SPKInstagramIconCatalog.h"
 #import "SPKTopicSettingsSupport.h"
@@ -9,7 +8,6 @@
 #import "../Utils.h"
 
 static char kSPKSectionEditFieldAssocKey;
-static char kSPKSectionEditSwitchAssocKey;
 
 @interface SPKActionSectionEditViewController () <UITableViewDataSource, UITableViewDelegate, UITableViewDragDelegate, UITableViewDropDelegate, UITextFieldDelegate>
 
@@ -68,7 +66,7 @@ static char kSPKSectionEditSwitchAssocKey;
         _onChange = [onChange copy];
         // currentSection is available now that the identifier is set; the title
         // is refreshed in viewWillAppear in case it is renamed here.
-        self.title = [self currentSection].title ?: @"Group";
+        self.title = [self currentSection].title ?: @"Submenu";
     }
     return self;
 }
@@ -100,15 +98,15 @@ static char kSPKSectionEditSwitchAssocKey;
     return [[self currentSection].identifier isEqualToString:@"bulk"];
 }
 
-// The group's own settings only. Its contents are managed on the menu mirror,
-// so the two action lists that used to live here are gone — they were the very
-// lists the redesign removed.
+// The submenu's own settings only. Its actions are arranged on Configure Menu,
+// and what makes it a submenu is the zone it lives in — so neither the action
+// lists nor the "Show as Submenu" switch belong here any more.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
     return [self isBulkSection] ? 1 : 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    return section == 0 ? 3 : 1;   // name · icon · submenu, then Delete Group
+    return section == 0 ? 2 : 1;   // name · icon, then Delete Submenu
 }
 
 // The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
@@ -132,6 +130,8 @@ static char kSPKSectionEditSwitchAssocKey;
         return @"Bulk shows Download All / Copy All / Select Media on carousels. Its actions come from your single-item Download and Copy actions.";
     if (section == 1)
         return @"Its actions move to \"Not in the Menu\". Nothing is lost.";
+    if (section == 0)
+        return @"The name and icon are what the row in Instagram's menu will show.";
     return nil;
 }
 
@@ -152,10 +152,10 @@ static char kSPKSectionEditSwitchAssocKey;
 
     if (indexPath.section == 0) {
         if (indexPath.row == 0) {
-            config.text = @"Title";
+            config.text = @"Name";
             UITextField *field = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 180, 30)];
             field.textAlignment = NSTextAlignmentRight;
-            field.placeholder = @"Section";
+            field.placeholder = @"Submenu";
             field.text = section.title;
             field.returnKeyType = UIReturnKeyDone;
             field.delegate = self;
@@ -164,7 +164,7 @@ static char kSPKSectionEditSwitchAssocKey;
             cell.accessoryView = field;
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         } else if (indexPath.row == 1) {
-            config.text = @"Choose Icon";
+            config.text = @"Icon";
             config.secondaryText = nil;
             config.image = nil;
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
@@ -175,17 +175,9 @@ static char kSPKSectionEditSwitchAssocKey;
             }
 
             cell.selectionStyle = UITableViewCellSelectionStyleDefault;
-        } else if (indexPath.row == 2) {
-            config.text = @"Show as Submenu";
-            SPKSwitch *toggle = [[SPKSwitch alloc] init];
-            toggle.on = section.collapsible;
-            objc_setAssociatedObject(toggle, &kSPKSectionEditSwitchAssocKey, self, OBJC_ASSOCIATION_ASSIGN);
-            [toggle addTarget:self action:@selector(collapsibleSwitchChanged:) forControlEvents:UIControlEventValueChanged];
-            cell.accessoryView = toggle;
-            cell.selectionStyle = UITableViewCellSelectionStyleNone;
         }
     } else {
-        config.text = @"Delete Group";
+        config.text = @"Delete Submenu";
         config.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
         config.image = SPKSettingsIcon(@"trash");
         config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
@@ -268,12 +260,12 @@ static char kSPKSectionEditSwitchAssocKey;
         return;
     }
     if (indexPath.section == 1)
-        [self confirmDeleteGroup];
+        [self confirmDeleteSubmenu];
 }
 
-// Deleting a group empties it rather than losing anything: its actions land in
-// "Not in the Menu", where they can be swiped back in.
-- (void)confirmDeleteGroup {
+// Deleting a submenu empties it rather than losing anything: its actions land
+// in "Not in the Menu", where a swipe puts them back.
+- (void)confirmDeleteSubmenu {
     SPKActionMenuSection *section = [self currentSection];
     NSString *message = section.actions.count > 0
         ? [NSString stringWithFormat:@"Its %lu action%@ will move to \"Not in the Menu\".",
@@ -313,16 +305,8 @@ static char kSPKSectionEditSwitchAssocKey;
 
 - (void)titleFieldChanged:(UITextField *)sender {
     SPKActionMenuSection *section = [self currentSection];
-    section.title = sender.text.length > 0 ? sender.text : @"Section";
+    section.title = sender.text.length > 0 ? sender.text : @"Submenu";
     self.title = section.title;
-    [self.configuration save];
-    if (self.onChange)
-        self.onChange();
-}
-
-- (void)collapsibleSwitchChanged:(UISwitch *)sender {
-    SPKActionMenuSection *section = [self currentSection];
-    section.collapsible = sender.isOn;
     [self.configuration save];
     if (self.onChange)
         self.onChange();
