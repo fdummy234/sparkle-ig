@@ -17,6 +17,15 @@ static NSArray<NSString *> *SPKFilteredUniqueActionArray(NSArray *values, NSArra
     return SPKFilteredActionArray(values, supported);
 }
 
+NSString *const kSPKActionMenuTopLevelSectionIdentifier = @"menu";
+NSString *const kSPKActionMenuBulkSectionIdentifier = @"bulk";
+
+// Bumped when the stored shape changes so an existing config is migrated once.
+// Version 2 is the Configure Menu model: a "menu" section at index 0 holding the
+// first level, submenus after it, bulk last.
+static NSString *const kSPKActionConfigModelVersionKey = @"model_version";
+static const NSInteger kSPKActionConfigModelVersion = 2;
+
 NSString *SPKActionButtonTopicKeyForSource(SPKActionButtonSource source) {
     switch (source) {
     case SPKActionButtonSourceFeed:
@@ -347,13 +356,13 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         SPKActionButtonBulkCopySupportedActionsForSource(source).count > 0) {
         BOOL hasBulkSection = NO;
         for (SPKActionMenuSection *section in configuration.sections) {
-            if ([section.identifier isEqualToString:@"bulk"]) {
+            if ([section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier]) {
                 hasBulkSection = YES;
                 break;
             }
         }
         if (!hasBulkSection) {
-            SPKActionMenuSection *bulkSection = [SPKActionMenuSection sectionWithIdentifier:@"bulk"
+            SPKActionMenuSection *bulkSection = [SPKActionMenuSection sectionWithIdentifier:kSPKActionMenuBulkSectionIdentifier
                                                                                       title:@"Bulk"
                                                                                    iconName:@"carousel"
                                                                                 collapsible:YES
@@ -363,8 +372,63 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
         }
     }
 
+    NSNumber *storedVersion = [stored[kSPKActionConfigModelVersionKey] isKindOfClass:[NSNumber class]] ? stored[kSPKActionConfigModelVersionKey] : nil;
+    if (storedVersion.integerValue < kSPKActionConfigModelVersion)
+        [configuration migrateToConfigureMenuModel];
+
     [configuration normalize];
     return configuration;
+}
+
+// Runs once per surface, on the first load of the Configure Menu model.
+// Nothing is dropped: every action either stays where it was, rises to the first
+// level, or lands in "Not in the Menu".
+- (void)migrateToConfigureMenuModel {
+    NSMutableArray<NSString *> *risingActions = [NSMutableArray array];
+    NSMutableArray<SPKActionMenuSection *> *submenus = [NSMutableArray array];
+    SPKActionMenuSection *bulk = nil;
+    SPKActionMenuSection *existingTop = nil;
+
+    for (SPKActionMenuSection *section in self.sections) {
+        if ([section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier])
+            bulk = section;
+        else if ([section.identifier isEqualToString:kSPKActionMenuTopLevelSectionIdentifier])
+            existingTop = section;
+        else if (section.collapsible)
+            [submenus addObject:section];
+        else
+            [risingActions addObjectsFromArray:section.actions];   // an unfolded group is the first level
+    }
+
+    SPKActionMenuSection *top = existingTop;
+    if (!top) {
+        top = [SPKActionMenuSection sectionWithIdentifier:kSPKActionMenuTopLevelSectionIdentifier
+                                                    title:@"Menu"
+                                                 iconName:@"action"
+                                              collapsible:NO
+                                                  actions:@[]];
+    }
+    top.collapsible = NO;
+    for (NSString *identifier in risingActions) {
+        if (![top.actions containsObject:identifier])
+            [top.actions addObject:identifier];
+    }
+
+    NSMutableArray<SPKActionMenuSection *> *ordered = [NSMutableArray arrayWithObject:top];
+    [ordered addObjectsFromArray:submenus];
+    if (bulk)
+        [ordered addObject:bulk];
+    self.sections = ordered;
+
+    // "Disabled" is no longer a state of its own: those actions are the rows of
+    // "Not in the Menu", so they leave their section for that list.
+    for (NSString *identifier in [self.disabledActions copy]) {
+        for (SPKActionMenuSection *section in self.sections)
+            [section.actions removeObject:identifier];
+        if (![self.unassignedActions containsObject:identifier])
+            [self.unassignedActions addObject:identifier];
+    }
+    [self.disabledActions removeAllObjects];
 }
 
 - (NSString *)configDefaultsKey {
@@ -379,7 +443,8 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     return @{
         @"sections" : sectionDictionaries,
         @"disabled_actions" : [self.disabledActions copy] ?: @[],
-        @"unassigned_actions" : [self.unassignedActions copy] ?: @[]
+        @"unassigned_actions" : [self.unassignedActions copy] ?: @[],
+        kSPKActionConfigModelVersionKey : @(kSPKActionConfigModelVersion)
     };
 }
 
@@ -431,13 +496,92 @@ NSArray<SPKActionMenuSection *> *SPKActionButtonDefaultSectionsForSource(SPKActi
     self.sections = normalizedSections;
     self.disabledActions = [SPKFilteredActionArray(self.disabledActions, supported) mutableCopy];
 
+    // "Not in the Menu" is an explicit list now, not the complement: an action
+    // that is in no section and not on this list is catalogue stock, reachable
+    // from the "+". Anything filed in a section leaves the list.
     NSMutableOrderedSet<NSString *> *unassigned = [NSMutableOrderedSet orderedSetWithArray:SPKFilteredActionArray(self.unassignedActions, supported)];
-    for (NSString *identifier in supported) {
-        if (![seen containsObject:identifier]) {
-            [unassigned addObject:identifier];
-        }
+    for (NSString *identifier in seen.array) {
+        [unassigned removeObject:identifier];
     }
     self.unassignedActions = unassigned.array.mutableCopy;
+}
+
+// ── The four zones ───────────────────────────────────────────────────────────
+
+- (SPKActionMenuSection *)topLevelSection {
+    SPKActionMenuSection *top = [self sectionWithIdentifier:kSPKActionMenuTopLevelSectionIdentifier];
+    if (!top) {
+        top = [SPKActionMenuSection sectionWithIdentifier:kSPKActionMenuTopLevelSectionIdentifier
+                                                    title:@"Menu"
+                                                 iconName:@"action"
+                                              collapsible:NO
+                                                  actions:@[]];
+        [self.sections insertObject:top atIndex:0];
+    }
+    return top;
+}
+
+- (NSArray<SPKActionMenuSection *> *)submenuSections {
+    NSMutableArray<SPKActionMenuSection *> *submenus = [NSMutableArray array];
+    for (SPKActionMenuSection *section in self.sections) {
+        if ([section.identifier isEqualToString:kSPKActionMenuTopLevelSectionIdentifier])
+            continue;
+        if ([section.identifier isEqualToString:kSPKActionMenuBulkSectionIdentifier])
+            continue;
+        [submenus addObject:section];
+    }
+    return submenus;
+}
+
+- (nullable SPKActionMenuSection *)bulkSection {
+    return [self sectionWithIdentifier:kSPKActionMenuBulkSectionIdentifier];
+}
+
+// Supported by the surface, in no section, and not on the "Not in the Menu"
+// list: this is what the "+" offers.
+- (NSArray<NSString *> *)catalogActions {
+    NSMutableArray<NSString *> *catalog = [NSMutableArray array];
+    for (NSString *identifier in self.supportedActions) {
+        if ([self sectionIdentifierForAction:identifier])
+            continue;
+        if ([self.unassignedActions containsObject:identifier])
+            continue;
+        [catalog addObject:identifier];
+    }
+    return catalog;
+}
+
+- (SPKActionMenuSection *)addSubmenu {
+    SPKActionMenuSection *submenu = [SPKActionMenuSection sectionWithIdentifier:NSUUID.UUID.UUIDString
+                                                                          title:@"New Submenu"
+                                                                       iconName:@"more"
+                                                                    collapsible:YES
+                                                                        actions:@[]];
+    SPKActionMenuSection *bulk = [self bulkSection];
+    NSInteger insertionIndex = bulk ? (NSInteger)[self.sections indexOfObject:bulk] : (NSInteger)self.sections.count;
+    [self.sections insertObject:submenu atIndex:(NSUInteger)MAX(0, insertionIndex)];
+    return submenu;
+}
+
+// Submenu order is expressed in the zone, not in the whole sections array: the
+// first level opens the menu and bulk closes it, whatever happens in between.
+- (void)moveSubmenuFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex {
+    NSArray<SPKActionMenuSection *> *submenus = [self submenuSections];
+    if (sourceIndex < 0 || destinationIndex < 0 ||
+        sourceIndex >= (NSInteger)submenus.count || destinationIndex >= (NSInteger)submenus.count)
+        return;
+
+    NSMutableArray<SPKActionMenuSection *> *reordered = [submenus mutableCopy];
+    SPKActionMenuSection *moved = reordered[(NSUInteger)sourceIndex];
+    [reordered removeObjectAtIndex:(NSUInteger)sourceIndex];
+    [reordered insertObject:moved atIndex:(NSUInteger)destinationIndex];
+
+    NSMutableArray<SPKActionMenuSection *> *ordered = [NSMutableArray arrayWithObject:[self topLevelSection]];
+    [ordered addObjectsFromArray:reordered];
+    SPKActionMenuSection *bulk = [self bulkSection];
+    if (bulk)
+        [ordered addObject:bulk];
+    self.sections = ordered;
 }
 
 - (nullable SPKActionMenuSection *)sectionWithIdentifier:(NSString *)identifier {

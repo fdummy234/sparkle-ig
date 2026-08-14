@@ -21,6 +21,12 @@ NS_ASSUME_NONNULL_BEGIN
                        defaultSections:(NSArray<SPKActionMenuSection *> *)defaultSections;
 
 - (NSString *)configDefaultsKey;
+- (SPKActionMenuSection *)topLevelSection;
+- (NSArray<SPKActionMenuSection *> *)submenuSections;
+- (nullable SPKActionMenuSection *)bulkSection;
+- (NSArray<NSString *> *)catalogActions;
+- (SPKActionMenuSection *)addSubmenu;
+- (void)moveSubmenuFromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex;
 - (NSDictionary *)dictionaryRepresentation;
 - (void)save;
 - (void)normalize;
@@ -33,6 +39,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)moveActionInSectionIdentifier:(NSString *)sectionIdentifier fromIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destinationIndex;
 
 @end
+
+// The four zones of Configure Menu. "menu" is the first level of the runtime
+// menu (collapsible NO), every other non-bulk section is a submenu, "bulk" is
+// derived from the single-item actions, and whatever is in neither a section
+// nor unassignedActions is catalogue stock reachable from the "+".
+FOUNDATION_EXPORT NSString *const kSPKActionMenuTopLevelSectionIdentifier;
+FOUNDATION_EXPORT NSString *const kSPKActionMenuBulkSectionIdentifier;
 
 FOUNDATION_EXPORT NSString *SPKActionButtonTopicKeyForSource(SPKActionButtonSource source);
 FOUNDATION_EXPORT NSString *SPKActionButtonTopicTitleForSource(SPKActionButtonSource source);
