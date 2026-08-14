@@ -148,8 +148,8 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray<SPKSetting *> *menuRows = [NSMutableArray array];
     NSMutableArray<SPKSetting *> *finalRows = [NSMutableArray array];
     for (SPKSetting *entry in rows) {
-        if ([entry.title isEqualToString:@"Default Tap Action"] ||
-            [entry.title isEqualToString:@"Configure Actions"])
+        if ([entry.title isEqualToString:@"On Tap"] ||
+            [entry.title isEqualToString:@"Configure Menu"])
             [menuRows addObject:entry];
         else if ([entry.title isEqualToString:@"Reset to Default"])
             [finalRows addObject:entry];   // AB4: destructive closes the page
@@ -176,7 +176,7 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
 }
 
 SPKSetting *SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSource source) {
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Default Tap Action"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"On Tap"
                                                      subtitle:@""
                                                          icon:SPKSettingsIcon(@"action")
                                                viewController:[[SPKActionButtonDefaultActionPickerViewController alloc] initWithSource:source]];
@@ -219,7 +219,7 @@ SPKSetting *SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSource 
     SPKEditActionsListViewController *controller = [[SPKEditActionsListViewController alloc] initWithSource:source topicTitle:topicTitle];
     (void)supportedActions;
     (void)defaultSections;
-    return [SPKSetting navigationCellWithTitle:@"Configure Actions"
+    return [SPKSetting navigationCellWithTitle:@"Configure Menu"
                                       subtitle:@""
                                           icon:SPKSettingsIcon(@"slider")
                                 viewController:controller];

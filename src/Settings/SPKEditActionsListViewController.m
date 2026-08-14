@@ -39,7 +39,7 @@
                                                                    topicTitle:topicTitle
                                                              supportedActions:SPKActionButtonSupportedActionsForSource(source)
                                                               defaultSections:SPKActionButtonDefaultSectionsForSource(source)];
-        self.title = @"Configure Actions";
+        self.title = @"Configure Menu";
     }
     return self;
 }
@@ -174,6 +174,70 @@
 
 // The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
 // SPKColor_InstagramGroupedBackground returns white in this palette.
+// A group's header is its own control: it names the group, shows its shape, and
+// opens the group's settings on tap.
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    if (title.length == 0)
+        return nil;
+
+    UIView *header = [UIView new];
+    UILabel *label = [UILabel new];
+    label.text = title;
+    label.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightSemibold];
+    label.textColor = [SPKUtils SPKColor_InstagramSecondaryText];
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    [header addSubview:label];
+
+    UILabel *shape = [UILabel new];
+    shape.font = [UIFont systemFontOfSize:12.0];
+    shape.textColor = [SPKUtils SPKColor_InstagramSecondaryText];
+    shape.translatesAutoresizingMaskIntoConstraints = NO;
+    [header addSubview:shape];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [label.leadingAnchor constraintEqualToAnchor:header.leadingAnchor constant:15.0],
+        [label.bottomAnchor constraintEqualToAnchor:header.bottomAnchor constant:-5.0],
+        [shape.trailingAnchor constraintEqualToAnchor:header.trailingAnchor constant:-16.0],
+        [shape.centerYAnchor constraintEqualToAnchor:label.centerYAnchor]
+    ]];
+
+    if (section < (NSInteger)self.groups.count) {
+        SPKActionMenuSection *group = self.groups[section];
+        NSUInteger count = group.actions.count;
+        // A one-action group never collapses (SPKSubmenuOrSingleElement), so the
+        // header says so rather than promising a submenu that will not appear.
+        shape.text = count == 0 ? @"empty"
+                   : count == 1 ? @"1 action"
+                   : (group.collapsible ? @"Submenu" : @"Inline");
+        header.tag = section;
+        UITapGestureRecognizer *tap =
+            [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(groupHeaderTapped:)];
+        [header addGestureRecognizer:tap];
+    }
+    return header;
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
+    NSString *title = [self tableView:tableView titleForHeaderInSection:section];
+    return title.length > 0 ? 32.0 : 0.0;
+}
+
+- (void)groupHeaderTapped:(UITapGestureRecognizer *)recognizer {
+    NSInteger index = recognizer.view.tag;
+    if (index < 0 || index >= (NSInteger)self.groups.count)
+        return;
+    SPKActionMenuSection *group = self.groups[index];
+    __weak typeof(self) weakSelf = self;
+    SPKActionSectionEditViewController *editor =
+        [[SPKActionSectionEditViewController alloc] initWithConfiguration:self.configuration
+                                                       sectionIdentifier:group.identifier
+                                                                onChange:^{
+        [weakSelf.tableView reloadData];
+    }];
+    [self.navigationController pushViewController:editor animated:YES];
+}
+
 - (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
     return 6.0;
 }

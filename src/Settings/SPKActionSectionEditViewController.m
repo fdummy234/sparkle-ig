@@ -66,7 +66,7 @@ static char kSPKSectionEditSwitchAssocKey;
         _configuration = configuration;
         _sectionIdentifier = [sectionIdentifier copy];
         _onChange = [onChange copy];
-        self.title = @"Edit Section";
+        self.title = section.title ?: @"Group";
     }
     return self;
 }
@@ -91,7 +91,6 @@ static char kSPKSectionEditSwitchAssocKey;
     // Sparkle screen (SPKSettingsViewController.m:553).
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
-    self.tableView.tintColor = [SPKUtils SPKColor_InstagramBlue];
     [self.view addSubview:self.tableView];
 }
 
@@ -99,19 +98,15 @@ static char kSPKSectionEditSwitchAssocKey;
     return [[self currentSection].identifier isEqualToString:@"bulk"];
 }
 
+// The group's own settings only. Its contents are managed on the menu mirror,
+// so the two action lists that used to live here are gone — they were the very
+// lists the redesign removed.
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    // The Bulk section's contents are derived from the single-item actions, so it
-    // only exposes the Section header (title/icon/collapsible) — no assignable
-    // action lists.
-    return [self isBulkSection] ? 1 : 3;
+    return [self isBulkSection] ? 1 : 2;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0)
-        return 3;
-    if (section == 1)
-        return [self currentSection].actions.count;
-    return self.configuration.supportedActions.count;
+    return section == 0 ? 3 : 1;   // name · icon · submenu, then Delete Group
 }
 
 // The 6 pt band the rest of Sparkle puts between groups. #EFEFF1 in hard code:
@@ -127,21 +122,14 @@ static char kSPKSectionEditSwitchAssocKey;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section == 0)
-        return @"Shape";
-    if (section == 1)
-        return @"In This Group";
-    return @"Add to This Group";
+    return nil;
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    if ([self isBulkSection]) {
-        return section == 0 ? @"Bulk shows Download All / Copy All / Select Media on carousels. Its actions and order are derived from your single-item Download and Copy actions.\nReorder or rename this section to control where Bulk appears in the menu." : nil;
-    }
+    if ([self isBulkSection] && section == 0)
+        return @"Bulk shows Download All / Copy All / Select Media on carousels. Its actions come from your single-item Download and Copy actions.";
     if (section == 1)
-        return @"Drag to reorder actions in this section. Remove an action to send it to the unassigned bucket.";
-    if (section == 2)
-        return @"Tap an action to assign it here. If it is already in another section, it will move.";
+        return @"Its actions move to \"Not in the Menu\". Nothing is lost.";
     return nil;
 }
 
@@ -156,7 +144,6 @@ static char kSPKSectionEditSwitchAssocKey;
     UIListContentConfiguration *config = cell.defaultContentConfiguration;
     UIImage *deferredIconAccessoryImage = nil;
     cell.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
-    cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
     cell.selectedBackgroundView = [self selectionBackgroundView];
     config.textProperties.color = [SPKUtils SPKColor_InstagramPrimaryText];
     config.secondaryTextProperties.color = [SPKUtils SPKColor_InstagramSecondaryText];
@@ -195,35 +182,12 @@ static char kSPKSectionEditSwitchAssocKey;
             cell.accessoryView = toggle;
             cell.selectionStyle = UITableViewCellSelectionStyleNone;
         }
-    } else if (indexPath.section == 1) {
-        NSString *identifier = section.actions[indexPath.row];
-        config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
-        config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        cell.showsReorderControl = YES;
-        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     } else {
-        NSString *identifier = self.configuration.supportedActions[indexPath.row];
-        config.text = SPKActionDescriptorDisplayTitle(identifier, self.configuration.topicTitle);
-        config.image = SPKSettingsIcon(SPKActionDescriptorIconName(identifier));
-        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-
-        NSString *owner = [self.configuration sectionIdentifierForAction:identifier];
-        if ([owner isEqualToString:section.identifier]) {
-            UIImageView *checkmarkView = [[UIImageView alloc] initWithImage:[SPKAssetUtils instagramIconNamed:@"circle_check_filled"]];
-            checkmarkView.tintColor = [SPKUtils SPKColor_InstagramBlue];
-            cell.accessoryView = checkmarkView;
-            config.secondaryText = nil;
-        } else {
-            cell.accessoryView = nil;
-            cell.accessoryType = UITableViewCellAccessoryNone;
-            if (owner.length > 0) {
-                SPKActionMenuSection *ownerSection = [self.configuration sectionWithIdentifier:owner];
-                config.secondaryText = ownerSection.title;
-            } else {
-                config.secondaryText = @"Unassigned";
-            }
-        }
+        config.text = @"Delete Group";
+        config.textProperties.color = [SPKUtils SPKColor_InstagramDestructive];
+        config.image = SPKSettingsIcon(@"trash");
+        config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramDestructive];
+        cell.selectionStyle = UITableViewCellSelectionStyleDefault;
     }
 
     cell.contentConfiguration = config;
@@ -295,29 +259,49 @@ static char kSPKSectionEditSwitchAssocKey;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+
     if (indexPath.section == 0 && indexPath.row == 1) {
         [self showIconPicker];
-    } else if (indexPath.section == 1) {
-        NSString *identifier = [self currentSection].actions[indexPath.row];
-        [self.configuration setAction:identifier assignedToSectionIdentifier:nil];
-        [self.configuration save];
-        if (self.onChange)
-            self.onChange();
-        [self.tableView reloadData];
-    } else if (indexPath.section == 2) {
-        NSString *identifier = self.configuration.supportedActions[indexPath.row];
-        NSString *owner = [self.configuration sectionIdentifierForAction:identifier];
-        if ([owner isEqualToString:self.sectionIdentifier]) {
-            [self.configuration setAction:identifier assignedToSectionIdentifier:nil];
-        } else {
-            [self.configuration setAction:identifier assignedToSectionIdentifier:self.sectionIdentifier];
-        }
-        [self.configuration save];
-        if (self.onChange)
-            self.onChange();
-        [self.tableView reloadData];
+        return;
     }
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    if (indexPath.section == 1)
+        [self confirmDeleteGroup];
+}
+
+// Deleting a group empties it rather than losing anything: its actions land in
+// "Not in the Menu", where they can be swiped back in.
+- (void)confirmDeleteGroup {
+    SPKActionMenuSection *section = [self currentSection];
+    NSString *message = section.actions.count > 0
+        ? [NSString stringWithFormat:@"Its %lu action%@ will move to \"Not in the Menu\".",
+           (unsigned long)section.actions.count, section.actions.count == 1 ? @"" : @"s"]
+        : @"This group is empty.";
+
+    UIAlertController *alert =
+        [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete \"%@\"?", section.title]
+                                            message:message
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+
+    __weak typeof(self) weakSelf = self;
+    [alert addAction:[UIAlertAction actionWithTitle:@"Delete"
+                                              style:UIAlertActionStyleDestructive
+                                            handler:^(UIAlertAction *action) {
+        typeof(self) strongSelf = weakSelf;
+        if (!strongSelf)
+            return;
+        SPKActionMenuSection *doomed = [strongSelf currentSection];
+        for (NSString *identifier in [doomed.actions copy])
+            [strongSelf.configuration setAction:identifier assignedToSectionIdentifier:nil];
+        [strongSelf.configuration.sections removeObject:doomed];
+        [strongSelf.configuration normalize];
+        [strongSelf.configuration save];
+        if (strongSelf.onChange)
+            strongSelf.onChange();
+        [strongSelf.navigationController popViewControllerAnimated:YES];
+    }]];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
