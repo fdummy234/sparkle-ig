@@ -25,7 +25,7 @@ static NSString *const kSPKSubmenuRowKindKey = @"kind";
 static NSString *const kSPKSubmenuRowSubmenuKey = @"submenu";
 static NSString *const kSPKSubmenuRowActionKey = @"action";
 
-@interface SPKEditActionsListViewController () <UITableViewDataSource, UITableViewDelegate>
+@interface SPKEditActionsListViewController () <UITableViewDataSource, UITableViewDelegate, UITableViewDragDelegate, UITableViewDropDelegate>
 
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) SPKActionButtonConfiguration *configuration;
@@ -69,13 +69,13 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     // Sparkle screen (SPKSettingsViewController.m:553).
     self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
+    // Long press and drag, the way the other two editors in this project do it.
+    // NOT tableView.editing: UIKit refuses swipe actions while a table is in
+    // editing mode, so the always-visible grips would cost both swipes.
+    self.tableView.dragInteractionEnabled = YES;
+    self.tableView.dragDelegate = self;
+    self.tableView.dropDelegate = self;
     [self.view addSubview:self.tableView];
-
-    // Set after the table exists: editing mode is what puts the reorder grip on
-    // every row without a long press first, and the swipes keep working next to
-    // it. Assigned before the table was built, this was a no-op on nil.
-    self.tableView.editing = YES;
-    self.tableView.allowsSelectionDuringEditing = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -422,7 +422,9 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
         NSArray<NSString *> *actions = [self outsideActions];
         if (actions.count == 0)
             return [self hintCellWithText:@"Nothing set aside."];
-        return [self actionCellForIdentifier:actions[(NSUInteger)indexPath.row] indented:NO dimmed:YES];
+        // Full ink: these rows are draggable and swipe back into the menu. Grey
+        // read as "disabled", which they are not — only Bulk is.
+        return [self actionCellForIdentifier:actions[(NSUInteger)indexPath.row] indented:NO dimmed:NO];
     }
 
     if ([self hasCopyInfoEditorRow] && indexPath.row == 0)
@@ -703,6 +705,48 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
         return;
     }
     [self moveAction:identifier toSectionIdentifier:targetSubmenu atIndex:positionInSubmenu];
+}
+
+#pragma mark - Drag and drop
+
+- (NSArray<UIDragItem *> *)tableView:(UITableView *)tableView
+        itemsForBeginningDragSession:(id<UIDragSession>)session
+                         atIndexPath:(NSIndexPath *)indexPath {
+    if (![self tableView:tableView canMoveRowAtIndexPath:indexPath])
+        return @[];
+    NSString *carried = [self identifierForSwipeAtIndexPath:indexPath] ?: @"submenu";
+    UIDragItem *item = [[UIDragItem alloc] initWithItemProvider:[[NSItemProvider alloc] initWithObject:carried]];
+    item.localObject = carried;
+    return @[ item ];
+}
+
+- (BOOL)tableView:(UITableView *)tableView dragSessionAllowsMoveOperation:(id<UIDragSession>)session {
+    return YES;
+}
+
+- (BOOL)tableView:(UITableView *)tableView dragSessionIsRestrictedToDraggingApplication:(id<UIDragSession>)session {
+    return YES;
+}
+
+- (UITableViewDropProposal *)tableView:(UITableView *)tableView
+                  dropSessionDidUpdate:(id<UIDropSession>)session
+              withDestinationIndexPath:(NSIndexPath *)destinationIndexPath {
+    if (session.localDragSession == nil || destinationIndexPath == nil)
+        return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
+    NSInteger destination = destinationIndexPath.section;
+    if (destination == [self bulkSectionIndex] || destination == [self resetSectionIndex])
+        return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
+    return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationMove
+                                                          intent:UITableViewDropIntentInsertAtDestinationIndexPath];
+}
+
+- (void)tableView:(UITableView *)tableView performDropWithCoordinator:(id<UITableViewDropCoordinator>)coordinator {
+    id<UITableViewDropItem> dropItem = coordinator.items.firstObject;
+    NSIndexPath *source = dropItem.sourceIndexPath;
+    NSIndexPath *destination = coordinator.destinationIndexPath;
+    if (!source || !destination)
+        return;
+    [self tableView:tableView moveRowAtIndexPath:source toIndexPath:destination];
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {
