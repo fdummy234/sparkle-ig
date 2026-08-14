@@ -747,6 +747,17 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     return YES;
 }
 
+// True while the zone is empty and showing its hint line instead of actions.
+- (BOOL)sectionShowsHintRow:(NSInteger)section {
+    if (section == [self menuSectionIndex])
+        return [self menuActions].count == 0;
+    if (section == [self outsideSectionIndex])
+        return [self outsideActions].count == 0;
+    if (section == [self bulkSectionIndex])
+        return [self bulkActions].count == 0;
+    return NO;
+}
+
 - (UITableViewDropProposal *)tableView:(UITableView *)tableView
                   dropSessionDidUpdate:(id<UIDropSession>)session
               withDestinationIndexPath:(NSIndexPath *)destinationIndexPath {
@@ -755,6 +766,12 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     NSInteger destination = destinationIndexPath.section;
     if (destination == [self bulkSectionIndex] || destination == [self resetSectionIndex])
         return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationCancel];
+    // An empty zone holds one hint row, and it will still hold one row once the
+    // action lands — the count does not grow. Promising UIKit an insertion it
+    // will not find is what crashed Instagram on a drop into an empty Menu.
+    if ([self sectionShowsHintRow:destination])
+        return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationMove
+                                                              intent:UITableViewDropIntentUnspecified];
     return [[UITableViewDropProposal alloc] initWithDropOperation:UIDropOperationMove
                                                           intent:UITableViewDropIntentInsertAtDestinationIndexPath];
 }
@@ -765,7 +782,13 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
     NSIndexPath *destination = coordinator.destinationIndexPath;
     if (!source || !destination)
         return;
-    [self tableView:tableView moveRowAtIndexPath:source toIndexPath:destination];
+    // Reloading inside the coordinator puts the table's bookkeeping and the drop
+    // animation on the same runloop turn. Let the session close first.
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        typeof(self) strongSelf = weakSelf;
+        [strongSelf tableView:strongSelf.tableView moveRowAtIndexPath:source toIndexPath:destination];
+    });
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath {

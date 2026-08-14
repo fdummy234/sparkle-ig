@@ -160,7 +160,10 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray *navSections = [NSMutableArray array];
     [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
     if (menuRows.count > 0)
-        [navSections addObject:SPKTopicSection(@"Its Menu", menuRows, nil)];
+        // The footer belongs to the section, so it speaks for both rows. The two
+        // swipes are the part nobody discovers on their own, so they are named.
+        [navSections addObject:SPKTopicSection(@"Its Menu", menuRows,
+            @"On Tap is what a single tap does. Configure Menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
     if (finalRows.count > 0)
         [navSections addObject:SPKTopicSection(@"", finalRows, footer)];
 
