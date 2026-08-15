@@ -56,11 +56,15 @@ static NSString *const kSPKHeaderPickerCellIdentifier = @"SPKHeaderDefaultPicker
     self.view.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
     self.rows = [self buildRows];
 
-    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleInsetGrouped];
+    // Convention v1.2, alignée sur le sélecteur jumeau du bouton d'action :
+    // Grouped et cellules blanches, pas la carte grise arrondie d'InsetGrouped.
+    self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds style:UITableViewStyleGrouped];
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramGroupedBackground];
+    self.tableView.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
+    // Aucun filet entre les rangées : les bandes de 6 pt séparent les groupes.
+    self.tableView.separatorStyle = UITableViewCellSeparatorStyleNone;
     self.tableView.separatorColor = [SPKUtils SPKColor_InstagramSeparator];
     self.tableView.tintColor = [SPKUtils SPKColor_InstagramBlue];
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:kSPKHeaderPickerCellIdentifier];
@@ -79,8 +83,16 @@ static NSString *const kSPKHeaderPickerCellIdentifier = @"SPKHeaderDefaultPicker
     return self.rows.count;
 }
 
-- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
-    return @"Choose what a single tap does. Long press always opens the menu of enabled destinations.";
+// La bande de 6 pt que le reste de Sparkle pose entre les groupes. #EFEFF1 en
+// dur : SPKColor_InstagramGroupedBackground renvoie du blanc dans cette palette.
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return 6.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section {
+    UIView *band = [UIView new];
+    band.backgroundColor = [UIColor colorWithRed:0.937 green:0.937 blue:0.945 alpha:1.0];
+    return band;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -94,13 +106,19 @@ static NSString *const kSPKHeaderPickerCellIdentifier = @"SPKHeaderDefaultPicker
     config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
     cell.contentConfiguration = config;
 
-    cell.backgroundColor = [SPKUtils SPKColor_InstagramSecondaryBackground];
+    cell.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
     cell.tintColor = [SPKUtils SPKColor_InstagramBlue];
     cell.selectedBackgroundView = [self selectionBackgroundView];
 
     if ([row.identifier isEqualToString:SPKHeaderButtonResolvedDefaultActionIdentifier()]) {
-        UIImageView *checkmark = [[UIImageView alloc] initWithImage:[SPKAssetUtils instagramIconNamed:@"circle_check_filled"]];
-        checkmark.tintColor = [SPKUtils SPKColor_InstagramBlue];
+        // Le disque bleu était le dernier contrôle de sélection bleu du tweak.
+        UIImageSymbolConfiguration *symbol =
+            [UIImageSymbolConfiguration configurationWithPointSize:14.0 weight:UIImageSymbolWeightSemibold];
+        UIImageView *checkmark = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"checkmark"
+                                                                            withConfiguration:symbol]];
+        checkmark.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+        checkmark.contentMode = UIViewContentModeScaleAspectFit;
+        [checkmark sizeToFit];
         cell.accessoryView = checkmark;
     } else {
         cell.accessoryView = nil;

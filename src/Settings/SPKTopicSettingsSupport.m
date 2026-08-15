@@ -456,6 +456,8 @@ SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void) {
                                                      subtitle:@""
                                                          icon:SPKSettingsIcon(@"action")
                                                viewController:[SPKHeaderButtonDefaultActionPickerViewController new]];
+    setting.helpText = @"What a single tap on the header button does. A long press always opens the menu of enabled destinations.";
+    setting.searchKeywords = @"default tap action header shortcut";
     setting.accessoryTextProvider = ^NSString * {
         return SPKHeaderButtonDefaultActionTitle();
     };
