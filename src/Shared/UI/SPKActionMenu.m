@@ -266,9 +266,8 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
 
     container.alpha = 0.0;
     container.transform = CGAffineTransformMakeScale(0.82, 0.82);
-    // Measured on the previous build: at 0.78 damping the panel walked straight
-    // to its size and never overshot — no bounce at all. 0.62 with real launch
-    // velocity overshoots and settles back, which is the liquid-glass feel.
+    // Damping below 0.7 with launch velocity overshoots and settles back, which
+    // is what reads as a bounce.
     UISpringTimingParameters *openTiming =
         [[UISpringTimingParameters alloc] initWithMass:1.0
                                              stiffness:200.0
@@ -316,9 +315,9 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     CGFloat y = kSPKActionMenuContentPadding;
     __weak SPKActionMenuOverlay *weakOverlay = overlay;
 
-    // Takes its position as an argument: a block captures a plain local by VALUE
-    // at creation, so reading `y` inside would have pinned every hairline to the
-    // first row's offset — which is exactly what it did.
+    // The position is an argument: a block captures a plain local by value at
+    // creation, so reading the running offset from inside would pin every
+    // hairline to the first row.
     void (^addSeparator)(CGFloat) = ^(CGFloat lineY) {
         UIView *separator = [UIView new];
         separator.backgroundColor = UIColor.separatorColor;
@@ -406,10 +405,7 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     CGRect target = CGRectMake(x, menuY, width, height);
     CGRect glassTarget = CGRectMake(0, 0, width, height);
     if (animated) {
-        // A real spring, described by its physics rather than by a duration:
-        // stiffness 210 / damping 19 gives a 0.43 s response and a damping ratio
-        // of 0.66 — it overshoots, comes back, and settles, which is the motion
-        // the system's own menus use.
+        // Stiffness 210 / damping 19: a 0.43 s response at a 0.66 damping ratio.
         UISpringTimingParameters *timing =
             [[UISpringTimingParameters alloc] initWithMass:1.0
                                                  stiffness:210.0
@@ -419,9 +415,8 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
             [[UIViewPropertyAnimator alloc] initWithDuration:0.0 timingParameters:timing];
         [animator addAnimations:^{
             container.frame = target;
-            // The glass has to travel WITH the container. Resized outside the
-            // animation, it snapped to its new size while the box was still
-            // moving — that was the jolt.
+            // The glass resizes inside the animation so it travels with the
+            // container rather than snapping ahead of it.
             blurView.frame = glassTarget;
             outgoing.alpha = 0.0;
         }];
