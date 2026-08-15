@@ -82,7 +82,13 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     [items insertObject:item atIndex:0];
     controller.navigationItem.rightBarButtonItems = items;
 
-    SPKLog(@"Settings", @"[Sparkle] Settings entry seated on the navigation item");
+    // Trois faits que seul l'appareil peut donner : sur QUELLE classe on a posé
+    // l'item, s'il y avait déjà des boutons à droite, et — au tour suivant — si
+    // le nôtre a SURVÉCU à la reconstruction de SwiftUI.
+    SPKLog(@"Settings", @"[Sparkle] entry seated on %@ · existing right items: %lu · nav bar: %@",
+           NSStringFromClass([controller class]),
+           (unsigned long)right.count,
+           NSStringFromClass([controller.navigationController.navigationBar class] ?: [NSNull class]));
 }
 
 %group SPKNativeSettingsEntryHooks
@@ -101,7 +107,13 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     // Bornée à une fois par apparition : ce n'est pas une boucle.
     __weak UIViewController *weakController = self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        SPKSeatSettingsEntryItem(weakController);
+        UIViewController *strongController = weakController;
+        if (!strongController)
+            return;
+        UIBarButtonItem *ours = objc_getAssociatedObject(strongController, kSPKSettingsEntryItemAssocKey);
+        BOOL survived = ours && [strongController.navigationItem.rightBarButtonItems containsObject:ours];
+        SPKLog(@"Settings", @"[Sparkle] entry survived SwiftUI rebuild: %@", survived ? @"YES" : @"NO");
+        SPKSeatSettingsEntryItem(strongController);
     });
 }
 
