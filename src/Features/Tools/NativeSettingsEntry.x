@@ -17,11 +17,17 @@
 // posé sur le navigationItem quand l'écran apparaît. UIKit le place lui-même :
 // aucun parcours, aucun calcul de hauteur, aucun crochet sur le layout.
 //
-// Le commentaire d'origine écartait cette approche parce que SwiftUI possède sa
-// barre d'outils et la reconstruit pendant que la vue se pose. La parade n'est
-// pas de lutter à chaque image : c'est de reposer l'item UNE fois à
-// l'apparition, puis une seule fois de plus une fraction de seconde après, le
-// temps que SwiftUI ait fini. Deux poses bornées, contre soixante par seconde.
+// Le commentaire d'origine écartait cette approche en supposant que SwiftUI
+// possède sa barre et la reconstruit. MESURÉ SUR L'APPAREIL, c'est faux pour cet
+// écran : l'item posé survit (« survived: YES »), la barre est une
+// IGNavigationBar et le contrôleur n'a aucun autre bouton à droite. Une seule
+// pose par apparition suffit donc, contre soixante par seconde auparavant.
+//
+// Le contrôleur est une générique Swift —
+// _TtGC14Settings2Views27IGSettingsHostingControllerVS_19IGSettingScreenView_ —
+// dont le nom varie selon la spécialisation. On ne la crochète donc pas
+// directement : le strstr sur « IGSettingsHostingController » traverse le nom
+// mangé et coûte quelques nanosecondes.
 
 static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKey;
 
@@ -103,18 +109,9 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
 
     SPKSeatSettingsEntryItem(self);
 
-    // Une seule reprise, le temps que SwiftUI ait fini de reconstruire sa barre.
-    // Bornée à une fois par apparition : ce n'est pas une boucle.
-    __weak UIViewController *weakController = self;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIViewController *strongController = weakController;
-        if (!strongController)
-            return;
-        UIBarButtonItem *ours = objc_getAssociatedObject(strongController, kSPKSettingsEntryItemAssocKey);
-        BOOL survived = ours && [strongController.navigationItem.rightBarButtonItems containsObject:ours];
-        SPKLog(@"Settings", @"[Sparkle] entry survived SwiftUI rebuild: %@", survived ? @"YES" : @"NO");
-        SPKSeatSettingsEntryItem(strongController);
-    });
+    // Pas de reprise différée : mesuré sur l'appareil, « survived: YES » — la
+    // barre SwiftUI de cet écran n'écrase PAS le navigationItem. Une seule pose
+    // par apparition suffit.
 }
 
 %end
@@ -122,6 +119,11 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
 %end
 
 void SPKInstallNativeSettingsEntryHooksIfNeeded(void) {
+    // Cet installeur fait partie des « essentiels » (SPKStartupHooks.m:117), donc
+    // « Turn Off All Features » ne le saute PAS. Sans sa propre préférence, il
+    // n'existait aucun moyen de le retirer pour mesurer ce qu'il coûte.
+    if (![SPKUtils getBoolPref:@"tools_settings_entry"])
+        return;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         %init(SPKNativeSettingsEntryHooks);
