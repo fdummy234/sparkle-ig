@@ -202,7 +202,6 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
 
     
     SPKSetting *favoritesRow = [SPKSetting switchCellWithTitle:@"Show Favorites at Top" icon:SPKSettingsIcon(@"heart") defaultsKey:kFavoritesAtTopKey];
-    favoritesRow.helpText = @"Pin favorites above other files in the current folder.";
     favoritesRow.action = ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:@"SPKGalleryFavoritesSortPreferenceChanged" object:nil];
     };
@@ -286,7 +285,6 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
     SPKSetting *mediaInfoRow = [SPKSetting switchCellWithTitle:@"Show Media Info"
                                                           icon:SPKSettingsIcon(@"info")
                                                    defaultsKey:@"gallery_preview_show_metadata"];
-    mediaInfoRow.helpText = @"Overlay the username, source and dates on the expanded preview.";
 
     // Browsing, Grid and Preview asked the same question — what the grid shows
     // and how you move in it — under three headers.
@@ -354,7 +352,6 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                          };
                                                          [self.navigationController pushViewController:vc animated:YES];
                                                      }];
-    deleteRow.helpText = @"Remove files from the Gallery for good.";
     deleteRow.tintColor = [SPKUtils SPKColor_InstagramDestructive];
     deleteRow.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
