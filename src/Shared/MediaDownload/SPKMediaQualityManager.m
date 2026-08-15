@@ -1779,6 +1779,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
         addObject:SPKTopicSection(
                       @"", @[ [SPKSetting
                                switchCellWithTitle:@"Advanced Encoding"
+                                       icon:SPKSettingsIcon(@"slider")
                                        defaultsKey:@"downloads_adv_encoding"] ],
                       @"Advanced Encoding exposes codec, preset, bitrate, CRF, "
                       @"resolution, and audio overrides. In advanced mode, the "
@@ -1791,15 +1792,19 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                                 @[
                                     [SPKSetting menuCellWithTitle:@"Video Codec"
                                                          subtitle:nil
+                                                         icon:SPKSettingsIcon(@"video")
                                                              menu:[self codecMenu]],
                                     [SPKSetting menuCellWithTitle:@"Preset"
                                                          subtitle:nil
+                                                         icon:SPKSettingsIcon(@"slider")
                                                              menu:[self presetMenu]],
                                     [SPKSetting menuCellWithTitle:@"H.264 Profile"
                                                          subtitle:nil
+                                                         icon:SPKSettingsIcon(@"video")
                                                              menu:[self profileMenu]],
                                     [SPKSetting menuCellWithTitle:@"H.264 Level"
                                                          subtitle:nil
+                                                         icon:SPKSettingsIcon(@"video")
                                                              menu:[self levelMenu]]
                                 ],
                                 nil)];
@@ -1821,6 +1826,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                                                          @"vid_bitrate_kbps"],
                               [SPKSetting menuCellWithTitle:@"Max Resolution"
                                                    subtitle:nil
+                                                   icon:SPKSettingsIcon(@"hd")
                                                        menu:[self maxResMenu]]
                           ],
                           nil)];
@@ -1837,6 +1843,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                                                          @"audio_bitrate_kbps"],
                               [SPKSetting menuCellWithTitle:@"Audio Channels"
                                                    subtitle:nil
+                                                   icon:SPKSettingsIcon(@"audio")
                                                        menu:[self audioChannelsMenu]]
                           ],
                           nil)];
@@ -1848,9 +1855,11 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                     @[
                         [SPKSetting menuCellWithTitle:@"Pixel Format"
                                              subtitle:nil
+                                             icon:SPKSettingsIcon(@"blend")
                                                  menu:[self pixelFormatMenu]],
                         [SPKSetting
                             switchCellWithTitle:@"Fast Start"
+                                    icon:SPKSettingsIcon(@"play")
                                     defaultsKey:@"downloads_encoding_faststart"]
                     ],
                     @"Fast Start moves MP4 metadata to the beginning of the "
@@ -1903,6 +1912,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                 SPKTopicSection(
                     @"Video", @[ [SPKSetting menuCellWithTitle:@"Encoding Speed"
                                                       subtitle:nil
+                                                      icon:SPKSettingsIcon(@"clock")
                                                           menu:[self speedMenu]] ],
                     @"Controls the libx264 encoding effort. Slower presets take "
                     @"longer but produce smaller files at the same visual quality. "
@@ -1923,6 +1933,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
     return @[
         SPKTopicSection(
             @"", @[ [SPKSetting switchCellWithTitle:@"Advanced Encoding"
+                                        icon:SPKSettingsIcon(@"slider")
                                         defaultsKey:@"downloads_adv_encoding"] ],
             @"Advanced Encoding exposes codec, preset, bitrate, CRF, resolution, "
             @"and audio overrides. In advanced mode, the selected video codec is "
@@ -1932,18 +1943,23 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
             @[
                 [SPKSetting menuCellWithTitle:@"Encoding Speed"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"clock")
                                          menu:[self speedMenu]],
                 [SPKSetting menuCellWithTitle:@"Video Codec"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"video")
                                          menu:[self codecMenu]],
                 [SPKSetting menuCellWithTitle:@"Preset"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"slider")
                                          menu:[self presetMenu]],
                 [SPKSetting menuCellWithTitle:@"H.264 Profile"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"video")
                                          menu:[self profileMenu]],
                 [SPKSetting menuCellWithTitle:@"H.264 Level"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"video")
                                          menu:[self levelMenu]]
             ],
             @"Controls the libx264 encoding effort. Slower presets take longer but "
@@ -1963,6 +1979,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                                defaultsKey:@"downloads_encoding_vid_bitrate_kbps"],
                 [SPKSetting menuCellWithTitle:@"Max Resolution"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"hd")
                                          menu:[self maxResMenu]]
             ],
             nil),
@@ -1976,6 +1993,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
                                defaultsKey:@"downloads_encoding_audio_bitrate_kbps"],
                 [SPKSetting menuCellWithTitle:@"Audio Channels"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"audio")
                                          menu:[self audioChannelsMenu]]
             ],
             nil),
@@ -1984,8 +2002,10 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
             @[
                 [SPKSetting menuCellWithTitle:@"Pixel Format"
                                      subtitle:nil
+                                     icon:SPKSettingsIcon(@"blend")
                                          menu:[self pixelFormatMenu]],
                 [SPKSetting switchCellWithTitle:@"Fast Start"
+                                    icon:SPKSettingsIcon(@"play")
                                     defaultsKey:@"downloads_encoding_faststart"]
             ],
             @"Fast Start moves MP4 metadata to the beginning of the file, allowing "
