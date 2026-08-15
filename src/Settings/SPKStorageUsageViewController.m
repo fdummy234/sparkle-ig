@@ -81,7 +81,7 @@
 
     SPKSetting *clearAvatars = [SPKSetting buttonCellWithTitle:@"Clear Cached Pictures"
                                                       subtitle:nil
-                                                          icon:SPKSettingsIcon(@"user_circle")
+                                                          icon:SPKSettingsIcon(@"trash")
                                                         action:^{
                                                             [self confirmClearAvatars];
                                                         }];
