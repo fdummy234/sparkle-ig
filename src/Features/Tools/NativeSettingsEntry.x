@@ -20,6 +20,21 @@ static const void *kSPKSettingsEntryRetryAssocKey = &kSPKSettingsEntryRetryAssoc
 // Bounded so a bar that genuinely never gets a title cannot spin on layout.
 static NSInteger const kSPKSettingsEntryMaxTitleRetries = 12;
 static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssocKey;
+static const void *kSPKSettingsEntryTitleAssocKey = &kSPKSettingsEntryTitleAssocKey;
+
+// Le libellé retenu est-il toujours utilisable ? Quelques sauts vers le haut,
+// contre un parcours complet de l'arbre.
+static BOOL SPKSettingsEntryTitleStillValid(UILabel *label, UINavigationBar *bar) {
+    if (!label || label.text.length == 0 || label.window == nil)
+        return NO;
+    UIView *view = label.superview;
+    while (view) {
+        if (view == bar)
+            return YES;
+        view = view.superview;
+    }
+    return NO;
+}
 
 // 1 = not the settings screen · 2 = settings screen, no title yet · 3 = placed.
 // Logged only when it CHANGES, so the log says which branch took the icon away
@@ -128,7 +143,11 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     // back to the front rather than added once.
     if (button.superview != self)
         [self addSubview:button];
-    [self bringSubviewToFront:button];
+    // bringSubviewToFront: SALIT le layout, donc rappelle layoutSubviews, donc
+    // relance le parcours ci-dessous : une boucle de rétroaction qui rendait
+    // l'ouverture des réglages très lente. On ne remonte que si nécessaire.
+    if (self.subviews.lastObject != button)
+        [self bringSubviewToFront:button];
     button.hidden = NO;
 
     // Containers move between iOS versions; the title does not. It sits in the
@@ -136,17 +155,29 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     // match — found by walking down to the deepest label with text.
     CGFloat size = kSPKSettingsEntryButtonSize;
     CGRect bounds = self.bounds;
-    UILabel *titleLabel = nil;
-    NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
-    while (queue.count > 0) {
-        UIView *view = queue.firstObject;
-        [queue removeObjectAtIndex:0];
-        if (view == button)
-            continue;
-        if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
-            (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
-            titleLabel = (UILabel *)view;
-        [queue addObjectsFromArray:view.subviews];
+    // Le parcours complet tournait à CHAQUE passe de layout, sur toute la
+    // hiérarchie SwiftUI de la barre. On garde le libellé trouvé et on ne
+    // recommence que s'il n'est plus valable.
+    UILabel *titleLabel = objc_getAssociatedObject(self, kSPKSettingsEntryTitleAssocKey);
+    if (!SPKSettingsEntryTitleStillValid(titleLabel, self)) {
+        titleLabel = nil;
+        NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
+        NSUInteger visited = 0;
+        while (queue.count > 0 && visited < 400) {
+            UIView *view = queue.firstObject;
+            [queue removeObjectAtIndex:0];
+            visited++;
+            if (view == button)
+                continue;
+            if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
+                (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
+                titleLabel = (UILabel *)view;
+            [queue addObjectsFromArray:view.subviews];
+        }
+        // RETAIN et non ASSIGN : en ASSIGN, un libellé libéré laisserait un
+        // pointeur mort que la validation lirait au tour suivant. Retenir une
+        // sous-vue que la barre retient déjà ne crée aucun cycle.
+        objc_setAssociatedObject(self, kSPKSettingsEntryTitleAssocKey, titleLabel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 
     // On the first layout pass the bar has no title yet. Rather than place the
