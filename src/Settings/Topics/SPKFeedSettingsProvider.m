@@ -81,58 +81,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     // share one gesture template, so the sheets must read identically everywhere.
     masterActionButton.helpText = @"Tap runs the default action. Long-press opens the full action menu.";
 
-    // ---- Header Shortcut -----------------------------------------------
 
-    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show Header Button"
-                                                          icon:SPKSettingsIcon(@"action")
-                                                   defaultsKey:kSPKHeaderButtonEnabledKey];
-    headerButton.reloadsTableOnSwitchChange = YES;
-    headerButton.searchKeywords = @"feed header button";
-    headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
-    headerButton.searchKeywords = @"feed header button shortcut";
-
-    // Restored: the sub-page was rebuilt with an empty section list, so even
-    // reconnected it would have opened blank. These are the five destinations
-    // SPKHeaderDestPrefKey() still reads at runtime.
-    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Reorder Destinations"
-                                                                   subtitle:nil
-                                                                       icon:SPKSettingsIcon(@"slider")
-                                                                navSections:@[
-                                                                    SPKTopicSection(@"Destinations", @[
-                                                                        [SPKSetting switchCellWithTitle:@"Gallery"
-                                                                                                   icon:SPKSettingsIcon(@"sparkle_gallery")
-                                                                                            defaultsKey:@"feed_header_button_dest_gallery"],
-                                                                        [SPKSetting switchCellWithTitle:@"Profile Analyzer"
-                                                                                                   icon:SPKSettingsIcon(@"profile_analyzer")
-                                                                                            defaultsKey:@"feed_header_button_dest_analyzer"],
-                                                                        [SPKSetting switchCellWithTitle:@"Deleted Messages"
-                                                                                                   icon:SPKSettingsIcon(@"channels")
-                                                                                            defaultsKey:@"feed_header_button_dest_deleted"],
-                                                                        [SPKSetting switchCellWithTitle:@"Downloads"
-                                                                                                   icon:SPKSettingsIcon(@"download")
-                                                                                            defaultsKey:@"feed_header_button_dest_downloads"],
-                                                                        [SPKSetting switchCellWithTitle:@"Sparkle Settings"
-                                                                                                   icon:SPKSettingsIcon(@"sparkle")
-                                                                                            defaultsKey:@"feed_header_button_dest_settings"],
-                                                                    ], nil)
-                                                                ]];
-    configureDestinations.hiddenProvider = ^BOOL {
-        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-    };
-    configureDestinations.searchKeywords = @"configure";
-    configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
-
-    // Moved out of Tools: it only fires when this button's menu opens, so it
-    // belongs to this button and follows the same visibility rule as the row
-    // above. It sat under "Quick Settings Access", which no longer exists.
-    SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
-                                                             icon:SPKSettingsIcon(@"haptics")
-                                                      defaultsKey:@"tools_shortcut_haptics"];
-    shortcutHaptics.hiddenProvider = ^BOOL {
-        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-    };
-    shortcutHaptics.searchKeywords = @"haptic vibration feedback";
-    shortcutHaptics.helpText = @"A short tap of feedback when the header button's menu opens.";
 
     // ---- Layout --------------------------------------------------------
 
@@ -228,15 +177,6 @@ static NSArray *SPKFeedCommentsSections(void) {
                                 defaultsKey:@"feed_disable_bg_refresh"]
         ],
                         nil),
-        // Reconnected: these rows were rebuilt during the redesign but never
-        // added to a section, so the header button had no screen at all.
-        SPKTopicSection(@"Header Shortcut", @[
-            headerButton,
-            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
-            shortcutHaptics,
-            configureDestinations
-        ], nil),
-
         // Comments is a full section again: eight rows deep enough to stand on
         // their own page were one tap away for no reason.
         SPKFeedCommentsSections().firstObject,

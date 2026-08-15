@@ -2,6 +2,7 @@
 
 #import "../../AssetUtils.h"
 #import "../../Shared/Account/SPKAccountManager.h"
+#import "../../Features/Feed/HeaderActionButton.h"
 #import "../../Shared/ActionButton/ActionButtonCore.h"
 #import "../../Utils.h"
 #import "../SPKActionSectionIconPickerViewController.h"
@@ -179,7 +180,69 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                                      defaultsKey:@"general_disable_haptics"];
     disableHaptics.searchKeywords = @"app vibration vibrations taptic feedback";
 
+    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show Header Button"
+                                                          icon:SPKSettingsIcon(@"action")
+                                                   defaultsKey:kSPKHeaderButtonEnabledKey];
+    headerButton.reloadsTableOnSwitchChange = YES;
+    headerButton.searchKeywords = @"feed header button";
+    headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
+    headerButton.searchKeywords = @"feed header button shortcut";
+
+    // Restored, and renamed: the page holds five switches and nothing
+    // reorders — the menu order is fixed in SPKHeaderButtonAllDestinations().
+    // "Reorder" promised a feature that was never written., so even
+    // reconnected it would have opened blank. These are the five destinations
+    // SPKHeaderDestPrefKey() still reads at runtime.
+    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure Destinations"
+                                                                   subtitle:nil
+                                                                       icon:SPKSettingsIcon(@"slider")
+                                                                navSections:@[
+                                                                    SPKTopicSection(@"Destinations", @[
+                                                                        [SPKSetting switchCellWithTitle:@"Gallery"
+                                                                                                   icon:SPKSettingsIcon(@"sparkle_gallery")
+                                                                                            defaultsKey:@"feed_header_button_dest_gallery"],
+                                                                        [SPKSetting switchCellWithTitle:@"Profile Analyzer"
+                                                                                                   icon:SPKSettingsIcon(@"profile_analyzer")
+                                                                                            defaultsKey:@"feed_header_button_dest_analyzer"],
+                                                                        [SPKSetting switchCellWithTitle:@"Deleted Messages"
+                                                                                                   icon:SPKSettingsIcon(@"channels")
+                                                                                            defaultsKey:@"feed_header_button_dest_deleted"],
+                                                                        [SPKSetting switchCellWithTitle:@"Downloads"
+                                                                                                   icon:SPKSettingsIcon(@"download")
+                                                                                            defaultsKey:@"feed_header_button_dest_downloads"],
+                                                                        [SPKSetting switchCellWithTitle:@"Sparkle Settings"
+                                                                                                   icon:SPKSettingsIcon(@"settings")
+                                                                                            defaultsKey:@"feed_header_button_dest_settings"],
+                                                                    ], nil)
+                                                                ]];
+    configureDestinations.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
+    };
+    configureDestinations.searchKeywords = @"configure";
+    configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
+
+    // Moved out of Tools: it only fires when this button's menu opens, so it
+    // belongs to this button and follows the same visibility rule as the row
+    // above. It sat under "Quick Settings Access", which no longer exists.
+    SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
+                                                             icon:SPKSettingsIcon(@"haptics")
+                                                      defaultsKey:@"tools_shortcut_haptics"];
+    shortcutHaptics.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
+    };
+    shortcutHaptics.searchKeywords = @"haptic vibration feedback";
+    shortcutHaptics.helpText = @"A short tap of feedback when the header button's menu opens.";
+
     SPKSetting *root = SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
+        // Moved out of Feed: the button opens Sparkle's own screens from the
+        // header, whatever you are looking at — it is not a feed setting.
+        SPKTopicSection(@"Header Shortcut", @[
+            headerButton,
+            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
+            shortcutHaptics,
+            configureDestinations
+        ], nil),
+
         // Behavior + Sharing merged: four rows, one subject — copying and
         // sharing. (No Recent Searches moved to Interface › Explore & Search;
         // the two Confirm rows live in the Confirmations gate row below.)
