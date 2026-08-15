@@ -260,13 +260,14 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
          animated:NO];
 
     container.alpha = 0.0;
-    container.transform = CGAffineTransformMakeScale(0.86, 0.86);
-    // A spring, not a curve: the system's menus settle rather than stop, and
-    // the corner anchor set in fillMenu makes it grow out of the button.
-    [UIView animateWithDuration:0.42
+    container.transform = CGAffineTransformMakeScale(0.82, 0.82);
+    // Measured on the previous build: at 0.78 damping the panel walked straight
+    // to its size and never overshot — no bounce at all. 0.62 with real launch
+    // velocity overshoots and settles back, which is the liquid-glass feel.
+    [UIView animateWithDuration:0.52
                           delay:0
-         usingSpringWithDamping:0.78
-          initialSpringVelocity:0.0
+         usingSpringWithDamping:0.62
+          initialSpringVelocity:0.7
                         options:UIViewAnimationOptionAllowUserInteraction
                      animations:^{
                          overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
@@ -398,22 +399,32 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
 
     CGRect target = CGRectMake(x, menuY, width, height);
     if (animated) {
-        [UIView animateWithDuration:0.38
+        [UIView animateWithDuration:0.50
                               delay:0
-             usingSpringWithDamping:0.82
-              initialSpringVelocity:0.0
+             usingSpringWithDamping:0.64
+              initialSpringVelocity:0.6
                             options:UIViewAnimationOptionAllowUserInteraction
                          animations:^{
                              container.frame = target;
                              outgoing.alpha = 0.0;
-                             for (UIView *row in blurView.contentView.subviews) {
-                                 if (row != outgoing)
-                                     row.alpha = 1.0;
-                             }
                          }
                          completion:^(__unused BOOL done) {
                              [outgoing removeFromSuperview];
                          }];
+
+        // The rows arrive one behind the other rather than all at once — the
+        // detail that makes a system menu feel alive instead of redrawn.
+        NSInteger step = 0;
+        for (UIView *row in blurView.contentView.subviews) {
+            if (row == outgoing)
+                continue;
+            [UIView animateWithDuration:0.26
+                                  delay:MIN(0.10, step * 0.022)
+                                options:UIViewAnimationOptionCurveEaseOut
+                             animations:^{ row.alpha = 1.0; }
+                             completion:nil];
+            step++;
+        }
     } else {
         // First present: the anchor corner must be set BEFORE the frame, or the
         // layer shifts by half its size when the anchor point moves.
