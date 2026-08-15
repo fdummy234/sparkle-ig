@@ -28,6 +28,7 @@ static NSDictionary *SPKBootstrapDefaults(void) {
         @"interface_open_clipboard_link" : @(YES),
         @"gallery_quick_access_tab" : @"direct-inbox-tab",
         @"tools_disable_all" : @(NO),
+        @"tools_settings_entry" : @(YES),
 #if SPK_DEV
         @"tools_perf_meter" : @(NO),
         @"tools_perf_hud" : @(NO),
