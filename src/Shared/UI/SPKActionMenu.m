@@ -240,6 +240,11 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     UIVisualEffect *effect = glassEffectClass
         ? [[glassEffectClass alloc] init]
         : [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial];
+    // Interactive glass is what deforms under a finger instead of sitting flat.
+    // Set through KVC and guarded: on a system without the property this is a
+    // no-op rather than a crash, and it compiles against any SDK.
+    if ([effect respondsToSelector:NSSelectorFromString(@"setInteractive:")])
+        [effect setValue:@YES forKey:@"interactive"];
     UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:effect];
     blurView.layer.cornerRadius = kSPKActionMenuCornerRadius;
     blurView.layer.cornerCurve = kCACornerCurveContinuous;
