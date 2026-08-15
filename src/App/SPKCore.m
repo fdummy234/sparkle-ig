@@ -80,6 +80,13 @@ static NSDictionary *SPKFeatureDefaults(void) {
         // above for pre-mode-menu users (→ text + colorful). Everyone else
         // defaults to off / native gray.
         @"profile_analyzer_track_visits" : @(NO),
+        // Restored from the original fork: without these the five destinations
+        // all default to NO, so the header button opens nothing at all.
+        @"feed_header_button_dest_gallery" : @(YES),
+        @"feed_header_button_dest_analyzer" : @(YES),
+        @"feed_header_button_dest_deleted" : @(YES),
+        @"feed_header_button_dest_downloads" : @(YES),
+        @"feed_header_button_dest_settings" : @(YES),
         @"feed_action_btn" : @(YES),
         @"feed_action_btn_default_action" : @"none",
         @"general_action_btn_default_menu_icon" : @"action",
