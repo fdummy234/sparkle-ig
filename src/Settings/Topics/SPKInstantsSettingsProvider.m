@@ -49,18 +49,6 @@ static NSArray *SPKInstantsSettingsSections(void) {
                     [[NSNotificationCenter defaultCenter] postNotificationName:@"SPKQuickSnapCreationPrefChangedNotification" object:nil];
                 };
                 s;
-            }),
-            ({
-                // R5: extends the master to the inbox, so it exists only while
-                // the master is on — the shape of "Also Show on Chat Media".
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide in Messages"
-                                                             icon:SPKSettingsIcon(@"comment")
-                                                      defaultsKey:@"instants_hide_inbox_entry"];
-                row.helpText = @"Remove the + from the inbox as well, not just the shutter.";
-                row.hiddenProvider = ^BOOL {
-                    return ![SPKUtils getBoolPref:@"instants_disable_creation"];
-                };
-                row;
             })
         ],
                         nil),

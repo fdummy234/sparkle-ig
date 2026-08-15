@@ -44,7 +44,7 @@ static NSArray *SPKFeedCommentsSections(void) {
         return ![SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
-    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Button"
+    SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Carousel"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
                                                           defaultsKey:@"general_comments_hide_shopping"];
     hideCommentShopping.helpText = @"Removes commerce carousels from comment threads.";

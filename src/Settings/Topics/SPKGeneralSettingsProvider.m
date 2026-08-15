@@ -60,7 +60,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     setting.iconProvider = ^UIImage * {
         return SPKSettingsIcon(SPKActionButtonOpenMenuIconName());
     };
-    setting.helpText = @"Changes the icon on every action button set to Open Menu.";
     setting.searchKeywords = @"glyph action button open menu";
     return setting;
 }
@@ -346,9 +345,13 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
             }),
             disableHaptics,
             [self perAccountSetting],
-            autoClearCache,
             [self appIconSetting],
-            [self defaultMenuIconSetting],
+            [self defaultMenuIconSetting]],
+                        nil),
+
+        // Clearing and scheduling the cache is storage, not an app preference.
+        SPKTopicSection(@"Storage", @[
+            autoClearCache,
             clearCacheSetting],
                         nil),
 

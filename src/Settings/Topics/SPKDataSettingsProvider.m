@@ -75,7 +75,7 @@
 
     SPKSetting *deletedMessagesRow = [SPKSetting buttonCellWithTitle:@"Deleted Messages"
                                                             subtitle:nil
-                                                                icon:SPKSettingsIcon(@"trash")
+                                                                icon:SPKSettingsIcon(@"channels")
                                                               action:^{
                                                                   self.includeDeletedMessages = !self.includeDeletedMessages;
                                                                   [self rebuildSections];

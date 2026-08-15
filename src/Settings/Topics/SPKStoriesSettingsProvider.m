@@ -104,7 +104,6 @@ manualSeenList.hiddenProvider = ^BOOL {
 static NSArray *SPKStoriesSettingsSections(void) {
     return @[
         // Leads the page: seen receipts govern what viewing a story reports.
-        SPKStoriesSeenReceiptsSection(),
 
 
         // "Other" was the confession that no subject had been found — these four
@@ -156,6 +155,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
                         @"5. Display the vote counts for each option the poll has.\n"
                         @"6. Unlock \"Story Preview\": the story long-press menu shows the actual story without appearing on the viewer list.\n"
                         @"7. Hide the Instagram Plus button in your story's viewer list."),
+        SPKStoriesSeenReceiptsSection(),
 
         // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
         // section (mid-page, plural header); now closes the page like everywhere.

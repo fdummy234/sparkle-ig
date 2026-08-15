@@ -260,6 +260,12 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 sw.searchKeywords = @"gesture vanish mode";
                 sw;
             }),
+        ],
+                        nil),
+
+        // Keeping and reading removed messages is archiving, not a
+        // disappearing-message behaviour.
+        SPKTopicSection(@"Deleted Messages", @[
             keepDeleted,
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
@@ -285,7 +291,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
             viewDeletedLog],
                         nil),
-        SPKTopicSection(@"Seen Receipts", @[
+        SPKTopicSection(@"Media Seen Receipts", @[
             unlockPreview,
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
@@ -296,12 +302,32 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                 row;
             }),
             advanceVisual,
+        ],
+                        nil),
+
+        // Two mechanisms lived here: read receipts for media, and read
+        // receipts for whole conversations. Each has its own switch.
+        SPKTopicSection(@"Chat Seen Receipts", @[
             manualSeenSwitch,
             markSeenGate,
             seenButtonPosition,
             manualSeenList],
                         nil),
         SPKTopicSection(@"Chat Screen", @[
+            ({
+                // Lives with the inbox it changes. Kept tied to Disable Instants
+                // Creation: hiding the entry without disabling capture would
+                // leave a shutter with no way back.
+                SPKSetting *hideInstants = [SPKSetting switchCellWithTitle:@"Hide Instants Button"
+                                                                     icon:SPKSettingsIcon(@"instants")
+                                                              defaultsKey:@"instants_hide_inbox_entry"];
+                hideInstants.helpText = @"Removes the + from the inbox. Requires Disable Instants Creation, on the Camera page.";
+                hideInstants.searchKeywords = @"instants inbox plus button";
+                hideInstants.hiddenProvider = ^BOOL {
+                    return ![SPKUtils getBoolPref:@"instants_disable_creation"];
+                };
+                hideInstants;
+            }),
             hideCreateGroup,
             // Six hides of the same screen, one gate — the verb lives on the
             // row; Typing Status keeps its noun (it is not a button).
