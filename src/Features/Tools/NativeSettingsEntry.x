@@ -1,52 +1,30 @@
 #import "../../Utils.h"
 #import <objc/runtime.h>
 
-// Sparkle's single visible entry point: a ✦ button in the navigation bar of
-// Instagram's own "Settings and activity" screen.
+// L'entrée ✦ de Sparkle dans l'écran « Settings and activity » d'Instagram.
 //
-// Two things make that screen hostile to a plain rightBarButtonItem: it is
-// hosted by SwiftUI, which owns its toolbar and rebuilds it as the view
-// settles, and its controller is a Swift generic the runtime only registers
-// once its module loads. So the button is not a bar button item at all — it is
-// a view parented to the navigation bar and re-seated on every layout pass,
-// the same approach the inbox header button already uses against this app.
+// CE QUI A ÉCHOUÉ, ET QU'IL NE FAUT PAS REFAIRE : la version précédente
+// crochetait -[UINavigationBar layoutSubviews] pour poser un UIButton en
+// sous-vue et l'aligner sur le libellé du titre. Deux coûts, à CHAQUE passe de
+// layout : un parcours complet de la hiérarchie SwiftUI de la barre pour
+// trouver ce libellé, et un bringSubviewToFront: qui resalissait le layout donc
+// redéclenchait la passe. L'écran des réglages en devenait très lent à ouvrir.
+// Trois tentatives d'alléger ce parcours ont toutes échoué : le borner par
+// nombre de nœuds ratait le titre, le borner par profondeur aussi — il est plus
+// profond que cinq niveaux.
 //
-// The hook sits on UINavigationBar rather than on any Instagram class: UIKit is
-// always present, and the bar is walked back to its owning controller to decide
-// whether this is the settings screen.
+// CETTE VERSION NE FAIT RIEN PAR IMAGE. Le bouton redevient un UIBarButtonItem,
+// posé sur le navigationItem quand l'écran apparaît. UIKit le place lui-même :
+// aucun parcours, aucun calcul de hauteur, aucun crochet sur le layout.
+//
+// Le commentaire d'origine écartait cette approche parce que SwiftUI possède sa
+// barre d'outils et la reconstruit pendant que la vue se pose. La parade n'est
+// pas de lutter à chaque image : c'est de reposer l'item UNE fois à
+// l'apparition, puis une seule fois de plus une fraction de seconde après, le
+// temps que SwiftUI ait fini. Deux poses bornées, contre soixante par seconde.
 
-static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
-static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssocKey;
-static const void *kSPKSettingsEntryTitleAssocKey = &kSPKSettingsEntryTitleAssocKey;
-static const void *kSPKSettingsEntryCenterAssocKey = &kSPKSettingsEntryCenterAssocKey;
-static const void *kSPKSettingsEntrySearchAssocKey = &kSPKSettingsEntrySearchAssocKey;
+static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKey;
 
-// Le libellé retenu est-il toujours utilisable ? Quelques sauts vers le haut,
-// contre un parcours complet de l'arbre.
-static BOOL SPKSettingsEntryTitleStillValid(UILabel *label, UINavigationBar *bar) {
-    if (!label || label.text.length == 0 || label.window == nil)
-        return NO;
-    UIView *view = label.superview;
-    while (view) {
-        if (view == bar)
-            return YES;
-        view = view.superview;
-    }
-    return NO;
-}
-
-// 1 = not the settings screen · 2 = settings screen, no title yet · 3 = placed.
-// Logged only when it CHANGES, so the log says which branch took the icon away
-// instead of repeating on every layout pass.
-static void SPKLogSettingsEntryState(UINavigationBar *bar, NSInteger state) {
-    NSNumber *previous = objc_getAssociatedObject(bar, kSPKSettingsEntryStateAssocKey);
-    if (previous.integerValue == state)
-        return;
-    objc_setAssociatedObject(bar, kSPKSettingsEntryStateAssocKey, @(state), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SPKLog(@"Settings", @"[Sparkle] entry state %ld (1=off-screen 2=no-title 3=placed)", (long)state);
-}
-static CGFloat const kSPKSettingsEntryButtonSize = 40.0;
-static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
 @interface SPKNativeSettingsEntryTarget : NSObject
 + (instancetype)sharedTarget;
 - (void)openSparkleSettings:(id)sender;
@@ -64,14 +42,13 @@ static CGFloat const kSPKSettingsEntryButtonInset = 8.0;
 }
 
 - (void)openSparkleSettings:(id)sender {
-    UIWindow *window = [sender isKindOfClass:[UIView class]] ? ((UIView *)sender).window : nil;
-    [SPKUtils showSettingsVC:window ?: [UIApplication sharedApplication].keyWindow];
+    [SPKUtils showSettingsVC:UIApplication.sharedApplication.keyWindow];
 }
 
 @end
 
-// Identified by two independent signals so a rename on either side still lands:
-// the Swift class name, or the title Instagram gives the screen.
+// Reconnu par deux signaux indépendants, pour qu'un renommage d'un côté ne
+// suffise pas à tout casser : le nom de classe Swift, ou le titre de l'écran.
 static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
     if (!controller)
         return NO;
@@ -81,185 +58,55 @@ static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
     return [controller.title isEqualToString:@"Settings and activity"];
 }
 
-static UIViewController *SPKControllerForNavigationBar(UINavigationBar *bar) {
-    UIResponder *responder = bar.nextResponder;
-    while (responder) {
-        if ([responder isKindOfClass:[UINavigationController class]])
-            return ((UINavigationController *)responder).topViewController;
-        responder = responder.nextResponder;
-    }
-    return nil;
-}
-
-// A single layout pass during a transition used to blink the icon away and the
-// return switched it back on — that was the flash. Instead of hiding on the
-// spot, confirm on the next runloop turn: a transient pass never survives it,
-// and a real departure does.
-static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *button) {
-    if (!button || button.hidden)
+static void SPKSeatSettingsEntryItem(UIViewController *controller) {
+    if (!SPKIsNativeSettingsController(controller))
         return;
-    __weak UINavigationBar *weakBar = bar;
-    __weak UIButton *weakButton = button;
-    dispatch_async(dispatch_get_main_queue(), ^{
-        UINavigationBar *strongBar = weakBar;
-        if (!strongBar)
-            return;
-        if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(strongBar)))
-            weakButton.hidden = YES;
-    });
+
+    UIBarButtonItem *existing = objc_getAssociatedObject(controller, kSPKSettingsEntryItemAssocKey);
+    NSArray<UIBarButtonItem *> *right = controller.navigationItem.rightBarButtonItems;
+    if (existing && [right containsObject:existing])
+        return;   // déjà en place : rien à faire
+
+    UIImage *icon = [UIImage systemImageNamed:@"sparkles"
+                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:18.0
+                                                                                              weight:UIImageSymbolWeightRegular]];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:icon
+                                                            style:UIBarButtonItemStylePlain
+                                                           target:[SPKNativeSettingsEntryTarget sharedTarget]
+                                                           action:@selector(openSparkleSettings:)];
+    item.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+    item.accessibilityLabel = @"Sparkle";
+    objc_setAssociatedObject(controller, kSPKSettingsEntryItemAssocKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    NSMutableArray<UIBarButtonItem *> *items = right ? [right mutableCopy] : [NSMutableArray array];
+    [items insertObject:item atIndex:0];
+    controller.navigationItem.rightBarButtonItems = items;
+
+    SPKLog(@"Settings", @"[Sparkle] Settings entry seated on the navigation item");
 }
 
 %group SPKNativeSettingsEntryHooks
-%hook UINavigationBar
 
-- (void)layoutSubviews {
-    %orig;
-
-    UIButton *button = objc_getAssociatedObject(self, kSPKSettingsEntryButtonAssocKey);
-    if (!SPKIsNativeSettingsController(SPKControllerForNavigationBar(self))) {
-        if (button)
-            SPKLogSettingsEntryState(self, 1);
-        SPKSettingsEntryHideAfterConfirm(self, button);
-        return;
-    }
-
-    if (!button) {
-        button = [UIButton buttonWithType:UIButtonTypeSystem];
-        UIImage *icon = [UIImage systemImageNamed:@"sparkles"
-                                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20.0
-                                                                                                  weight:UIImageSymbolWeightRegular]];
-        [button setImage:icon forState:UIControlStateNormal];
-        button.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        button.accessibilityLabel = @"Sparkle";
-        [button addTarget:[SPKNativeSettingsEntryTarget sharedTarget]
-                   action:@selector(openSparkleSettings:)
-         forControlEvents:UIControlEventTouchUpInside];
-        objc_setAssociatedObject(self, kSPKSettingsEntryButtonAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        SPKLog(@"Settings", @"[Sparkle] Settings entry seated in the navigation bar");
-    }
-
-    // SwiftUI re-adds its own content on each pass, so the button is brought
-    // back to the front rather than added once.
-    if (button.superview != self)
-        [self addSubview:button];
-    // bringSubviewToFront: SALIT le layout, donc rappelle layoutSubviews, donc
-    // relance le parcours ci-dessous : une boucle de rétroaction qui rendait
-    // l'ouverture des réglages très lente. On ne remonte que si nécessaire.
-    if (self.subviews.lastObject != button)
-        [self bringSubviewToFront:button];
-    button.hidden = NO;
-
-    // Containers move between iOS versions; the title does not. It sits in the
-    // middle of the control row by definition, so its centre is the one to
-    // match — found by walking down to the deepest label with text.
-    CGFloat size = kSPKSettingsEntryButtonSize;
-    CGRect bounds = self.bounds;
-    // Le parcours complet tournait à CHAQUE passe de layout, sur toute la
-    // hiérarchie SwiftUI de la barre. On garde le libellé trouvé et on ne
-    // recommence que s'il n'est plus valable.
-    UILabel *titleLabel = objc_getAssociatedObject(self, kSPKSettingsEntryTitleAssocKey);
-    BOOL searchRequested = [objc_getAssociatedObject(self, kSPKSettingsEntrySearchAssocKey) boolValue];
-    if (!SPKSettingsEntryTitleStillValid(titleLabel, self) && searchRequested) {
-        objc_setAssociatedObject(self, kSPKSettingsEntrySearchAssocKey, @NO, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-        // Le titre est PLUS PROFOND que quelques niveaux dans la barre SwiftUI des
-    // réglages : toute limite de profondeur le ratait, et le rater faisait
-    // disparaître l'icône. On cherche donc sans limite — mais UNE SEULE FOIS
-    // par ouverture d'écran, jamais à chaque passe de layout.
-    titleLabel = nil;
-    NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
-    while (queue.count > 0) {
-        UIView *view = queue.firstObject;
-        [queue removeObjectAtIndex:0];
-        if (view == button)
-            continue;
-        if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
-            (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
-            titleLabel = (UILabel *)view;
-        [queue addObjectsFromArray:view.subviews];
-    }
-        objc_setAssociatedObject(self, kSPKSettingsEntryTitleAssocKey, titleLabel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    }
-
-    // On the first layout pass the bar has no title yet. Rather than place the
-    // icon at a guessed height and let it jump when the title arrives, keep it
-    // hidden until there is something to align with.
-    //
-    // Repli : la dernière hauteur connue. Une fois posée, l'icône ne bouge plus
-    // et ne disparaît plus, même si SwiftUI remplace son libellé.
-    NSNumber *rememberedCentre = objc_getAssociatedObject(self, kSPKSettingsEntryCenterAssocKey);
-    if (!SPKSettingsEntryTitleStillValid(titleLabel, self) && rememberedCentre) {
-        button.hidden = NO;
-        button.frame = CGRectMake(CGRectGetMaxX(bounds) - kSPKSettingsEntryButtonInset - size,
-                                  rememberedCentre.doubleValue - size / 2.0, size, size);
-        SPKLogSettingsEntryState(self, 3);
-        return;
-    }
-
-    if (!titleLabel) {
-        SPKLogSettingsEntryState(self, 2);
-        // Already placed: leave it where it is rather than blink it off while
-        // the title is between two passes. Only a never-placed button hides.
-        if (button.hidden || CGRectIsEmpty(button.frame))
-            button.hidden = YES;
-        // Aucune relance ici. Redemander une passe DEPUIS une passe est une
-        // boucle : c'est ce qui rendait l'ouverture des réglages interminable.
-        // viewDidAppear: en déclenche déjà deux, ce qui suffit et reste borné.
-        return;
-    }
-    SPKLogSettingsEntryState(self, 3);
-    CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
-    // Retenue pour les passes suivantes : c'est elle qui évite de refouiller
-    // l'arbre, et qui garde l'icône en place quand le libellé s'absente.
-    objc_setAssociatedObject(self, kSPKSettingsEntryCenterAssocKey, @(centreY), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    // Mirror the leading inset of whatever sits on the other side of the title.
-    CGFloat inset = kSPKSettingsEntryButtonInset;
-    UIView *leading = nil;
-    for (UIView *child in (titleLabel.superview ? titleLabel.superview.subviews : self.subviews)) {
-        if (child == button || child == titleLabel || CGRectIsEmpty(child.frame))
-            continue;
-        CGRect f = [child convertRect:child.bounds toView:self];
-        if (CGRectGetWidth(f) > CGRectGetWidth(bounds) * 0.4)
-            continue;
-        if (!leading || CGRectGetMinX(f) < CGRectGetMinX([leading convertRect:leading.bounds toView:self]))
-            leading = child;
-    }
-    if (leading) {
-        CGFloat x = CGRectGetMinX([leading convertRect:leading.bounds toView:self]);
-        if (x < CGRectGetWidth(bounds) * 0.25)
-            inset = x;
-    }
-
-    button.frame = CGRectMake(CGRectGetMaxX(bounds) - size - inset,
-                              centreY - size / 2.0,
-                              size,
-                              size);
-}
-
-%end
-
-// The retry added last time only covered the "no title yet" branch. Coming back
-// from a swipe can instead leave the bar's LAST layout pass reading a different
-// top controller, and nothing lays it out again — so the icon stayed away until
-// Instagram restarted. This is the event that says "the screen is on screen
-// again", and it asks the bar for one more pass.
 %hook UIViewController
 
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
+
     if (!SPKIsNativeSettingsController(self))
         return;
-    UINavigationBar *bar = self.navigationController.navigationBar;
-    // La seule occasion où l'on refouille l'arbre : à l'ouverture de l'écran.
-    objc_setAssociatedObject(bar, kSPKSettingsEntrySearchAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    [bar setNeedsLayout];
-    // The SwiftUI screen finishes installing its own bar content a beat later.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [bar setNeedsLayout];
+
+    SPKSeatSettingsEntryItem(self);
+
+    // Une seule reprise, le temps que SwiftUI ait fini de reconstruire sa barre.
+    // Bornée à une fois par apparition : ce n'est pas une boucle.
+    __weak UIViewController *weakController = self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        SPKSeatSettingsEntryItem(weakController);
     });
 }
 
 %end
+
 %end
 
 void SPKInstallNativeSettingsEntryHooksIfNeeded(void) {
