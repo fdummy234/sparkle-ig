@@ -188,9 +188,8 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
     headerButton.searchKeywords = @"feed header button shortcut";
 
-    // Restored, and renamed: the page holds five switches and nothing
-    // reorders — the menu order is fixed in SPKHeaderButtonAllDestinations().
-    // "Reorder" promised a feature that was never written., so even
+    // Five switches. The menu order itself is fixed in
+    // SPKHeaderButtonAllDestinations() and is not editable here., so even
     // reconnected it would have opened blank. These are the five destinations
     // SPKHeaderDestPrefKey() still reads at runtime.
     SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure Destinations"
@@ -221,9 +220,8 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     configureDestinations.searchKeywords = @"configure";
     configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
 
-    // Moved out of Tools: it only fires when this button's menu opens, so it
-    // belongs to this button and follows the same visibility rule as the row
-    // above. It sat under "Quick Settings Access", which no longer exists.
+    // Fires when this button's menu opens, so it follows the same visibility
+    // rule as the row above.
     SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
                                                              icon:SPKSettingsIcon(@"haptics")
                                                       defaultsKey:@"tools_shortcut_haptics"];
@@ -234,8 +232,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     shortcutHaptics.helpText = @"A short tap of feedback when the header button's menu opens.";
 
     SPKSetting *root = SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
-        // Moved out of Feed: the button opens Sparkle's own screens from the
-        // header, whatever you are looking at — it is not a feed setting.
+        // The button opens Sparkle's own screens from the header on any tab.
         SPKTopicSection(@"Header Shortcut", @[
             headerButton,
             SPKFeedHeaderButtonDefaultActionNavigationSetting(),

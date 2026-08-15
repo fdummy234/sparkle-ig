@@ -103,9 +103,7 @@ manualSeenList.hiddenProvider = ^BOOL {
 
 static NSArray *SPKStoriesSettingsSections(void) {
     return @[
-        // Reconnected: the section was written and complete but never assembled,
-        // so manual seen had no screen at all. It leads the page because it is
-        // what the file declares first.
+        // Leads the page: seen receipts govern what viewing a story reports.
         SPKStoriesSeenReceiptsSection(),
 
 
