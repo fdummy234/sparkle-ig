@@ -72,7 +72,6 @@
                            icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:kSPKNotificationPillGlowEnabledKey],
             [SPKSetting switchCellWithTitle:@"Liquid Glass"
-                                       icon:SPKSettingsIcon(@"aura")
                                    subtitle:(SPKPrefIsAvailable(kSPKNotificationPillLiquidGlassEnabledKey)
                                                  ? @"Render notifications with iOS 26 Liquid Glass"
                                                  : @"Requires iOS 26 or later")
