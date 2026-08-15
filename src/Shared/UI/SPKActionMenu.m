@@ -269,17 +269,19 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     // Measured on the previous build: at 0.78 damping the panel walked straight
     // to its size and never overshot — no bounce at all. 0.62 with real launch
     // velocity overshoots and settles back, which is the liquid-glass feel.
-    [UIView animateWithDuration:0.52
-                          delay:0
-         usingSpringWithDamping:0.62
-          initialSpringVelocity:0.7
-                        options:UIViewAnimationOptionAllowUserInteraction
-                     animations:^{
-                         overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
-                         container.alpha = 1.0;
-                         container.transform = CGAffineTransformIdentity;
-                     }
-                     completion:nil];
+    UISpringTimingParameters *openTiming =
+        [[UISpringTimingParameters alloc] initWithMass:1.0
+                                             stiffness:200.0
+                                               damping:17.5
+                                       initialVelocity:CGVectorMake(0.0, 6.0)];
+    UIViewPropertyAnimator *openAnimator =
+        [[UIViewPropertyAnimator alloc] initWithDuration:0.0 timingParameters:openTiming];
+    [openAnimator addAnimations:^{
+        overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
+        container.alpha = 1.0;
+        container.transform = CGAffineTransformIdentity;
+    }];
+    [openAnimator startAnimation];
 }
 
 // Draws one level. `header` is nil at the top; inside a submenu it is that
@@ -376,7 +378,6 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
         }
     }
 
-    blurView.frame = CGRectMake(0, 0, width, height);
     if (outgoing) {
         [blurView.contentView addSubview:outgoing];
         for (UIView *row in blurView.contentView.subviews) {
@@ -403,19 +404,31 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     menuY = MAX(minY, MIN(menuY, MAX(minY, maxY)));
 
     CGRect target = CGRectMake(x, menuY, width, height);
+    CGRect glassTarget = CGRectMake(0, 0, width, height);
     if (animated) {
-        [UIView animateWithDuration:0.50
-                              delay:0
-             usingSpringWithDamping:0.64
-              initialSpringVelocity:0.6
-                            options:UIViewAnimationOptionAllowUserInteraction
-                         animations:^{
-                             container.frame = target;
-                             outgoing.alpha = 0.0;
-                         }
-                         completion:^(__unused BOOL done) {
-                             [outgoing removeFromSuperview];
-                         }];
+        // A real spring, described by its physics rather than by a duration:
+        // stiffness 210 / damping 19 gives a 0.43 s response and a damping ratio
+        // of 0.66 — it overshoots, comes back, and settles, which is the motion
+        // the system's own menus use.
+        UISpringTimingParameters *timing =
+            [[UISpringTimingParameters alloc] initWithMass:1.0
+                                                 stiffness:210.0
+                                                   damping:19.0
+                                           initialVelocity:CGVectorMake(0.0, 0.0)];
+        UIViewPropertyAnimator *animator =
+            [[UIViewPropertyAnimator alloc] initWithDuration:0.0 timingParameters:timing];
+        [animator addAnimations:^{
+            container.frame = target;
+            // The glass has to travel WITH the container. Resized outside the
+            // animation, it snapped to its new size while the box was still
+            // moving — that was the jolt.
+            blurView.frame = glassTarget;
+            outgoing.alpha = 0.0;
+        }];
+        [animator addCompletion:^(__unused UIViewAnimatingPosition position) {
+            [outgoing removeFromSuperview];
+        }];
+        [animator startAnimation];
 
         // The rows arrive one behind the other rather than all at once — the
         // detail that makes a system menu feel alive instead of redrawn.
@@ -435,6 +448,7 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
         // layer shifts by half its size when the anchor point moves.
         container.layer.anchorPoint = CGPointMake(1.0, (belowY <= maxY) ? 0.0 : 1.0);
         container.frame = target;
+        blurView.frame = glassTarget;
     }
 }
 
