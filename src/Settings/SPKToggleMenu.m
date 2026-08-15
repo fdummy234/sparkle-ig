@@ -202,10 +202,12 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 }
 
 - (void)dismiss {
-    [UIView animateWithDuration:0.15
+    [UIView animateWithDuration:0.22
+        delay:0
+        options:UIViewAnimationOptionCurveEaseOut
         animations:^{
             self.menuContainer.alpha = 0.0;
-            self.menuContainer.transform = CGAffineTransformMakeScale(0.94, 0.94);
+            self.menuContainer.transform = CGAffineTransformMakeScale(0.90, 0.90);
             self.backgroundColor = UIColor.clearColor;
         }
         completion:^(__unused BOOL finished) {
@@ -276,6 +278,9 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     } else {
         menuEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial];
     }
+    // Interactive glass deforms under a finger instead of sitting flat.
+    if ([menuEffect respondsToSelector:NSSelectorFromString(@"setInteractive:")])
+        [menuEffect setValue:@YES forKey:@"interactive"];
     UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:menuEffect];
     blurView.frame = CGRectMake(0, 0, kSPKToggleMenuWidth, menuHeight);
     blurView.layer.cornerRadius = kSPKToggleMenuCornerRadius;
@@ -348,21 +353,30 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
                               : CGRectGetMinY(anchorFrame) - kSPKToggleMenuAnchorGap - menuHeight;
     menuY = MAX(minY, MIN(menuY, maxY));
 
+    // The corner anchor goes on BEFORE the frame: moving an anchor point on a
+    // laid-out layer shifts it by half its size. Set first, the frame lands right.
+    container.layer.anchorPoint = CGPointMake(1.0, fitsBelow ? 0.0 : 1.0);
     container.frame = CGRectMake(x, menuY, kSPKToggleMenuWidth, menuHeight);
     [overlay addSubview:container];
     [window addSubview:overlay];
 
+    // Same motion as the action button's menu: a spring described by its physics
+    // rather than a duration, so the panel grows out of the row and settles.
     container.alpha = 0.0;
-    container.transform = CGAffineTransformMakeScale(0.92, 0.92);
-    [UIView animateWithDuration:0.2
-                          delay:0
-                        options:UIViewAnimationOptionCurveEaseOut
-                     animations:^{
-                         overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
-                         container.alpha = 1.0;
-                         container.transform = CGAffineTransformIdentity;
-                     }
-                     completion:nil];
+    container.transform = CGAffineTransformMakeScale(0.82, 0.82);
+    UISpringTimingParameters *openTiming =
+        [[UISpringTimingParameters alloc] initWithMass:1.0
+                                             stiffness:200.0
+                                               damping:17.5
+                                       initialVelocity:CGVectorMake(0.0, 6.0)];
+    UIViewPropertyAnimator *openAnimator =
+        [[UIViewPropertyAnimator alloc] initWithDuration:0.0 timingParameters:openTiming];
+    [openAnimator addAnimations:^{
+        overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
+        container.alpha = 1.0;
+        container.transform = CGAffineTransformIdentity;
+    }];
+    [openAnimator startAnimation];
 }
 
 @end
