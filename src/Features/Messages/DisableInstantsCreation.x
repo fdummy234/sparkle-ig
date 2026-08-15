@@ -86,7 +86,7 @@ static BOOL SPKQuickSnapCreationDisabled(void) {
 }
 
 static BOOL SPKQuickSnapSendConfirmEnabled(void) {
-    /// TODO: investigate — hard-disabled. Confirm Instant Capture cannot gate IG's
+    /// Hard-disabled. Confirm Instant Capture cannot gate IG's
     /// new VIDEO Instants pipeline: capture happens regardless of the capture-button
     /// delegate (those callbacks are notification-only; swallowing them only breaks
     /// the shutter UI), and both photo & video auto-send through the undo-send pill /
