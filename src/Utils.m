@@ -1313,7 +1313,6 @@ static id SPKPrefValueWithMasterOverlay(NSString *key) {
 
     // Temp folder
     // * disabled bc app crashed trying to delete certain files inside it
-    // todo: remove the above disclaimer if this new code doesn't cause crashing
     NSArray *tempFolderContents = [fileManager contentsOfDirectoryAtURL:[NSURL fileURLWithPath:NSTemporaryDirectory()] includingPropertiesForKeys:nil options:NSDirectoryEnumerationSkipsHiddenFiles error:nil];
 
     for (NSURL *fileURL in tempFolderContents) {
