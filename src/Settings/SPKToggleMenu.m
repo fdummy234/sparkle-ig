@@ -64,8 +64,8 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 @property (nonatomic, strong) UIImageView *iconView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIImageView *checkView;
-/// Posé par le présentateur : dans un menu MIXTE, les items sans icône gardent
-/// la colonne pour que les titres restent alignés.
+/// Set by the presenter. In a menu where some items carry an icon, the ones
+/// without still reserve the column so every title lines up.
 @property (nonatomic, assign) BOOL reservesIconColumn;
 @end
 
@@ -75,9 +75,9 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     if ((self = [super initWithFrame:CGRectZero])) {
         _item = item;
 
-        // SPKSettingsIcon() ne renvoie jamais nil : un nom inconnu ou vide donne
-        // l'image de repli « [?] ». C'est elle qui défaisait la règle plus bas,
-        // laquelle testait image != nil pour décider s'il y a une icône.
+        // SPKSettingsIcon() never returns nil: an unknown or empty name yields
+        // the placeholder glyph. The image is built only for a real name so the
+        // layout below can test for its absence.
         UIImage *iconImage = item.iconName.length > 0
             ? [SPKSettingsIcon(item.iconName) imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]
             : nil;
@@ -289,7 +289,8 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     } else {
         menuEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemMaterial];
     }
-    // Interactive glass deforms under a finger instead of sitting flat.
+    // Interactive glass deforms under a finger. Set through KVC and guarded so
+    // it is a no-op on systems without the property.
     if ([menuEffect respondsToSelector:NSSelectorFromString(@"setInteractive:")])
         [menuEffect setValue:@YES forKey:@"interactive"];
     UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:menuEffect];
@@ -299,9 +300,8 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     blurView.clipsToBounds = YES;
     [container addSubview:blurView];
 
-    // Un menu dont AUCUN item ne porte d'icône n'a pas de colonne du tout : les
-    // titres commencent au bord. S'il y en a au moins une, tous la réservent,
-    // sinon les titres du même menu ne s'alignent plus entre eux.
+    // A menu where no item carries an icon has no icon column at all; titles
+    // start at the margin. One icon anywhere makes every row reserve it.
     BOOL menuHasAnyIcon = NO;
     for (SPKToggleMenuItem *candidate in items) {
         if (candidate.iconName.length > 0) {
@@ -383,8 +383,8 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     [overlay addSubview:container];
     [window addSubview:overlay];
 
-    // Same motion as the action button's menu: a spring described by its physics
-    // rather than a duration, so the panel grows out of the row and settles.
+    // A spring described by its physics rather than a duration: the panel grows
+    // out of the row and settles.
     container.alpha = 0.0;
     container.transform = CGAffineTransformMakeScale(0.82, 0.82);
     UISpringTimingParameters *openTiming =

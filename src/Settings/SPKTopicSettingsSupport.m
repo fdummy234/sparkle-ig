@@ -175,9 +175,8 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray *navSections = [NSMutableArray array];
     [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
     if (menuRows.count > 0)
-        // Not shown on screen — this file's footers only feed the search index
-        // (SPKSettingsViewController.m:1488). It earns its place by making the
-        // section findable on "swipe", "reorder" and "submenu".
+        // Not rendered: section footers only feed the search index. This one
+        // makes the section findable on "swipe", "reorder" and "submenu".
         [navSections addObject:SPKTopicSection(@"Its Menu", menuRows,
             @"On Tap is what a single tap does. Configure Menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
     if (finalRows.count > 0)
@@ -448,10 +447,8 @@ UIMenu *SPKStoryAutoSaveFilterModeMenu(void) {
 }
 
 SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void) {
-    // Converti en menu, comme tous les autres sélecteurs à choix unique du
-    // tweak : un écran poussé pour six options était le dernier survivant de
-    // l'ancien gabarit. Les valeurs sont celles que lit
-    // SPKHeaderDestinationForIdentifier(); "menu" est le repli qui ouvre la liste.
+    // A menu, like every other single-choice selector. The values are the ones
+    // SPKHeaderDestinationForIdentifier() reads; "menu" opens the full list.
     SPKSetting *setting = [SPKSetting menuCellWithTitle:@"Default Tap Action"
                                                    icon:SPKSettingsIcon(@"action")
                                                    menu:[UIMenu menuWithChildren:@[
