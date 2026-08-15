@@ -16,9 +16,6 @@
 // whether this is the settings screen.
 
 static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
-static const void *kSPKSettingsEntryRetryAssocKey = &kSPKSettingsEntryRetryAssocKey;
-// Bounded so a bar that genuinely never gets a title cannot spin on layout.
-static NSInteger const kSPKSettingsEntryMaxTitleRetries = 12;
 static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssocKey;
 static const void *kSPKSettingsEntryTitleAssocKey = &kSPKSettingsEntryTitleAssocKey;
 
@@ -160,19 +157,23 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     // recommence que s'il n'est plus valable.
     UILabel *titleLabel = objc_getAssociatedObject(self, kSPKSettingsEntryTitleAssocKey);
     if (!SPKSettingsEntryTitleStillValid(titleLabel, self)) {
+        // Borné par PROFONDEUR, pas par nombre de nœuds : le titre d'une barre
+        // vit à trois ou quatre niveaux, jamais plus. Un plafond de nœuds, lui,
+        // pouvait rater le titre dans une hiérarchie SwiftUI large — et rater le
+        // titre relançait le layout en boucle.
         titleLabel = nil;
-        NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
-        NSUInteger visited = 0;
-        while (queue.count > 0 && visited < 400) {
-            UIView *view = queue.firstObject;
-            [queue removeObjectAtIndex:0];
-            visited++;
-            if (view == button)
-                continue;
-            if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
-                (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
-                titleLabel = (UILabel *)view;
-            [queue addObjectsFromArray:view.subviews];
+        NSMutableArray<UIView *> *level = [self.subviews mutableCopy];
+        for (NSInteger depth = 0; depth < 5 && level.count > 0; depth++) {
+            NSMutableArray<UIView *> *next = [NSMutableArray array];
+            for (UIView *view in level) {
+                if (view == button)
+                    continue;
+                if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
+                    (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
+                    titleLabel = (UILabel *)view;
+                [next addObjectsFromArray:view.subviews];
+            }
+            level = next;
         }
         // RETAIN et non ASSIGN : en ASSIGN, un libellé libéré laisserait un
         // pointeur mort que la validation lirait au tour suivant. Retenir une
@@ -195,18 +196,11 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
         // the title is between two passes. Only a never-placed button hides.
         if (button.hidden || CGRectIsEmpty(button.frame))
             button.hidden = YES;
-        NSNumber *attempts = objc_getAssociatedObject(self, kSPKSettingsEntryRetryAssocKey);
-        if (attempts.integerValue < kSPKSettingsEntryMaxTitleRetries) {
-            objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(attempts.integerValue + 1), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            __weak UINavigationBar *weakBar = self;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [weakBar setNeedsLayout];
-            });
-        }
+        // Aucune relance ici. Redemander une passe DEPUIS une passe est une
+        // boucle : c'est ce qui rendait l'ouverture des réglages interminable.
+        // viewDidAppear: en déclenche déjà deux, ce qui suffit et reste borné.
         return;
     }
-    // Placed successfully: the next disappearance gets a fresh set of retries.
-    objc_setAssociatedObject(self, kSPKSettingsEntryRetryAssocKey, @(0), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     SPKLogSettingsEntryState(self, 3);
     CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
 
