@@ -430,7 +430,7 @@ static SPKDeletedMessageKind SPKDMDetailChipKindForIndex(NSInteger index) {
                                                                                                                              }],
                                                                                                ]];
                                                }];
-    /// TODO: investigate whether native UIMenu destructive tint can be customized. UIMenuElement exposes no supported color API.
+    /// A native UIMenu's destructive tint is not customizable: UIMenuElement exposes no supported color API.
     deleteAction.attributes = UIMenuElementAttributesDestructive;
 
     UIMenu *destructiveSection = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ deleteAction ]];
@@ -728,7 +728,7 @@ static SPKDeletedMessageKind SPKDMDetailChipKindForIndex(NSInteger index) {
                                                handler:^(__unused UIAction *a) {
                                                    [SPKDeletedMessagesStorage deleteMessageId:message.messageId forOwnerPK:weakSelf.ownerPK];
                                                }];
-    /// TODO: investigate whether native UIMenu destructive tint can be customized. UIMenuElement exposes no supported color API.
+    /// A native UIMenu's destructive tint is not customizable: UIMenuElement exposes no supported color API.
     deleteAction.attributes = UIMenuElementAttributesDestructive;
 
     UIMenu *destructiveSection = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ deleteAction ]];

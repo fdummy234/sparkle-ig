@@ -165,7 +165,7 @@ static NSString *SPKDMStorageOwnerPK(void) {
 
     SPKSetting *clearStaged = [SPKSetting buttonCellWithTitle:@"Clear Media Recovery Cache"
                                                      subtitle:nil
-                                                         icon:SPKSettingsIcon(@"clock")
+                                                         icon:SPKSettingsIcon(@"trash")
                                                        action:^{
                                                            [weakSelf confirmClearStagedMedia];
                                                        }];

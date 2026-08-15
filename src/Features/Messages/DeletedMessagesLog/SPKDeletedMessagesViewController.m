@@ -472,7 +472,7 @@ static SPKDeletedMessageKind SPKDMChipKindForIndex(NSInteger index) {
                                                  handler:^(__unused UIAction *a) {
                                                      [weakSelf confirmClearAll];
                                                  }];
-    /// TODO: investigate whether native UIMenu destructive tint can be customized. UIMenuElement exposes no supported color API.
+    /// A native UIMenu's destructive tint is not customizable: UIMenuElement exposes no supported color API.
     clearAllAction.attributes = UIMenuElementAttributesDestructive;
 
     UIMenu *destructiveSection = [UIMenu menuWithTitle:@"" image:nil identifier:nil options:UIMenuOptionsDisplayInline children:@[ clearAllAction ]];
