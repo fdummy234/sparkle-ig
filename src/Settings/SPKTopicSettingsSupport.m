@@ -1,6 +1,5 @@
 #import "SPKTopicSettingsSupport.h"
 #import "../Features/Feed/HeaderActionButton.h"
-#import "SPKHeaderButtonDefaultActionPickerViewController.h"
 #import "../Shared/UI/SPKNotificationCenter.h"
 #import "SPKActionButtonDefaultActionPickerViewController.h"
 #import "SPKBulkActionMenuEditViewController.h"
@@ -449,21 +448,28 @@ UIMenu *SPKStoryAutoSaveFilterModeMenu(void) {
 }
 
 SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void) {
-    // A navigation row (like the media action button's Default Tap Action) rather
-    // than a menu-button cell: the selected value renders as a full-width subtitle
-    // beneath the title instead of squeezing / truncating the title on one line.
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Default Tap Action"
-                                                     subtitle:@""
-                                                         icon:SPKSettingsIcon(@"action")
-                                               viewController:[SPKHeaderButtonDefaultActionPickerViewController new]];
+    // Converti en menu, comme tous les autres sélecteurs à choix unique du
+    // tweak : un écran poussé pour six options était le dernier survivant de
+    // l'ancien gabarit. Les valeurs sont celles que lit
+    // SPKHeaderDestinationForIdentifier(); "menu" est le repli qui ouvre la liste.
+    SPKSetting *setting = [SPKSetting menuCellWithTitle:@"Default Tap Action"
+                                                   icon:SPKSettingsIcon(@"action")
+                                                   menu:[UIMenu menuWithChildren:@[
+        SPKMenuCommand(@"Open Menu", @"action", nil, kSPKHeaderButtonDefaultActionKey, @"menu", NO),
+        [UIMenu menuWithTitle:@""
+                        image:nil
+                   identifier:nil
+                      options:UIMenuOptionsDisplayInline
+                     children:@[
+                         SPKMenuCommand(@"Gallery", @"sparkle_gallery", nil, kSPKHeaderButtonDefaultActionKey, @"gallery", NO),
+                         SPKMenuCommand(@"Profile Analyzer", @"profile_analyzer", nil, kSPKHeaderButtonDefaultActionKey, @"analyzer", NO),
+                         SPKMenuCommand(@"Deleted Messages", @"channels", nil, kSPKHeaderButtonDefaultActionKey, @"deleted", NO),
+                         SPKMenuCommand(@"Downloads", @"download", nil, kSPKHeaderButtonDefaultActionKey, @"downloads", NO),
+                         SPKMenuCommand(@"Sparkle Settings", @"settings", nil, kSPKHeaderButtonDefaultActionKey, @"settings", NO)
+                     ]]
+    ]]];
     setting.helpText = @"What a single tap on the header button does. A long press always opens the menu of enabled destinations.";
     setting.searchKeywords = @"default tap action header shortcut";
-    setting.accessoryTextProvider = ^NSString * {
-        return SPKHeaderButtonDefaultActionTitle();
-    };
-    setting.iconProvider = ^UIImage * {
-        return SPKSettingsIcon(SPKHeaderButtonDefaultActionIconName());
-    };
     return setting;
 }
 

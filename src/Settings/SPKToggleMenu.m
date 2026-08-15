@@ -64,6 +64,9 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
 @property (nonatomic, strong) UIImageView *iconView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIImageView *checkView;
+/// Posé par le présentateur : dans un menu MIXTE, les items sans icône gardent
+/// la colonne pour que les titres restent alignés.
+@property (nonatomic, assign) BOOL reservesIconColumn;
 @end
 
 @implementation SPKToggleMenuItemControl
@@ -72,8 +75,13 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     if ((self = [super initWithFrame:CGRectZero])) {
         _item = item;
 
-        _iconView = [[UIImageView alloc] initWithImage:
-            [SPKSettingsIcon(item.iconName) imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
+        // SPKSettingsIcon() ne renvoie jamais nil : un nom inconnu ou vide donne
+        // l'image de repli « [?] ». C'est elle qui défaisait la règle plus bas,
+        // laquelle testait image != nil pour décider s'il y a une icône.
+        UIImage *iconImage = item.iconName.length > 0
+            ? [SPKSettingsIcon(item.iconName) imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]
+            : nil;
+        _iconView = [[UIImageView alloc] initWithImage:iconImage];
         _iconView.tintColor = UIColor.labelColor;
         _iconView.contentMode = UIViewContentModeScaleAspectFit;
         [self addSubview:_iconView];
@@ -109,6 +117,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     // An item that declares no icon reserves no column: the title starts at the
     // margin instead of sitting beside an "unknown glyph" placeholder.
     BOOL hasIcon = (self.iconView.image != nil);
+    BOOL reserves = hasIcon || self.reservesIconColumn;
     self.iconView.hidden = !hasIcon;
     self.iconView.frame = hasIcon
         ? CGRectMake(kSPKToggleMenuHPad, (h - kSPKToggleMenuIconSize) / 2.0,
@@ -117,7 +126,9 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     CGFloat checkW = 18.0;
     self.checkView.frame = CGRectMake(w - kSPKToggleMenuHPad - checkW,
                                       (h - checkW) / 2.0, checkW, checkW);
-    CGFloat titleX = hasIcon ? CGRectGetMaxX(self.iconView.frame) + 12.0 : kSPKToggleMenuHPad;
+    CGFloat titleX = reserves
+        ? kSPKToggleMenuHPad + kSPKToggleMenuIconSize + 12.0
+        : kSPKToggleMenuHPad;
     self.titleLabel.frame = CGRectMake(titleX, 0,
                                        CGRectGetMinX(self.checkView.frame) - 8.0 - titleX, h);
 }
@@ -288,6 +299,17 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     blurView.clipsToBounds = YES;
     [container addSubview:blurView];
 
+    // Un menu dont AUCUN item ne porte d'icône n'a pas de colonne du tout : les
+    // titres commencent au bord. S'il y en a au moins une, tous la réservent,
+    // sinon les titres du même menu ne s'alignent plus entre eux.
+    BOOL menuHasAnyIcon = NO;
+    for (SPKToggleMenuItem *candidate in items) {
+        if (candidate.iconName.length > 0) {
+            menuHasAnyIcon = YES;
+            break;
+        }
+    }
+
     CGFloat y = kSPKToggleMenuContentPadding;
     for (NSUInteger i = 0; i < items.count; i++) {
         if (i > 0) {
@@ -298,6 +320,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
             y += hairline;
         }
         SPKToggleMenuItemControl *control = [[SPKToggleMenuItemControl alloc] initWithItem:items[i]];
+        control.reservesIconColumn = menuHasAnyIcon;
         if (!showsDone) {
             __weak SPKToggleMenuOverlay *weakOverlay = overlay;
             control.dismissHandler = ^{
