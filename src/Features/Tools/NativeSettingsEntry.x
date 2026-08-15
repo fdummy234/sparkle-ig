@@ -18,6 +18,8 @@
 static const void *kSPKSettingsEntryButtonAssocKey = &kSPKSettingsEntryButtonAssocKey;
 static const void *kSPKSettingsEntryStateAssocKey = &kSPKSettingsEntryStateAssocKey;
 static const void *kSPKSettingsEntryTitleAssocKey = &kSPKSettingsEntryTitleAssocKey;
+static const void *kSPKSettingsEntryCenterAssocKey = &kSPKSettingsEntryCenterAssocKey;
+static const void *kSPKSettingsEntrySearchAssocKey = &kSPKSettingsEntrySearchAssocKey;
 
 // Le libellé retenu est-il toujours utilisable ? Quelques sauts vers le haut,
 // contre un parcours complet de l'arbre.
@@ -156,28 +158,25 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     // hiérarchie SwiftUI de la barre. On garde le libellé trouvé et on ne
     // recommence que s'il n'est plus valable.
     UILabel *titleLabel = objc_getAssociatedObject(self, kSPKSettingsEntryTitleAssocKey);
-    if (!SPKSettingsEntryTitleStillValid(titleLabel, self)) {
-        // Borné par PROFONDEUR, pas par nombre de nœuds : le titre d'une barre
-        // vit à trois ou quatre niveaux, jamais plus. Un plafond de nœuds, lui,
-        // pouvait rater le titre dans une hiérarchie SwiftUI large — et rater le
-        // titre relançait le layout en boucle.
-        titleLabel = nil;
-        NSMutableArray<UIView *> *level = [self.subviews mutableCopy];
-        for (NSInteger depth = 0; depth < 5 && level.count > 0; depth++) {
-            NSMutableArray<UIView *> *next = [NSMutableArray array];
-            for (UIView *view in level) {
-                if (view == button)
-                    continue;
-                if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
-                    (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
-                    titleLabel = (UILabel *)view;
-                [next addObjectsFromArray:view.subviews];
-            }
-            level = next;
-        }
-        // RETAIN et non ASSIGN : en ASSIGN, un libellé libéré laisserait un
-        // pointeur mort que la validation lirait au tour suivant. Retenir une
-        // sous-vue que la barre retient déjà ne crée aucun cycle.
+    BOOL searchRequested = [objc_getAssociatedObject(self, kSPKSettingsEntrySearchAssocKey) boolValue];
+    if (!SPKSettingsEntryTitleStillValid(titleLabel, self) && searchRequested) {
+        objc_setAssociatedObject(self, kSPKSettingsEntrySearchAssocKey, @NO, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        // Le titre est PLUS PROFOND que quelques niveaux dans la barre SwiftUI des
+    // réglages : toute limite de profondeur le ratait, et le rater faisait
+    // disparaître l'icône. On cherche donc sans limite — mais UNE SEULE FOIS
+    // par ouverture d'écran, jamais à chaque passe de layout.
+    titleLabel = nil;
+    NSMutableArray<UIView *> *queue = [self.subviews mutableCopy];
+    while (queue.count > 0) {
+        UIView *view = queue.firstObject;
+        [queue removeObjectAtIndex:0];
+        if (view == button)
+            continue;
+        if ([view isKindOfClass:[UILabel class]] && ((UILabel *)view).text.length > 0 &&
+            (!titleLabel || CGRectGetWidth(view.bounds) > CGRectGetWidth(titleLabel.bounds)))
+            titleLabel = (UILabel *)view;
+        [queue addObjectsFromArray:view.subviews];
+    }
         objc_setAssociatedObject(self, kSPKSettingsEntryTitleAssocKey, titleLabel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
 
@@ -185,11 +184,17 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     // icon at a guessed height and let it jump when the title arrives, keep it
     // hidden until there is something to align with.
     //
-    // Hiding alone was not enough: during a tab or back swipe the title leaves
-    // for a pass, and if that pass is the LAST one the bar performs, the icon
-    // stayed hidden until Instagram was restarted. So ask for another pass
-    // rather than giving up — bounded, and only while this really is the
-    // settings screen (checked at the top of this method).
+    // Repli : la dernière hauteur connue. Une fois posée, l'icône ne bouge plus
+    // et ne disparaît plus, même si SwiftUI remplace son libellé.
+    NSNumber *rememberedCentre = objc_getAssociatedObject(self, kSPKSettingsEntryCenterAssocKey);
+    if (!SPKSettingsEntryTitleStillValid(titleLabel, self) && rememberedCentre) {
+        button.hidden = NO;
+        button.frame = CGRectMake(CGRectGetMaxX(bounds) - kSPKSettingsEntryButtonInset - size,
+                                  rememberedCentre.doubleValue - size / 2.0, size, size);
+        SPKLogSettingsEntryState(self, 3);
+        return;
+    }
+
     if (!titleLabel) {
         SPKLogSettingsEntryState(self, 2);
         // Already placed: leave it where it is rather than blink it off while
@@ -203,6 +208,9 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     }
     SPKLogSettingsEntryState(self, 3);
     CGFloat centreY = CGRectGetMidY([titleLabel convertRect:titleLabel.bounds toView:self]);
+    // Retenue pour les passes suivantes : c'est elle qui évite de refouiller
+    // l'arbre, et qui garde l'icône en place quand le libellé s'absente.
+    objc_setAssociatedObject(self, kSPKSettingsEntryCenterAssocKey, @(centreY), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     // Mirror the leading inset of whatever sits on the other side of the title.
     CGFloat inset = kSPKSettingsEntryButtonInset;
@@ -242,6 +250,8 @@ static void SPKSettingsEntryHideAfterConfirm(UINavigationBar *bar, UIButton *but
     if (!SPKIsNativeSettingsController(self))
         return;
     UINavigationBar *bar = self.navigationController.navigationBar;
+    // La seule occasion où l'on refouille l'arbre : à l'ouverture de l'écran.
+    objc_setAssociatedObject(bar, kSPKSettingsEntrySearchAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     [bar setNeedsLayout];
     // The SwiftUI screen finishes installing its own bar content a beat later.
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
