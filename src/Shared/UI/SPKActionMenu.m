@@ -174,13 +174,13 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
         if (self.pendingAction)
             self.pendingAction();
     };
-    [UIView animateWithDuration:0.16
+    [UIView animateWithDuration:0.22
                           delay:0
-                        options:UIViewAnimationOptionCurveEaseIn
+                        options:UIViewAnimationOptionCurveEaseOut
                      animations:^{
                          self.backgroundColor = UIColor.clearColor;
                          container.alpha = 0.0;
-                         container.transform = CGAffineTransformMakeScale(0.94, 0.94);
+                         container.transform = CGAffineTransformMakeScale(0.90, 0.90);
                      }
                      completion:finished];
 }
@@ -260,10 +260,14 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
          animated:NO];
 
     container.alpha = 0.0;
-    container.transform = CGAffineTransformMakeScale(0.92, 0.92);
-    [UIView animateWithDuration:0.2
+    container.transform = CGAffineTransformMakeScale(0.86, 0.86);
+    // A spring, not a curve: the system's menus settle rather than stop, and
+    // the corner anchor set in fillMenu makes it grow out of the button.
+    [UIView animateWithDuration:0.42
                           delay:0
-                        options:UIViewAnimationOptionCurveEaseOut
+         usingSpringWithDamping:0.78
+          initialSpringVelocity:0.0
+                        options:UIViewAnimationOptionAllowUserInteraction
                      animations:^{
                          overlay.backgroundColor = [UIColor.blackColor colorWithAlphaComponent:0.08];
                          container.alpha = 1.0;
@@ -283,6 +287,15 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
            nodes:(NSArray<SPKActionMenuNode *> *)nodes
           header:(SPKActionMenuNode *)header
         animated:(BOOL)animated {
+    // Cross-fade: the outgoing level is photographed and faded out over the new
+    // one, so the rows dissolve while the box resizes instead of being swapped
+    // under it in a single frame.
+    UIView *outgoing = nil;
+    if (animated && blurView.contentView.subviews.count > 0) {
+        outgoing = [blurView.contentView snapshotViewAfterScreenUpdates:NO];
+        outgoing.frame = blurView.contentView.bounds;
+        outgoing.autoresizingMask = UIViewAutoresizingNone;
+    }
     for (UIView *old in [blurView.contentView.subviews copy])
         [old removeFromSuperview];
 
@@ -295,10 +308,13 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     CGFloat y = kSPKActionMenuContentPadding;
     __weak SPKActionMenuOverlay *weakOverlay = overlay;
 
-    void (^addSeparator)(void) = ^{
+    // Takes its position as an argument: a block captures a plain local by VALUE
+    // at creation, so reading `y` inside would have pinned every hairline to the
+    // first row's offset — which is exactly what it did.
+    void (^addSeparator)(CGFloat) = ^(CGFloat lineY) {
         UIView *separator = [UIView new];
         separator.backgroundColor = UIColor.separatorColor;
-        separator.frame = CGRectMake(0, y, width, hairline);
+        separator.frame = CGRectMake(0, lineY, width, hairline);
         [blurView.contentView addSubview:separator];
     };
 
@@ -316,13 +332,13 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
                     anchor:anchorView window:window nodes:strongOverlay.rootNodes
                     header:nil animated:YES];
         };
-        addSeparator();
+        addSeparator(y);
         y += hairline;
     }
 
     for (NSUInteger i = 0; i < nodes.count; i++) {
         if (i > 0) {
-            addSeparator();
+            addSeparator(y);
             y += hairline;
         }
         SPKActionMenuNode *node = nodes[i];
@@ -355,6 +371,13 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
     }
 
     blurView.frame = CGRectMake(0, 0, width, height);
+    if (outgoing) {
+        [blurView.contentView addSubview:outgoing];
+        for (UIView *row in blurView.contentView.subviews) {
+            if (row != outgoing)
+                row.alpha = 0.0;
+        }
+    }
 
     // Placement: below the anchor when it fits, above otherwise, then clamped
     // into the safe area on both axes.
@@ -375,12 +398,26 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
 
     CGRect target = CGRectMake(x, menuY, width, height);
     if (animated) {
-        [UIView animateWithDuration:0.18
+        [UIView animateWithDuration:0.38
                               delay:0
-                            options:UIViewAnimationOptionCurveEaseOut
-                         animations:^{ container.frame = target; }
-                         completion:nil];
+             usingSpringWithDamping:0.82
+              initialSpringVelocity:0.0
+                            options:UIViewAnimationOptionAllowUserInteraction
+                         animations:^{
+                             container.frame = target;
+                             outgoing.alpha = 0.0;
+                             for (UIView *row in blurView.contentView.subviews) {
+                                 if (row != outgoing)
+                                     row.alpha = 1.0;
+                             }
+                         }
+                         completion:^(__unused BOOL done) {
+                             [outgoing removeFromSuperview];
+                         }];
     } else {
+        // First present: the anchor corner must be set BEFORE the frame, or the
+        // layer shifts by half its size when the anchor point moves.
+        container.layer.anchorPoint = CGPointMake(1.0, (belowY <= maxY) ? 0.0 : 1.0);
         container.frame = target;
     }
 }
