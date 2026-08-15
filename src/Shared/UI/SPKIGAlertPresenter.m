@@ -58,7 +58,7 @@ static UIAlertActionStyle SPKUIKitActionStyle(SPKIGAlertActionStyle style) {
     case SPKIGAlertActionStyleCancel:
         return UIAlertActionStyleCancel;
     case SPKIGAlertActionStyleDestructive:
-        /// TODO: investigate whether UIKit fallback alert destructive tint can be customized. UIAlertAction exposes no supported per-action color API.
+        /// A UIKit alert's destructive tint is not customizable: UIAlertAction exposes no supported per-action color API.
         return UIAlertActionStyleDestructive;
     case SPKIGAlertActionStyleDefault:
     default:
