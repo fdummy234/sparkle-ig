@@ -135,6 +135,17 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
+    // Son propre interrupteur : cet installeur fait partie des « essentiels »
+    // (SPKStartupHooks.m:117), donc « Turn Off All Features » ne le saute pas.
+    // Sans cette clé, il n'existait aucun moyen de le retirer.
+    SPKSetting *settingsEntry = [SPKSetting switchCellWithTitle:@"Sparkle Icon in Settings"
+                                                           icon:SPKSettingsIcon(@"sparkle")
+                                                    defaultsKey:@"tools_settings_entry"
+                                                requiresRestart:YES];
+    settingsEntry.helpText = @"Adds the Sparkle button to Instagram's own Settings screen. With it off, reach Sparkle through the home tab long press instead.";
+    settingsEntry.searchKeywords = @"native settings entry icon shortcut";
+    [instagramCells addObject:settingsEntry];
+
     SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
                                                            icon:SPKSettingsIcon(@"notification")
                                                     defaultsKey:@"tools_fix_duplicate_notifications"];
