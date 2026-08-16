@@ -101,7 +101,16 @@ static void SPKApplyCommentSortOrder(id threadConfig) {
 %end
 
 void SPKInstallCommentSortHooksIfEnabled(void) {
-    if ([SPKCommentSortMode() isEqualToString:@"default"])
+    NSString *mode = SPKCommentSortMode();
+    // Unconditional: says whether this installer ran at all, and what it read.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[SPKNotificationCenter shared] notifyIdentifier:@"comment_sort_install"
+                                                   title:@"Comment sort — installer ran"
+                                                subtitle:[NSString stringWithFormat:@"mode = %@", mode]
+                                            iconResource:@"sort"
+                                                    tone:SPKNotificationToneInfo];
+    });
+    if ([mode isEqualToString:@"default"])
         return;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
