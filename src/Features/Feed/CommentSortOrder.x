@@ -1,6 +1,7 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
 #import <objc/runtime.h>
+#import "../../Shared/UI/SPKNotificationCenter.h"
 
 // Forces the comment thread's sort order.
 //
@@ -31,6 +32,7 @@ static NSNumber *SPKCommentSortValue(NSString *mode) {
 }
 
 static void SPKApplyCommentSortOrder(id threadConfig) {
+    static BOOL probed = NO;
     NSNumber *value = SPKCommentSortValue(SPKCommentSortMode());
     if (!threadConfig || !value)
         return;
@@ -62,9 +64,20 @@ static void SPKApplyCommentSortOrder(id threadConfig) {
             [candidates addObject:name];
     }
     free(props);
+    if (probed)
+        return;
+    probed = YES;
+    NSString *found = candidates.count ? [candidates componentsJoinedByString:@", "] : @"none";
     SPKLog(@"Feed", @"[Sparkle] Comment sort order — config class %@ · ordering properties: %@",
-           NSStringFromClass([threadConfig class]),
-           candidates.count ? [candidates componentsJoinedByString:@", "] : @"none");
+           NSStringFromClass([threadConfig class]), found);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[SPKNotificationCenter shared] notifyIdentifier:@"comment_sort_probe"
+                                                   title:@"Comment sort — what the thread exposes"
+                                                subtitle:found
+                                            iconResource:@"sort"
+                                                    tone:candidates.count ? SPKNotificationToneInfo
+                                                                          : SPKNotificationToneError];
+    });
 }
 
 %group SPKCommentSortHooks
