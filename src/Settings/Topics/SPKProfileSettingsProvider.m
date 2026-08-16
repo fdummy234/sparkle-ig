@@ -127,6 +127,22 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
         // page name would say nothing — and without a header there is no ⓘ.
         SPKTopicSection(@"Profile Screen", @[
             ({
+                SPKSetting *age = [SPKSetting switchCellWithTitle:@"Show Account Age"
+                                                             icon:SPKSettingsIcon(@"clock")
+                                                      defaultsKey:@"profile_show_account_age"];
+                age.helpText = @"Adds how long the account has existed next to its post and follower counts. The column is left out when Instagram does not provide the date.";
+                age.searchKeywords = @"account age created joined date";
+                age;
+            }),
+            ({
+                SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution Photo"
+                                                                 icon:SPKSettingsIcon(@"hd")
+                                                          defaultsKey:@"profile_full_res_photo"];
+                fullRes.helpText = @"Loads the original profile picture in the header instead of the small square Instagram serves.";
+                fullRes.searchKeywords = @"profile picture resolution hd avatar";
+                fullRes;
+            }),
+            ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Expand Photo"
                                        icon:SPKSettingsIcon(@"expand")
                                 defaultsKey:@"profile_photo_zoom"];

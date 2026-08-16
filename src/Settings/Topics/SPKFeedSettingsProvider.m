@@ -44,6 +44,16 @@ static NSArray *SPKFeedCommentsSections(void) {
         return ![SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
+    SPKSetting *commentSort = [SPKSetting menuCellWithTitle:@"Sort Order"
+                                                       icon:SPKSettingsIcon(@"sort")
+                                                       menu:[UIMenu menuWithChildren:@[
+        SPKMenuCommand(@"Default", @"sort", nil, @"feed_comments_sort_order", @"default", NO),
+        SPKMenuCommand(@"Newest First", @"clock", nil, @"feed_comments_sort_order", @"newest", NO),
+        SPKMenuCommand(@"Oldest First", @"clock", nil, @"feed_comments_sort_order", @"oldest", NO),
+    ]]];
+    commentSort.helpText = @"Instagram ranks comments by engagement, which scatters a conversation. Newest or Oldest reads it in order instead.";
+    commentSort.searchKeywords = @"comment sort order chronological newest oldest";
+
     SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Carousel"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
                                                           defaultsKey:@"general_comments_hide_shopping"];
@@ -59,6 +69,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     // Comment settings relocated from General; keys unchanged.
     return @[
     SPKTopicSection(@"Comments", @[
+                commentSort,
                 copyComment,
                 commentMediaActions,
                 commentGalleryUpload,
