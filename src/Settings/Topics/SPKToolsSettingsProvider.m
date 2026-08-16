@@ -135,23 +135,30 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
-    // Reads back what the two new installers and their hooks recorded. Written to
-    // defaults rather than logged, so it survives without a console.
-    SPKSetting *diag = [SPKSetting buttonCellWithTitle:@"Feature Diagnostics"
-                                              subtitle:nil
-                                                  icon:SPKSettingsIcon(@"logs")
-                                                action:^(void) {
+    // Each value gets its own row: an alert truncates, a list does not.
+    SPKSetting *diag = ({
         NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
-        NSString *body = [NSString stringWithFormat:
-            @"COMMENT SORT\ninstaller: %@\nhook: %@\nproperties: %@\n\nACCOUNT AGE\ninstaller: %@\nhook: %@\nproperties: %@",
-            [d stringForKey:@"spk_diag_comment_sort"] ?: @"never ran",
-            [d stringForKey:@"spk_diag_comment_hook"] ?: @"never fired",
-            [d stringForKey:@"spk_diag_comment_props"] ?: @"—",
-            [d stringForKey:@"spk_diag_account_age"] ?: @"never ran",
-            [d stringForKey:@"spk_diag_account_hook"] ?: @"never fired",
-            [d stringForKey:@"spk_diag_account_props"] ?: @"—"];
-        [SPKUtils showConfirmation:^{ } title:@"Feature Diagnostics" message:body];
-    }];
+        NSArray<NSArray<NSString *> *> *entries = @[
+            @[ @"Sort · installer", [d stringForKey:@"spk_diag_comment_sort"] ?: @"never ran" ],
+            @[ @"Sort · hook", [d stringForKey:@"spk_diag_comment_hook"] ?: @"never fired" ],
+            @[ @"Sort · properties", [d stringForKey:@"spk_diag_comment_props"] ?: @"—" ],
+            @[ @"Age · installer", [d stringForKey:@"spk_diag_account_age"] ?: @"never ran" ],
+            @[ @"Age · hook", [d stringForKey:@"spk_diag_account_hook"] ?: @"never fired" ],
+            @[ @"Age · properties", [d stringForKey:@"spk_diag_account_props"] ?: @"—" ],
+        ];
+        NSMutableArray *rows = [NSMutableArray array];
+        for (NSArray<NSString *> *entry in entries) {
+            SPKSetting *row = [SPKSetting buttonCellWithTitle:entry[0]
+                                                     subtitle:entry[1]
+                                                         icon:SPKSettingsIcon(@"logs")
+                                                       action:^(void) { }];
+            [rows addObject:row];
+        }
+        [SPKSetting navigationCellWithTitle:@"Feature Diagnostics"
+                                   subtitle:nil
+                                       icon:SPKSettingsIcon(@"logs")
+                                navSections:@[ SPKTopicSection(@"What ran", rows, nil) ]];
+    });
     [instagramCells addObject:diag];
 
     SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
