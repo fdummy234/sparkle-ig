@@ -46,11 +46,7 @@ static NSArray *SPKFeedCommentsSections(void) {
 
     SPKSetting *commentSort = [SPKSetting menuCellWithTitle:@"Sort Order"
                                                        icon:SPKSettingsIcon(@"sort")
-                                                       menu:[UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Default", @"sort", nil, @"feed_comments_sort_order", @"default", NO),
-        SPKMenuCommand(@"Newest First", @"clock", nil, @"feed_comments_sort_order", @"newest", NO),
-        SPKMenuCommand(@"Oldest First", @"clock", nil, @"feed_comments_sort_order", @"oldest", NO),
-    ]]];
+                                                       menu:SPKCommentSortOrderMenu()];
     commentSort.helpText = @"Instagram ranks comments by engagement, which scatters a conversation. Newest or Oldest reads it in order instead.";
     commentSort.searchKeywords = @"comment sort order chronological newest oldest";
 
