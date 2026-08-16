@@ -180,8 +180,6 @@ void SPKInstallFeedSurfaceHooksIfNeeded(void) {
     SPK_INSTALL(SPKInstallLikeConfirmHooksIfNeeded);
     SPK_INSTALL(SPKInstallExternalLinkConfirmHooksIfNeeded);
     SPK_INSTALL(SPKInstallCommentSortHooksIfEnabled);
-    SPK_INSTALL(SPKInstallProfileAccountAgeHooksIfEnabled);
-    SPK_INSTALL(SPKInstallProfileFullResPhotoHooksIfEnabled);
     SPK_INSTALL(SPKInstallDisableFeedAutoplayHooksIfEnabled);
     SPK_INSTALL(SPKInstallPostCommentConfirmHooksIfEnabled);
     SPK_INSTALL(SPKInstallSwipeCloseCommentsHooksIfEnabled);
@@ -289,6 +287,8 @@ void SPKInstallProfileSurfaceHooksIfNeeded(void) {
     SPKHookBisectSetCurrentSurface(@"Profile");
     SPK_INSTALL(SPKInstallProfileActionButtonHooksIfEnabled);
     SPK_INSTALL(SPKInstallProfilePhotoZoomHooksIfEnabled);
+    SPK_INSTALL(SPKInstallProfileAccountAgeHooksIfEnabled);
+    SPK_INSTALL(SPKInstallProfileFullResPhotoHooksIfEnabled);
     SPK_INSTALL(SPKInstallFollowConfirmHooksIfNeeded);
     SPK_INSTALL(SPKInstallNoSuggestedUsersHooksIfEnabled);
     SPK_INSTALL(SPKInstallFollowIndicatorHooksIfEnabled);
