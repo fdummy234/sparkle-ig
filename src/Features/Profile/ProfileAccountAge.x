@@ -17,9 +17,37 @@ static BOOL SPKProfileAccountAgeEnabled(void) {
     return [SPKUtils getBoolPref:kSPKProfileAccountAgeKey];
 }
 
+// Lists the date-like properties the user object actually exposes. Logged once
+// per class so the console says what is available instead of what was expected.
+static void SPKLogUserDateProperties(id user) {
+    static NSMutableSet *seen;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ seen = [NSMutableSet set]; });
+    NSString *className = NSStringFromClass([user class]);
+    if (!className || [seen containsObject:className])
+        return;
+    [seen addObject:className];
+
+    NSMutableArray *dateish = [NSMutableArray array];
+    unsigned int count = 0;
+    objc_property_t *props = class_copyPropertyList([user class], &count);
+    for (unsigned int i = 0; i < count; i++) {
+        NSString *name = @(property_getName(props[i]));
+        NSString *lower = name.lowercaseString;
+        if ([lower containsString:@"date"] || [lower containsString:@"creat"] ||
+            [lower containsString:@"join"] || [lower containsString:@"since"] ||
+            [lower containsString:@"time"] || [lower containsString:@"age"])
+            [dateish addObject:name];
+    }
+    free(props);
+    SPKLog(@"Profile", @"[Sparkle] Account age — user class %@ · date-like properties: %@",
+           className, dateish.count ? [dateish componentsJoinedByString:@", "] : @"none");
+}
+
 static NSDate *SPKAccountCreationDate(id user) {
     if (!user)
         return nil;
+    SPKLogUserDateProperties(user);
     for (NSString *name in @[ @"accountCreationDate", @"dateJoined", @"joinedDate",
                               @"createdAt", @"accountCreatedAt", @"signupDate" ]) {
         SEL selector = NSSelectorFromString(name);
@@ -106,6 +134,12 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
     if (![controller isKindOfClass:%c(IGProfileViewController)])
         return;
     id user = SPKObjectForSelector(controller, @"user");
+    static BOOL announced = NO;
+    if (!announced) {
+        announced = YES;
+        SPKLog(@"Profile", @"[Sparkle] Account age — hook running · user resolved: %@",
+               user ? NSStringFromClass([user class]) : @"NO");
+    }
     SPKPlaceAccountAgeLabel((UIView *)self, SPKAccountAgeText(SPKAccountCreationDate(user)));
 }
 
