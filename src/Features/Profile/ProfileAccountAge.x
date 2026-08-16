@@ -2,14 +2,13 @@
 #import "../../InstagramHeaders.h"
 #import "../../Shared/ActionButton/ActionButtonLookupUtils.h"
 #import <objc/runtime.h>
-#import "../../Shared/UI/SPKNotificationCenter.h"
 
 // Adds the account's age next to posts / followers / following.
 //
-// Instagram does not publish a creation date on the user object: the value shown
-// in "About this account" is fetched by a separate call. Several plausible
-// accessors are read, and when none answers the column is left out entirely
-// rather than shown empty — a blank stat draws the eye for nothing.
+// The date is read through whichever accessor the user object answers. It is
+// present on some profiles and not others — Instagram loads a full user for the
+// signed-in account and a lighter one for people you visit — so the column is
+// left out rather than shown empty when the date is missing.
 
 static NSString *const kSPKProfileAccountAgeKey = @"profile_show_account_age";
 static const void *kSPKAccountAgeLabelAssocKey = &kSPKAccountAgeLabelAssocKey;
@@ -18,54 +17,51 @@ static BOOL SPKProfileAccountAgeEnabled(void) {
     return [SPKUtils getBoolPref:kSPKProfileAccountAgeKey];
 }
 
-// Lists the date-like properties the user object actually exposes. Logged once
-// per class so the console says what is available instead of what was expected.
-static void SPKLogUserDateProperties(id user) {
-    static NSMutableSet *seen;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{ seen = [NSMutableSet set]; });
-    NSString *className = NSStringFromClass([user class]);
-    if (!className || [seen containsObject:className])
-        return;
-    [seen addObject:className];
+static NSArray<NSString *> *SPKAccountDateSelectorNames(void) {
+    return @[ @"accountCreationDate", @"dateJoined", @"joinedDate", @"createdAt",
+              @"accountCreatedAt", @"signupDate", @"creationDate", @"dateCreated",
+              @"registrationDate", @"memberSince" ];
+}
 
-    NSMutableArray *dateish = [NSMutableArray array];
-    unsigned int count = 0;
-    objc_property_t *props = class_copyPropertyList([user class], &count);
-    for (unsigned int i = 0; i < count; i++) {
-        NSString *name = @(property_getName(props[i]));
-        NSString *lower = name.lowercaseString;
-        if ([lower containsString:@"date"] || [lower containsString:@"creat"] ||
-            [lower containsString:@"join"] || [lower containsString:@"since"] ||
-            [lower containsString:@"time"] || [lower containsString:@"age"])
-            [dateish addObject:name];
+// Records what the object actually answers. Methods, not @property declarations:
+// a plain method never appears in class_copyPropertyList, which is what made an
+// earlier probe report "no date available" on a profile that had one.
+static void SPKRecordAccountDateProbe(id user, NSString *hit) {
+    NSMutableArray *answered = [NSMutableArray array];
+    for (NSString *name in SPKAccountDateSelectorNames()) {
+        if ([user respondsToSelector:NSSelectorFromString(name)])
+            [answered addObject:name];
     }
-    free(props);
-    NSString *found = dateish.count ? [dateish componentsJoinedByString:@", "] : @"none";
-    SPKLog(@"Profile", @"[Sparkle] Account age — user class %@ · date-like properties: %@", className, found);
-    // Shown in Sparkle's own banner so the finding is readable without a console.
-    [[NSUserDefaults standardUserDefaults] setObject:found forKey:@"spk_diag_account_props"];
+    NSString *summary = [NSString stringWithFormat:@"%@ · answers: %@ · used: %@",
+                         NSStringFromClass([user class]),
+                         answered.count ? [answered componentsJoinedByString:@", "] : @"none",
+                         hit ?: @"none"];
+    [[NSUserDefaults standardUserDefaults] setObject:summary forKey:@"spk_diag_account_probe"];
 }
 
 static NSDate *SPKAccountCreationDate(id user) {
     if (!user)
         return nil;
-    SPKLogUserDateProperties(user);
-    for (NSString *name in @[ @"accountCreationDate", @"dateJoined", @"joinedDate",
-                              @"createdAt", @"accountCreatedAt", @"signupDate" ]) {
+    for (NSString *name in SPKAccountDateSelectorNames()) {
         SEL selector = NSSelectorFromString(name);
         if (![user respondsToSelector:selector])
             continue;
         id value = ((id (*)(id, SEL))objc_msgSend)(user, selector);
+        NSDate *date = nil;
         if ([value isKindOfClass:[NSDate class]])
-            return (NSDate *)value;
-        if ([value isKindOfClass:[NSNumber class]])
-            return [NSDate dateWithTimeIntervalSince1970:[(NSNumber *)value doubleValue]];
+            date = (NSDate *)value;
+        else if ([value isKindOfClass:[NSNumber class]])
+            date = [NSDate dateWithTimeIntervalSince1970:[(NSNumber *)value doubleValue]];
+        if (date) {
+            SPKRecordAccountDateProbe(user, name);
+            return date;
+        }
     }
+    SPKRecordAccountDateProbe(user, nil);
     return nil;
 }
 
-// Compact enough to sit under a stat number: 3 w, 5 mo, 2 y.
+// Compact enough to sit under a stat number: 3 d, 5 w, 8 mo, 2 y.
 static NSString *SPKAccountAgeText(NSDate *created) {
     if (!created)
         return nil;
@@ -95,8 +91,6 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
         label = [UILabel new];
         label.textAlignment = NSTextAlignmentCenter;
         label.numberOfLines = 2;
-        label.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightSemibold];
-        label.textColor = [SPKUtils SPKColor_InstagramPrimaryText];
         objc_setAssociatedObject(container, kSPKAccountAgeLabelAssocKey, label, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     if (label.superview != container)
@@ -137,14 +131,6 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
     if (![controller isKindOfClass:%c(IGProfileViewController)])
         return;
     id user = SPKObjectForSelector(controller, @"user");
-    [[NSUserDefaults standardUserDefaults] setObject:(user ? NSStringFromClass([user class]) : @"no user")
-                                              forKey:@"spk_diag_account_hook"];
-    static BOOL announced = NO;
-    if (!announced) {
-        announced = YES;
-        SPKLog(@"Profile", @"[Sparkle] Account age — hook running · user resolved: %@",
-               user ? NSStringFromClass([user class]) : @"NO");
-    }
     SPKPlaceAccountAgeLabel((UIView *)self, SPKAccountAgeText(SPKAccountCreationDate(user)));
 }
 
@@ -153,10 +139,7 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
 %end
 
 void SPKInstallProfileAccountAgeHooksIfEnabled(void) {
-    BOOL on = SPKProfileAccountAgeEnabled();
-    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"ran · pref=%@", on ? @"ON" : @"OFF"]
-                                              forKey:@"spk_diag_account_age"];
-    if (!on)
+    if (!SPKProfileAccountAgeEnabled())
         return;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
