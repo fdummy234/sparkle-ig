@@ -91,7 +91,7 @@ static SPKSetting *SPKRootRow(SPKSetting *topic) {
             ]
         },
         @{
-            @"header" : @"Messaging & Profile",
+            @"header" : @"People",
             @"rows" : @[
                 SPKRootRow([SPKMessagesSettingsProvider rootSetting]),
                 SPKRootRow([SPKProfileSettingsProvider rootSetting])
