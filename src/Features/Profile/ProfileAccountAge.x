@@ -44,14 +44,7 @@ static void SPKLogUserDateProperties(id user) {
     NSString *found = dateish.count ? [dateish componentsJoinedByString:@", "] : @"none";
     SPKLog(@"Profile", @"[Sparkle] Account age — user class %@ · date-like properties: %@", className, found);
     // Shown in Sparkle's own banner so the finding is readable without a console.
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[SPKNotificationCenter shared] notifyIdentifier:@"account_age_probe"
-                                                   title:@"Account age — what the profile exposes"
-                                                subtitle:found
-                                            iconResource:@"clock"
-                                                    tone:dateish.count ? SPKNotificationToneInfo
-                                                                       : SPKNotificationToneError];
-    });
+    [[NSUserDefaults standardUserDefaults] setObject:found forKey:@"spk_diag_account_props"];
 }
 
 static NSDate *SPKAccountCreationDate(id user) {
@@ -144,6 +137,8 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
     if (![controller isKindOfClass:%c(IGProfileViewController)])
         return;
     id user = SPKObjectForSelector(controller, @"user");
+    [[NSUserDefaults standardUserDefaults] setObject:(user ? NSStringFromClass([user class]) : @"no user")
+                                              forKey:@"spk_diag_account_hook"];
     static BOOL announced = NO;
     if (!announced) {
         announced = YES;
@@ -159,13 +154,8 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
 
 void SPKInstallProfileAccountAgeHooksIfEnabled(void) {
     BOOL on = SPKProfileAccountAgeEnabled();
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[SPKNotificationCenter shared] notifyIdentifier:@"account_age_install"
-                                                   title:@"Account age — installer ran"
-                                                subtitle:on ? @"pref = ON" : @"pref = OFF"
-                                            iconResource:@"clock"
-                                                    tone:SPKNotificationToneInfo];
-    });
+    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"ran · pref=%@", on ? @"ON" : @"OFF"]
+                                              forKey:@"spk_diag_account_age"];
     if (!on)
         return;
     static dispatch_once_t onceToken;
