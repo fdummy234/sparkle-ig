@@ -1,5 +1,6 @@
 #import "../../Utils.h"
 #import "../../InstagramHeaders.h"
+#import <objc/runtime.h>
 
 // Forces the comment thread's sort order.
 //
@@ -50,8 +51,20 @@ static void SPKApplyCommentSortOrder(id threadConfig) {
             continue;
         }
     }
-    SPKLog(@"Feed", @"[Sparkle] Comment sort order: no writable key on %@",
-           NSStringFromClass([threadConfig class]));
+    NSMutableArray *candidates = [NSMutableArray array];
+    unsigned int count = 0;
+    objc_property_t *props = class_copyPropertyList([threadConfig class], &count);
+    for (unsigned int i = 0; i < count; i++) {
+        NSString *name = @(property_getName(props[i]));
+        NSString *lower = name.lowercaseString;
+        if ([lower containsString:@"sort"] || [lower containsString:@"order"] ||
+            [lower containsString:@"rank"] || [lower containsString:@"filter"])
+            [candidates addObject:name];
+    }
+    free(props);
+    SPKLog(@"Feed", @"[Sparkle] Comment sort order — config class %@ · ordering properties: %@",
+           NSStringFromClass([threadConfig class]),
+           candidates.count ? [candidates componentsJoinedByString:@", "] : @"none");
 }
 
 %group SPKCommentSortHooks
