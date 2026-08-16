@@ -131,7 +131,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                                                              icon:SPKSettingsIcon(@"clock")
                                                       defaultsKey:@"profile_show_account_age"
                                                   requiresRestart:YES];
-                age.helpText = @"Adds how long the account has existed next to its post and follower counts. The column is left out when Instagram does not provide the date.";
+                age.helpText = @"Adds how long the account has existed next to its post and follower counts. Instagram does not send the date for every profile; the column is left out when it is missing.";
                 age.searchKeywords = @"account age created joined date";
                 age;
             }),
