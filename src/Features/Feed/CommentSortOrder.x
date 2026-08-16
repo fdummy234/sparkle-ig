@@ -33,6 +33,7 @@ static NSNumber *SPKCommentSortValue(NSString *mode) {
 
 static void SPKApplyCommentSortOrder(id threadConfig) {
     static BOOL probed = NO;
+    [[NSUserDefaults standardUserDefaults] setObject:@"hook fired" forKey:@"spk_diag_comment_hook"];
     NSNumber *value = SPKCommentSortValue(SPKCommentSortMode());
     if (!threadConfig || !value)
         return;
@@ -70,14 +71,7 @@ static void SPKApplyCommentSortOrder(id threadConfig) {
     NSString *found = candidates.count ? [candidates componentsJoinedByString:@", "] : @"none";
     SPKLog(@"Feed", @"[Sparkle] Comment sort order — config class %@ · ordering properties: %@",
            NSStringFromClass([threadConfig class]), found);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [[SPKNotificationCenter shared] notifyIdentifier:@"comment_sort_probe"
-                                                   title:@"Comment sort — what the thread exposes"
-                                                subtitle:found
-                                            iconResource:@"sort"
-                                                    tone:candidates.count ? SPKNotificationToneInfo
-                                                                          : SPKNotificationToneError];
-    });
+    [[NSUserDefaults standardUserDefaults] setObject:found forKey:@"spk_diag_comment_props"];
 }
 
 %group SPKCommentSortHooks
@@ -102,14 +96,10 @@ static void SPKApplyCommentSortOrder(id threadConfig) {
 
 void SPKInstallCommentSortHooksIfEnabled(void) {
     NSString *mode = SPKCommentSortMode();
-    // Unconditional: says whether this installer ran at all, and what it read.
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [[SPKNotificationCenter shared] notifyIdentifier:@"comment_sort_install"
-                                                   title:@"Comment sort — installer ran"
-                                                subtitle:[NSString stringWithFormat:@"mode = %@", mode]
-                                            iconResource:@"sort"
-                                                    tone:SPKNotificationToneInfo];
-    });
+    // Written, not shown: a banner needs a window and can silently do nothing
+    // this early. Defaults always persist, and Tools reads them back.
+    [[NSUserDefaults standardUserDefaults] setObject:[NSString stringWithFormat:@"ran · mode=%@", mode]
+                                              forKey:@"spk_diag_comment_sort"];
     if ([mode isEqualToString:@"default"])
         return;
     static dispatch_once_t onceToken;
