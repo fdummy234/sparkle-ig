@@ -129,7 +129,8 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
             ({
                 SPKSetting *age = [SPKSetting switchCellWithTitle:@"Show Account Age"
                                                              icon:SPKSettingsIcon(@"clock")
-                                                      defaultsKey:@"profile_show_account_age"];
+                                                      defaultsKey:@"profile_show_account_age"
+                                                  requiresRestart:YES];
                 age.helpText = @"Adds how long the account has existed next to its post and follower counts. The column is left out when Instagram does not provide the date.";
                 age.searchKeywords = @"account age created joined date";
                 age;
@@ -137,7 +138,8 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
             ({
                 SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution Photo"
                                                                  icon:SPKSettingsIcon(@"hd")
-                                                          defaultsKey:@"profile_full_res_photo"];
+                                                          defaultsKey:@"profile_full_res_photo"
+                                                      requiresRestart:YES];
                 fullRes.helpText = @"Loads the original profile picture in the header instead of the small square Instagram serves.";
                 fullRes.searchKeywords = @"profile picture resolution hd avatar";
                 fullRes;
