@@ -2,6 +2,7 @@
 #import "../../InstagramHeaders.h"
 #import "../../Shared/ActionButton/ActionButtonLookupUtils.h"
 #import <objc/runtime.h>
+#import "../../Shared/UI/SPKNotificationCenter.h"
 
 // Adds the account's age next to posts / followers / following.
 //
@@ -40,8 +41,17 @@ static void SPKLogUserDateProperties(id user) {
             [dateish addObject:name];
     }
     free(props);
-    SPKLog(@"Profile", @"[Sparkle] Account age — user class %@ · date-like properties: %@",
-           className, dateish.count ? [dateish componentsJoinedByString:@", "] : @"none");
+    NSString *found = dateish.count ? [dateish componentsJoinedByString:@", "] : @"none";
+    SPKLog(@"Profile", @"[Sparkle] Account age — user class %@ · date-like properties: %@", className, found);
+    // Shown in Sparkle's own banner so the finding is readable without a console.
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[SPKNotificationCenter shared] notifyIdentifier:@"account_age_probe"
+                                                   title:@"Account age — what the profile exposes"
+                                                subtitle:found
+                                            iconResource:@"clock"
+                                                    tone:dateish.count ? SPKNotificationToneInfo
+                                                                       : SPKNotificationToneError];
+    });
 }
 
 static NSDate *SPKAccountCreationDate(id user) {
