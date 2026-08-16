@@ -135,6 +135,25 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
+    // Reads back what the two new installers and their hooks recorded. Written to
+    // defaults rather than logged, so it survives without a console.
+    SPKSetting *diag = [SPKSetting buttonCellWithTitle:@"Feature Diagnostics"
+                                              subtitle:nil
+                                                  icon:SPKSettingsIcon(@"logs")
+                                                action:^(void) {
+        NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+        NSString *body = [NSString stringWithFormat:
+            @"COMMENT SORT\ninstaller: %@\nhook: %@\nproperties: %@\n\nACCOUNT AGE\ninstaller: %@\nhook: %@\nproperties: %@",
+            [d stringForKey:@"spk_diag_comment_sort"] ?: @"never ran",
+            [d stringForKey:@"spk_diag_comment_hook"] ?: @"never fired",
+            [d stringForKey:@"spk_diag_comment_props"] ?: @"—",
+            [d stringForKey:@"spk_diag_account_age"] ?: @"never ran",
+            [d stringForKey:@"spk_diag_account_hook"] ?: @"never fired",
+            [d stringForKey:@"spk_diag_account_props"] ?: @"—"];
+        [SPKUtils showConfirmation:^{ } title:@"Feature Diagnostics" message:body];
+    }];
+    [instagramCells addObject:diag];
+
     SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
                                                            icon:SPKSettingsIcon(@"notification")
                                                     defaultsKey:@"tools_fix_duplicate_notifications"];
