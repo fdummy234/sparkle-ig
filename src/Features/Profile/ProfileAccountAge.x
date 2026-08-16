@@ -158,7 +158,15 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
 %end
 
 void SPKInstallProfileAccountAgeHooksIfEnabled(void) {
-    if (!SPKProfileAccountAgeEnabled())
+    BOOL on = SPKProfileAccountAgeEnabled();
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [[SPKNotificationCenter shared] notifyIdentifier:@"account_age_install"
+                                                   title:@"Account age — installer ran"
+                                                subtitle:on ? @"pref = ON" : @"pref = OFF"
+                                            iconResource:@"clock"
+                                                    tone:SPKNotificationToneInfo];
+    });
+    if (!on)
         return;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
