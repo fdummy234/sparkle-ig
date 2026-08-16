@@ -359,14 +359,21 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // rows that lived in Sharing and Comments, short residues like
         // everywhere else.
         SPKTopicSection(@"", @[
-            SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
+            ({
+                SPKSetting *confirmations = SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
                 [SPKToggleMenuItem itemWithTitle:@"New Post"
                                         iconName:@"messages"
                                      defaultsKey:@"general_confirm_send"],
                 [SPKToggleMenuItem itemWithTitle:@"Comment Like"
                                         iconName:@"heart"
                                      defaultsKey:@"general_comments_confirm_like"],
-            ])
+                [SPKToggleMenuItem itemWithTitle:@"Opening a Link"
+                                        iconName:@"external_link"
+                                     defaultsKey:@"general_confirm_open_link"],
+                ]);
+                confirmations.helpText = @"Asks before the action goes through. Opening a Link shows the full address first, which a shortened link hides.";
+                confirmations;
+            })
         ],
                         nil),
     ]);
