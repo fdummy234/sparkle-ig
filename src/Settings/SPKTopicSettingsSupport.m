@@ -348,6 +348,14 @@ UIMenu *SPKSwipeCloseCommentsDirectionMenu(void) {
     ]];
 }
 
+UIMenu *SPKCommentSortOrderMenu(void) {
+    return [UIMenu menuWithChildren:@[
+        SPKMenuCommand(@"Default", @"sort", nil, @"feed_comments_sort_order", @"default", NO),
+        SPKMenuCommand(@"Newest First", @"clock", nil, @"feed_comments_sort_order", @"newest", NO),
+        SPKMenuCommand(@"Oldest First", @"clock", nil, @"feed_comments_sort_order", @"oldest", NO),
+    ]];
+}
+
 UIMenu *SPKCacheAutoClearMenu(void) {
     return [UIMenu menuWithChildren:@[
         SPKMenuCommand(@"Never", nil, nil, @"general_cache_auto_clear", @"never", NO),
