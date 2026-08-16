@@ -68,6 +68,7 @@ static NSDictionary *SPKFeatureDefaults(void) {
         @"msgs_confirm_voice_msg" : @(NO),
         @"general_confirm_create_group" : @(NO),
         @"general_confirm_send" : @(NO),
+        @"general_confirm_open_link" : @(NO),
         @"msgs_keep_deleted" : @(NO),
         @"msgs_deleted_log" : @(NO),
         @"msgs_deleted_log_reactions" : @(NO),

@@ -20,6 +20,7 @@ FOUNDATION_EXPORT void SPKInstallProfilePhotoZoomHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallBackgroundRefreshHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallSeenButtonHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallFollowConfirmHooksIfNeeded(void);
+FOUNDATION_EXPORT void SPKInstallExternalLinkConfirmHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallCreateGroupButtonControlHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallConfirmSendHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallSharedLinkCleanupHooksIfEnabled(void);
@@ -174,6 +175,7 @@ void SPKInstallFeedSurfaceHooksIfNeeded(void) {
     SPK_INSTALL(SPKInstallHeaderActionButtonHooksIfEnabled);
     SPK_INSTALL(SPKInstallBackgroundRefreshHooksIfEnabled);
     SPK_INSTALL(SPKInstallLikeConfirmHooksIfNeeded);
+    SPK_INSTALL(SPKInstallExternalLinkConfirmHooksIfNeeded);
     SPK_INSTALL(SPKInstallDisableFeedAutoplayHooksIfEnabled);
     SPK_INSTALL(SPKInstallPostCommentConfirmHooksIfEnabled);
     SPK_INSTALL(SPKInstallSwipeCloseCommentsHooksIfEnabled);
