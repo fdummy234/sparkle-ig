@@ -291,8 +291,14 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
             viewDeletedLog],
                         nil),
-        SPKTopicSection(@"Media Seen Receipts", @[
+        // Ordered so each master switch is followed by what it controls:
+        // conversations first, then photos and videos.
+        SPKTopicSection(@"Seen Receipts", @[
             unlockPreview,
+            manualSeenSwitch,
+            markSeenGate,
+            seenButtonPosition,
+            manualSeenList,
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
                                            icon:SPKSettingsIcon(@"eye")
@@ -303,15 +309,6 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
             }),
             advanceVisual,
         ],
-                        nil),
-
-        // Two mechanisms lived here: read receipts for media, and read
-        // receipts for whole conversations. Each has its own switch.
-        SPKTopicSection(@"Chat Seen Receipts", @[
-            manualSeenSwitch,
-            markSeenGate,
-            seenButtonPosition,
-            manualSeenList],
                         nil),
         SPKTopicSection(@"Chat Screen", @[
             ({
