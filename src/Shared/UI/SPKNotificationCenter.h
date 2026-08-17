@@ -73,6 +73,7 @@ FOUNDATION_EXPORT NSString *const kSPKNotificationCopyDescription;
 FOUNDATION_EXPORT NSString *const kSPKNotificationCopyNoteText;
 FOUNDATION_EXPORT NSString *const kSPKNotificationShareLongPressCopyLink;
 FOUNDATION_EXPORT NSString *const kSPKNotificationCopyComment;
+FOUNDATION_EXPORT NSString *const kSPKNotificationCommentSortUnavailable;
 FOUNDATION_EXPORT NSString *const kSPKNotificationCopyGIFLink;
 FOUNDATION_EXPORT NSString *const kSPKNotificationMediaEncodingLogs;
 FOUNDATION_EXPORT NSString *const kSPKNotificationFlexUnavailable;

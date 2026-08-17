@@ -95,6 +95,7 @@ SPK_NOTIF_CONST(kSPKNotificationCopyDescription, "copy_description");
 SPK_NOTIF_CONST(kSPKNotificationCopyNoteText, "copy_note_text");
 SPK_NOTIF_CONST(kSPKNotificationShareLongPressCopyLink, "share_long_press_copy_link");
 SPK_NOTIF_CONST(kSPKNotificationCopyComment, "copy_comment");
+SPK_NOTIF_CONST(kSPKNotificationCommentSortUnavailable, "comment_sort_unavailable");
 SPK_NOTIF_CONST(kSPKNotificationCopyGIFLink, "copy_gif_link");
 SPK_NOTIF_CONST(kSPKNotificationMediaEncodingLogs, "media_encoding_logs");
 SPK_NOTIF_CONST(kSPKNotificationFlexUnavailable, "flex_unavailable");
@@ -239,6 +240,7 @@ NSArray<NSDictionary *> *SPKNotificationPreferenceSections(void) {
           @"items" : @[
               SPKNotificationItem(kSPKNotificationCopyComment, @"Copy Comment", @"copy"),
               SPKNotificationItem(kSPKNotificationCopyGIFLink, @"Copy Media Link", @"link"),
+              SPKNotificationItem(kSPKNotificationCommentSortUnavailable, @"Sorting Unavailable", @"sort"),
           ]},
         @{@"title" : @"Media",
           @"items" : @[
