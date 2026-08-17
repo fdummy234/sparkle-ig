@@ -161,6 +161,7 @@ static NSDictionary *SPKFeatureDefaults(void) {
         @"general_comments_hide_shopping" : @(NO),
         @"general_comments_hide_gifts_button" : @(NO),
         @"general_comments_gallery_upload" : @(NO),
+        @"feed_comments_sort_menu" : @(NO),
         @"general_hide_reels_shopping_cta" : @(NO),
         @"general_hide_meta_ai_msgs" : @(NO),
         @"general_hide_meta_ai_explore" : @(NO),
