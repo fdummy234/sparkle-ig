@@ -44,11 +44,12 @@ static NSArray *SPKFeedCommentsSections(void) {
         return ![SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
-    SPKSetting *commentSort = [SPKSetting menuCellWithTitle:@"Sort Order"
-                                                       icon:SPKSettingsIcon(@"sort")
-                                                       menu:SPKCommentSortOrderMenu()];
-    commentSort.helpText = @"Instagram ranks comments by engagement, which scatters a conversation. Newest or Oldest reads it in order instead.";
-    commentSort.searchKeywords = @"comment sort order chronological newest oldest";
+    SPKSetting *commentSort = [SPKSetting switchCellWithTitle:@"Sort Menu"
+                                                         icon:SPKSettingsIcon(@"sort")
+                                                  defaultsKey:@"feed_comments_sort_menu"
+                                              requiresRestart:YES];
+    commentSort.helpText = @"Instagram builds a comment sorting menu but never shows the button. This puts the button back on the thread. Instagram supplies the options, so a post it sends none for says so instead of opening an empty menu.";
+    commentSort.searchKeywords = @"comment sort order chronological newest oldest top recent menu";
 
     SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Carousel"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
