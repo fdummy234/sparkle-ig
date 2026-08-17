@@ -32,11 +32,20 @@ static void SPKRecordAccountDateProbe(id user, NSString *hit) {
         if ([user respondsToSelector:NSSelectorFromString(name)])
             [answered addObject:name];
     }
-    NSString *summary = [NSString stringWithFormat:@"%@ · answers: %@ · used: %@",
-                         NSStringFromClass([user class]),
-                         answered.count ? [answered componentsJoinedByString:@", "] : @"none",
-                         hit ?: @"none"];
-    [[NSUserDefaults standardUserDefaults] setObject:summary forKey:@"spk_diag_account_probe"];
+    // Keeps the last three profiles: reaching Sparkle's settings goes through
+    // your own profile, which would otherwise overwrite the visited one.
+    NSString *username = SPKObjectForSelector(user, @"username") ?: @"?";
+    NSString *summary = [NSString stringWithFormat:@"%@ → %@", username, hit ?: @"no date"];
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSMutableArray *history = [[defaults arrayForKey:@"spk_diag_account_history"] mutableCopy] ?: [NSMutableArray array];
+    if (![history.lastObject isEqualToString:summary]) {
+        [history addObject:summary];
+        while (history.count > 3)
+            [history removeObjectAtIndex:0];
+        [defaults setObject:history forKey:@"spk_diag_account_history"];
+    }
+    [defaults setObject:[history componentsJoinedByString:@"  ·  "] forKey:@"spk_diag_account_probe"];
 }
 
 static NSDate *SPKAccountCreationDate(id user) {
