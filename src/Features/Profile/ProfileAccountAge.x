@@ -108,14 +108,38 @@ static void SPKPlaceAccountAgeLabel(UIView *container, NSString *text) {
                       NSParagraphStyleAttributeName : centred }]];
     label.attributedText = stacked;
 
-    CGFloat rightMost = 0.0;
+    // A fourth column has to be made room for, not squeezed against the edge.
+    // The three existing stats are re-laid across three quarters and the label
+    // takes the last one, so nothing overlaps and every column is equal.
+    NSMutableArray<UIView *> *stats = [NSMutableArray array];
     for (UIView *sub in container.subviews) {
-        if (sub != label)
-            rightMost = MAX(rightMost, CGRectGetMaxX(sub.frame));
+        if (sub != label && !CGRectIsEmpty(sub.frame))
+            [stats addObject:sub];
     }
-    CGFloat width = 62.0;
-    CGFloat x = MIN(rightMost + 10.0, CGRectGetWidth(container.bounds) - width);
-    label.frame = CGRectMake(MAX(x, 0.0), 0.0, width, CGRectGetHeight(container.bounds));
+    [stats sortUsingComparator:^NSComparisonResult(UIView *a, UIView *b) {
+        return CGRectGetMinX(a.frame) < CGRectGetMinX(b.frame) ? NSOrderedAscending : NSOrderedDescending;
+    }];
+
+    CGFloat height = CGRectGetHeight(container.bounds);
+    NSUInteger columns = stats.count + 1;
+    CGFloat columnWidth = CGRectGetWidth(container.bounds) / (CGFloat)columns;
+    for (NSUInteger i = 0; i < stats.count; i++) {
+        UIView *stat = stats[i];
+        CGRect frame = stat.frame;
+        // Keep each stat's own height and vertical position; only the column moves.
+        frame.origin.x = columnWidth * (CGFloat)i;
+        frame.size.width = columnWidth;
+        stat.frame = frame;
+    }
+    // Vertical box copied from an existing stat so the number and the caption
+    // sit on the same baselines as posts / followers / following.
+    CGFloat top = 0.0;
+    CGFloat boxHeight = height;
+    if (stats.count > 0) {
+        top = CGRectGetMinY(stats.firstObject.frame);
+        boxHeight = CGRectGetHeight(stats.firstObject.frame);
+    }
+    label.frame = CGRectMake(columnWidth * (CGFloat)stats.count, top, columnWidth, boxHeight);
     [container bringSubviewToFront:label];
 }
 
