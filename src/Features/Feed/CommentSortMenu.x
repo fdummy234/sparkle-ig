@@ -19,9 +19,13 @@
 // own posting date, so the order can be rebuilt from what is on screen.
 //
 // Measured in the 441 binary and on a live thread:
-//   IGCommentThreadViewController  -objectsForListAdapter:   @24@0:8@16
+//   IGCommentThreadViewController  -objectsForListAdapter:            @24@0:8@16
+//                                  -scrollViewWillScrollNearBottom:
+//                                             triggeredByManualCheck: v28@0:8@16B24
 //                                  ivar _listAdapter -> IGListAdapter
+//                                  ivar _collectionView -> UICollectionView
 //   IGListAdapter                  -performUpdatesAnimated:completion:
+//   IGCommentThread                ivar _moreCommentsAvailableBelow (BOOL)
 //   IGCommentGroup                 ivar _parentComment -> IGCommentModel
 //                                  (no published accessor; read the ivar)
 //   IGCommentModel                 -createdAt -> IGDate, -pk -> NSString
@@ -41,7 +45,9 @@
 // Master switch. Read once at launch, so it carries requiresRestart.
 static NSString *const kSPKCommentSortEnabledKey = @"feed_comments_sort_menu";
 
-// Current order. Read on every pass, so it takes effect without a restart.
+// Current order. Read on every pass, so it takes effect without a restart, and
+// stored in the defaults, so it carries from one thread to the next and across
+// launches.
 static NSString *const kSPKCommentSortModeKey = @"feed_comments_sort_mode";
 
 static NSString *const kSPKCommentSortModeDefault = @"default";
@@ -53,8 +59,19 @@ static NSString *const kSPKCommentSortModeOldest = @"oldest";
 // signal on a device without a console.
 static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 
+// Pages pulled in ahead of the reader when a thread opens. Sorting can only
+// order what has been loaded, so a thread that keeps loading keeps reshuffling;
+// pulling a few pages up front settles the order before it is read. Bounded
+// because each page is a network round trip and a busy post has hundreds.
+static const NSUInteger kSPKCommentSortPreloadPages = 3;
+
+// Spacing between preload rounds. Long enough for a page to come back and be
+// folded into the thread before the next one is asked for.
+static const NSTimeInterval kSPKCommentSortPreloadInterval = 1.1;
+
 static const void *kSPKCommentSortEntryAssocKey = &kSPKCommentSortEntryAssocKey;
 static const void *kSPKCommentSortTargetAssocKey = &kSPKCommentSortTargetAssocKey;
+static const void *kSPKCommentSortPreloadedAssocKey = &kSPKCommentSortPreloadedAssocKey;
 
 static NSString *SPKCommentSortMode(void) {
     NSString *mode = [SPKUtils getStringPref:kSPKCommentSortModeKey];
@@ -71,6 +88,17 @@ static NSString *SPKCommentSortModeTitle(NSString *mode) {
     if ([mode isEqualToString:kSPKCommentSortModeOldest])
         return @"Oldest first";
     return @"Instagram's order";
+}
+
+// One glyph per order, so the control states which one is in force rather than
+// only offering to change it. Arrows read at a glance: down for newest on top,
+// up for oldest on top, both ways for the order Instagram chose.
+static NSString *SPKCommentSortModeSymbol(NSString *mode) {
+    if ([mode isEqualToString:kSPKCommentSortModeNewest])
+        return @"arrow.down";
+    if ([mode isEqualToString:kSPKCommentSortModeOldest])
+        return @"arrow.up";
+    return @"arrow.up.arrow.down";
 }
 
 #pragma mark - Report
@@ -106,10 +134,35 @@ static id SPKCommentSortIvarValue(id object, const char *name) {
     return object_getIvar(object, ivar);
 }
 
+// Same idea for a flag. object_getIvar only covers object ivars, so a BOOL is
+// read from its offset, and only once the encoding confirms it is one.
+static BOOL SPKCommentSortBoolIvar(id object, const char *name, BOOL fallback) {
+    if (!object || !name)
+        return fallback;
+    Ivar ivar = class_getInstanceVariable(object_getClass(object), name);
+    if (!ivar)
+        return fallback;
+    const char *encoding = ivar_getTypeEncoding(ivar);
+    if (!encoding || (encoding[0] != 'B' && encoding[0] != 'c'))
+        return fallback;
+    uint8_t *base = (uint8_t *)(__bridge void *)object;
+    return *(base + ivar_getOffset(ivar)) != 0;
+}
+
 static id SPKCommentSortSend(id target, SEL selector) {
     if (!target || !selector || ![target respondsToSelector:selector])
         return nil;
     return ((id (*)(id, SEL))objc_msgSend)(target, selector);
+}
+
+// The thread model behind a controller, which carries both the comments and the
+// flag saying whether more of them are waiting on the server.
+static id SPKCommentSortThread(UIViewController *controller) {
+    id manager = SPKCommentSortIvarValue(controller, "_threadManager");
+    id thread = SPKCommentSortSend(manager, NSSelectorFromString(@"commentThread"));
+    if (!thread)
+        thread = SPKCommentSortIvarValue(manager, "commentThread");
+    return thread;
 }
 
 #pragma mark - Sort key
@@ -186,20 +239,90 @@ static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
     return reordered;
 }
 
+#pragma mark - Preloading
+
+// Asks Instagram for the next page the same way scrolling would.
+//
+// The controller's own pagination entry point takes a "triggered by manual
+// check" flag, so being called outside a scroll is a case Instagram already
+// accounts for. The rounds stop as soon as the thread reports nothing more
+// below, and in any case after the page cap.
+static void SPKCommentSortPreloadRound(UIViewController *controller, NSUInteger remaining) {
+    if (!controller || remaining == 0)
+        return;
+
+    id thread = SPKCommentSortThread(controller);
+    if (!thread)
+        return;
+
+    // Default YES: an unreadable flag should not make the loop stop silently on
+    // the first round, and the page cap still bounds it.
+    if (!SPKCommentSortBoolIvar(thread, "_moreCommentsAvailableBelow", YES)) {
+        SPKCommentSortNote([NSString stringWithFormat:@"preload done · %lu page(s) left unused",
+                                                      (unsigned long)remaining]);
+        return;
+    }
+
+    SEL nearBottom = NSSelectorFromString(@"scrollViewWillScrollNearBottom:triggeredByManualCheck:");
+    if (![controller respondsToSelector:nearBottom]) {
+        SPKCommentSortNote(@"preload unavailable · no pagination entry");
+        return;
+    }
+
+    id collectionView = SPKCommentSortIvarValue(controller, "_collectionView");
+    ((void (*)(id, SEL, id, BOOL))objc_msgSend)(controller, nearBottom, collectionView, YES);
+
+    __weak UIViewController *weakController = controller;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSPKCommentSortPreloadInterval * NSEC_PER_SEC)),
+                   dispatch_get_main_queue(), ^{
+        UIViewController *strongController = weakController;
+        if (strongController)
+            SPKCommentSortPreloadRound(strongController, remaining - 1);
+    });
+}
+
+// Runs once per thread. Sorting an unsorted order is what makes comments jump,
+// so this only runs when an order other than Instagram's is in force.
+static void SPKCommentSortStartPreload(UIViewController *controller) {
+    if (objc_getAssociatedObject(controller, kSPKCommentSortPreloadedAssocKey))
+        return;
+    if ([SPKCommentSortMode() isEqualToString:kSPKCommentSortModeDefault])
+        return;
+
+    objc_setAssociatedObject(controller, kSPKCommentSortPreloadedAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SPKCommentSortNote([NSString stringWithFormat:@"preload start · %lu pages",
+                                                  (unsigned long)kSPKCommentSortPreloadPages]);
+    SPKCommentSortPreloadRound(controller, kSPKCommentSortPreloadPages);
+}
+
 #pragma mark - Entry control
 
 @interface SPKCommentSortTarget : NSObject
 @property (nonatomic, weak) UIViewController *controller;
+@property (nonatomic, weak) UIButton *button;
 - (void)cycleSortMode:(UIButton *)sender;
 @end
+
+// Keeps the glyph in step with the order actually in force, both when a thread
+// opens and after every tap.
+static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
+    if (!button)
+        return;
+    UIImageSymbolConfiguration *configuration =
+        [UIImageSymbolConfiguration configurationWithPointSize:14.0 weight:UIImageSymbolWeightBold];
+    UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
+                              withConfiguration:configuration];
+    [button setImage:symbol forState:UIControlStateNormal];
+    button.accessibilityValue = SPKCommentSortModeTitle(mode);
+}
 
 @implementation SPKCommentSortTarget
 
 // Cycles Instagram's order → newest → oldest → Instagram's order.
 //
-// A cycling control rather than a popup menu: the order has three states, the
-// banner already names the one in force, and it keeps the thread free of a menu
-// that would cover the comments being reordered.
+// A cycling control rather than a popup: the order has three states, the glyph
+// already names the one in force, and it keeps the thread free of a menu that
+// would cover the comments being reordered.
 - (void)cycleSortMode:(UIButton *)sender {
     NSString *current = SPKCommentSortMode();
     NSString *next = kSPKCommentSortModeNewest;
@@ -209,6 +332,7 @@ static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
         next = kSPKCommentSortModeDefault;
 
     SPKPreferenceSetObject(next, kSPKCommentSortModeKey);
+    SPKCommentSortApplySymbol(sender, next);
     SPKCommentSortNote([NSString stringWithFormat:@"mode -> %@", next]);
 
     UIViewController *controller = self.controller;
@@ -225,77 +349,95 @@ static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
         SPKCommentSortNote(@"list adapter missing performUpdates");
     }
 
+    // Leaving Instagram's order needs the pages that sorting will draw from.
+    if (![next isEqualToString:kSPKCommentSortModeDefault])
+        SPKCommentSortStartPreload(controller);
+
     SPKNotify(kSPKNotificationCommentSortUnavailable, @"Comment Sorting",
               SPKCommentSortModeTitle(next), @"sort", SPKNotificationToneSuccess);
 }
 
 @end
 
-// Seats the control on the window rather than on the controller's view.
+// The sheet that presents the thread, so the control can ride along with it.
 //
-// Measured on device: the thread controller's view is 1005 pt tall while the
-// visible sheet is shorter, so its top edge sits behind the sheet's own header
-// and anything anchored there is drawn out of sight.
-static void SPKSeatCommentSortEntry(UIViewController *host) {
-    if (objc_getAssociatedObject(host, kSPKCommentSortEntryAssocKey))
+// Comments open in a partial modal sheet and the thread controller sits inside
+// it. Anchoring to the window instead makes the control drift, because the
+// sheet moves and the window does not.
+static UIViewController *SPKCommentSortSheetHost(UIViewController *controller) {
+    UIViewController *host = controller;
+    NSUInteger hops = 0;
+    while (host.parentViewController && hops < 5) {
+        host = host.parentViewController;
+        hops++;
+    }
+    return host;
+}
+
+static void SPKSeatCommentSortEntry(UIViewController *controller) {
+    if (objc_getAssociatedObject(controller, kSPKCommentSortEntryAssocKey))
         return;
 
-    UIWindow *window = host.view.window;
-    if (!window) {
-        SPKCommentSortNote(@"seat skipped · no window");
+    UIViewController *sheet = SPKCommentSortSheetHost(controller);
+    UIView *container = [sheet isViewLoaded] ? sheet.view : nil;
+    if (!container.window)
+        container = controller.view.window;
+    if (!container) {
+        SPKCommentSortNote(@"seat skipped · no container");
         return;
     }
 
     SPKCommentSortTarget *target = [SPKCommentSortTarget new];
-    target.controller = host;
+    target.controller = controller;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.translatesAutoresizingMaskIntoConstraints = NO;
     button.tintColor = UIColor.labelColor;
     button.accessibilityLabel = @"Sort comments";
-    [button setImage:[UIImage systemImageNamed:@"arrow.up.arrow.down"
-                          withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:15.0
-                                                                                            weight:UIImageSymbolWeightSemibold]]
-            forState:UIControlStateNormal];
+    button.imageView.contentMode = UIViewContentModeScaleAspectFit;
     [button addTarget:target action:@selector(cycleSortMode:) forControlEvents:UIControlEventTouchUpInside];
+    SPKCommentSortApplySymbol(button, SPKCommentSortMode());
+    target.button = button;
 
-    // Glass on iOS 26; elsewhere the tweak's own capsule fill, which also gives
-    // the glyph the contrast it lacks against a white sheet.
-    if (!SPKChipApplyGlass(button, NO, 17.0, nil)) {
-        button.backgroundColor = [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:0.92];
-    }
+    // A fill under the glass rather than glass alone: on the white comment
+    // sheet a clear capsule leaves the glyph with nothing to read against.
+    button.backgroundColor = [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:0.94];
+    SPKChipApplyGlass(button, NO, 17.0, nil);
     button.layer.cornerRadius = 17.0;
     button.layer.cornerCurve = kCACornerCurveContinuous;
     button.layer.borderWidth = 0.5;
-    button.layer.borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.35].CGColor;
+    button.layer.borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.4].CGColor;
     button.layer.zPosition = 5000.0;
 
-    [window addSubview:button];
-    [window bringSubviewToFront:button];
+    [container addSubview:button];
+    [container bringSubviewToFront:button];
 
     // Instagram's send button holds the trailing corner of the sheet header, so
-    // the control takes the leading side at the same height.
-    UILayoutGuide *guide = window.safeAreaLayoutGuide;
+    // the control takes the leading side at the same height. Measuring from the
+    // safe area keeps it right whether the sheet is partial, where the inset is
+    // zero, or raised to full height, where it is not.
+    UILayoutGuide *guide = container.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
         [button.widthAnchor constraintEqualToConstant:34.0],
         [button.heightAnchor constraintEqualToConstant:34.0],
         [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
-        [button.centerYAnchor constraintEqualToAnchor:guide.centerYAnchor constant:-140.0],
+        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:20.0],
     ]];
 
-    objc_setAssociatedObject(host, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(host, kSPKCommentSortEntryAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(controller, kSPKCommentSortEntryAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    SPKCommentSortNote([NSString stringWithFormat:@"seated · mode %@", SPKCommentSortMode()]);
+    SPKCommentSortNote([NSString stringWithFormat:@"seated on %@ · mode %@",
+                                                  NSStringFromClass([sheet class]), SPKCommentSortMode()]);
 }
 
-static void SPKRemoveCommentSortEntry(UIViewController *host) {
-    UIButton *button = objc_getAssociatedObject(host, kSPKCommentSortEntryAssocKey);
+static void SPKRemoveCommentSortEntry(UIViewController *controller) {
+    UIButton *button = objc_getAssociatedObject(controller, kSPKCommentSortEntryAssocKey);
     if (!button)
         return;
     [button removeFromSuperview];
-    objc_setAssociatedObject(host, kSPKCommentSortEntryAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    objc_setAssociatedObject(host, kSPKCommentSortTargetAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(controller, kSPKCommentSortEntryAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 #pragma mark - Hooks
@@ -318,8 +460,8 @@ static void SPKRemoveCommentSortEntry(UIViewController *host) {
 
     NSArray *reordered = SPKCommentSortReorder(objects, mode);
 
-    // Recorded once per thread rather than on every pass: the adapter asks for
-    // its objects repeatedly, and five identical lines would bury the rest.
+    // Recorded only when the count moves rather than on every pass: the adapter
+    // asks for its objects repeatedly, and identical lines would bury the rest.
     static NSUInteger lastCount = 0;
     if (objects.count != lastCount) {
         lastCount = objects.count;
@@ -332,8 +474,9 @@ static void SPKRemoveCommentSortEntry(UIViewController *host) {
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     SPKSeatCommentSortEntry((UIViewController *)self);
+    SPKCommentSortStartPreload((UIViewController *)self);
 
-    // The window is not always attached on the first pass.
+    // The sheet is not always laid out on the first pass.
     __weak UIViewController *weakSelf = (UIViewController *)self;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         UIViewController *strongSelf = weakSelf;
