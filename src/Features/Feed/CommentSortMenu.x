@@ -13,31 +13,51 @@
 // never drawn. A control on the thread calls the controller's own delegate
 // method, so the app builds the menu, applies the choice and remembers it.
 //
-// Read from the 441 binary, and the reason nothing here guesses a value:
+// Measured in the 441 binary:
 //   IGCommentThreadViewController  -didTapSortingView:            v24@0:8@16
+//   IGCommentThreadViewController  -viewDidAppear: is implemented on the class
 //   IGCommentThreadViewController  ivar _threadManager, _commentSortingMenuController
 //   IGCommentSortingMenuController -presentMenuFromOriginView:    v24@0:8@16
 //   IGCommentThread                -sortOrder (NSString), ivar _sortOptions
+//   Exactly one class in the whole binary carries -didTapSortingView:.
 //
-// Comments open inside a partial modal sheet, and the thread controller sits as
-// a descendant of that sheet rather than being presented on its own. Both are
-// hooked, and the control is seated on whichever one appears, after the subtree
-// is searched for the controller that carries the sorting method. The search
-// repeats once shortly after, because the sheet fills its content
-// asynchronously — the same reason SwipeCloseComments retries.
+// Measured on device with FLEX, on the open comments sheet:
+//   Nearest View Controller = IGCommentThreadViewController
+//   Its view is an IGDSShimmeringGroupView 440x1005 — taller than the visible
+//   sheet, so its top edge lies behind the sheet's own "Comments" header.
 //
-// The menu entries arrive from the backend through the GraphQL fragment
-// IGCommentSortingMenuControllerMenuItemsForMediaFragment, attached to the
-// media, and no sort value exists as a literal anywhere in the binary. An
-// account the backend does not serve therefore gets an empty menu. Every way
-// this can come up short reports itself rather than leaving a silent gap.
+// That last measurement is why the control is attached to the window rather
+// than to the controller's view: the controller's top is not a reliable place
+// to put anything visible. The window's safe area is.
+//
+// Each stage writes what it did, and Feed → Comments → Sort Menu Report shows
+// it. Reading that row says whether the installer ran, whether the hooks were
+// installed, whether the hook fired and on which class — the one thing three
+// earlier attempts could not establish.
 
 static NSString *const kSPKCommentSortMenuKey = @"feed_comments_sort_menu";
-static NSString *const kSPKCommentSortReadingKey = @"spk_diag_comment_sort";
+static NSString *const kSPKCommentSortStateKey = @"spk_diag_comment_sort";
 
 static const void *kSPKCommentSortEntryAssocKey = &kSPKCommentSortEntryAssocKey;
 static const void *kSPKCommentSortTargetAssocKey = &kSPKCommentSortTargetAssocKey;
-static const void *kSPKCommentSortReportedAssocKey = &kSPKCommentSortReportedAssocKey;
+
+#pragma mark - Reading kept where the settings can show it
+
+// A short history rather than one slot: reaching the settings crosses other
+// screens, and a single value is overwritten before it can be read.
+static void SPKCommentSortNote(NSString *line) {
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"HH:mm:ss";
+
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSMutableArray *history = [([defaults arrayForKey:kSPKCommentSortStateKey] ?: @[]) mutableCopy];
+    [history insertObject:[NSString stringWithFormat:@"%@ %@", [formatter stringFromDate:[NSDate date]], line]
+                  atIndex:0];
+    while (history.count > 5)
+        [history removeLastObject];
+    [defaults setObject:history forKey:kSPKCommentSortStateKey];
+    [defaults synchronize];
+}
 
 #pragma mark - Runtime reading
 
@@ -63,7 +83,7 @@ static id SPKCommentSortSend(id target, SEL selector) {
 
 // A served sort option carries its own wire value. Its shape is decided by the
 // backend, so several published names are tried before falling back to a label
-// that is at least readable in the reading.
+// that is at least readable in the report.
 static NSString *SPKCommentSortOptionLabel(id option) {
     if (!option)
         return @"nil";
@@ -83,58 +103,6 @@ static NSString *SPKCommentSortOptionLabel(id option) {
     return NSStringFromClass([option class]);
 }
 
-// Keeps the last three readings rather than one: reaching the settings goes
-// through other screens, and a single slot is overwritten before it can be read.
-static void SPKCommentSortRecordReading(NSString *line) {
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"HH:mm:ss";
-
-    NSString *stamped = [NSString stringWithFormat:@"%@ · %@", [formatter stringFromDate:[NSDate date]], line];
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSMutableArray *history = [([defaults arrayForKey:kSPKCommentSortReadingKey] ?: @[]) mutableCopy];
-    [history insertObject:stamped atIndex:0];
-    while (history.count > 3)
-        [history removeLastObject];
-    [defaults setObject:history forKey:kSPKCommentSortReadingKey];
-}
-
-#pragma mark - Locating the sorting controller
-
-static SEL SPKCommentSortDidTapSelector(void) {
-    return NSSelectorFromString(@"didTapSortingView:");
-}
-
-// The thread controller is a descendant of the sheet, not the sheet itself.
-static UIViewController *SPKCommentSortFindTarget(UIViewController *root, NSInteger depth) {
-    if (!root || depth > 5)
-        return nil;
-    if ([root respondsToSelector:SPKCommentSortDidTapSelector()])
-        return root;
-    for (UIViewController *child in root.childViewControllers) {
-        UIViewController *found = SPKCommentSortFindTarget(child, depth + 1);
-        if (found)
-            return found;
-    }
-    return nil;
-}
-
-// Used only to tell a comment surface apart from any other partial modal sheet,
-// so an unrelated sheet stays silent while a comment sheet that carries no
-// sorting method says which class it is instead.
-static NSString *SPKCommentSortDescribeCommentController(UIViewController *root, NSInteger depth) {
-    if (!root || depth > 5)
-        return nil;
-    NSString *name = NSStringFromClass([root class]);
-    if ([name rangeOfString:@"Comment" options:NSCaseInsensitiveSearch].location != NSNotFound)
-        return name;
-    for (UIViewController *child in root.childViewControllers) {
-        NSString *found = SPKCommentSortDescribeCommentController(child, depth + 1);
-        if (found)
-            return found;
-    }
-    return nil;
-}
-
 #pragma mark - Entry target
 
 @interface SPKCommentSortMenuTarget : NSObject
@@ -146,8 +114,10 @@ static NSString *SPKCommentSortDescribeCommentController(UIViewController *root,
 
 - (void)presentSortMenu:(UIButton *)sender {
     UIViewController *controller = self.controller;
-    if (!controller)
+    if (!controller) {
+        SPKCommentSortNote(@"tap · controller gone");
         return;
+    }
 
     id manager = SPKCommentSortIvarValue(controller, "_threadManager");
     id thread = SPKCommentSortSend(manager, NSSelectorFromString(@"commentThread"));
@@ -170,19 +140,19 @@ static NSString *SPKCommentSortDescribeCommentController(UIViewController *root,
         if (labels.count >= 4)
             break;
     }
-    SPKCommentSortRecordReading([NSString stringWithFormat:@"tap on %@ · options %lu [%@] · current %@ · menu %@",
-                                                          NSStringFromClass([controller class]),
-                                                          (unsigned long)options.count,
-                                                          labels.count ? [labels componentsJoinedByString:@", "] : @"—",
-                                                          [current isKindOfClass:[NSString class]] ? current : @"—",
-                                                          menuController ? NSStringFromClass([menuController class]) : @"nil"]);
+    SPKCommentSortNote([NSString stringWithFormat:@"tap · options %lu [%@] · current %@ · menu %@",
+                                                  (unsigned long)options.count,
+                                                  labels.count ? [labels componentsJoinedByString:@", "] : @"none",
+                                                  [current isKindOfClass:[NSString class]] ? current : @"none",
+                                                  menuController ? @"built" : @"nil"]);
 
     UIViewController *presentedBefore = controller.presentedViewController;
     UIViewController *rootPresentedBefore = controller.view.window.rootViewController.presentedViewController;
 
+    SEL didTapSorting = NSSelectorFromString(@"didTapSortingView:");
     SEL presentMenu = NSSelectorFromString(@"presentMenuFromOriginView:");
-    if ([controller respondsToSelector:SPKCommentSortDidTapSelector()]) {
-        ((void (*)(id, SEL, id))objc_msgSend)(controller, SPKCommentSortDidTapSelector(), sender);
+    if ([controller respondsToSelector:didTapSorting]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(controller, didTapSorting, sender);
     } else if ([menuController respondsToSelector:presentMenu]) {
         ((void (*)(id, SEL, id))objc_msgSend)(menuController, presentMenu, sender);
     }
@@ -201,9 +171,10 @@ static NSString *SPKCommentSortDescribeCommentController(UIViewController *root,
             return;
 
         NSString *subtitle = servedCount > 0
-                                 ? [NSString stringWithFormat:@"%lu sort options were served, but the menu did not open.",
+                                 ? [NSString stringWithFormat:@"%lu options served, menu did not open.",
                                                               (unsigned long)servedCount]
-                                 : @"Instagram served no sorting options for this post.";
+                                 : @"No sorting options served for this post.";
+        SPKCommentSortNote([NSString stringWithFormat:@"menu did not open · options %lu", (unsigned long)servedCount]);
         SPKNotify(kSPKNotificationCommentSortUnavailable, @"Comment Sorting", subtitle, @"sort",
                   servedCount > 0 ? SPKNotificationToneInfo : SPKNotificationToneError);
     });
@@ -213,29 +184,22 @@ static NSString *SPKCommentSortDescribeCommentController(UIViewController *root,
 
 #pragma mark - Entry control
 
+// Attached to the window, not to the controller's view: the controller's view
+// measures 440x1005 with its top behind the sheet's header, so nothing placed
+// at its top edge is reliably visible.
 static void SPKSeatCommentSortEntry(UIViewController *host) {
-    if (![host isViewLoaded] || !host.view.window)
-        return;
     if (objc_getAssociatedObject(host, kSPKCommentSortEntryAssocKey))
         return;
 
-    UIViewController *target = SPKCommentSortFindTarget(host, 0);
-    if (!target) {
-        // A comment surface without the sorting method is worth naming; any
-        // other sheet is none of this feature's business and stays silent.
-        NSString *commentClass = SPKCommentSortDescribeCommentController(host, 0);
-        if (commentClass && !objc_getAssociatedObject(host, kSPKCommentSortReportedAssocKey)) {
-            objc_setAssociatedObject(host, kSPKCommentSortReportedAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-            SPKCommentSortRecordReading([NSString stringWithFormat:@"no sorting entry · comment class %@", commentClass]);
-            SPKNotify(kSPKNotificationCommentSortUnavailable, @"Comment Sorting",
-                      [NSString stringWithFormat:@"%@ carries no sorting entry.", commentClass], @"sort",
-                      SPKNotificationToneError);
-        }
+    UIWindow *window = host.view.window;
+    if (!window) {
+        SPKCommentSortNote([NSString stringWithFormat:@"seat skipped · %@ has no window",
+                                                      NSStringFromClass([host class])]);
         return;
     }
 
     SPKCommentSortMenuTarget *entryTarget = [SPKCommentSortMenuTarget new];
-    entryTarget.controller = target;
+    entryTarget.controller = host;
 
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.translatesAutoresizingMaskIntoConstraints = NO;
@@ -254,64 +218,59 @@ static void SPKSeatCommentSortEntry(UIViewController *host) {
         button.layer.cornerCurve = kCACornerCurveContinuous;
         button.clipsToBounds = YES;
     }
-    // Instagram's own header is laid out over the sheet; the control has to sit
-    // above it rather than behind it.
-    button.layer.zPosition = 1000.0;
+    button.layer.zPosition = 5000.0;
 
-    [host.view addSubview:button];
-    [host.view bringSubviewToFront:button];
+    [window addSubview:button];
+    [window bringSubviewToFront:button];
 
-    // The trailing corner already holds Instagram's send button, so the control
-    // takes the free leading corner, level with it.
-    UILayoutGuide *guide = host.view.safeAreaLayoutGuide;
+    // The sheet's trailing corner holds Instagram's send button, so the control
+    // takes the leading side, low enough to clear the status bar.
+    UILayoutGuide *guide = window.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
         [button.widthAnchor constraintEqualToConstant:34.0],
         [button.heightAnchor constraintEqualToConstant:34.0],
         [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
-        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:20.0],
+        [button.centerYAnchor constraintEqualToAnchor:guide.centerYAnchor constant:-140.0],
     ]];
 
     objc_setAssociatedObject(host, kSPKCommentSortTargetAssocKey, entryTarget, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(host, kSPKCommentSortEntryAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    SPKCommentSortRecordReading([NSString stringWithFormat:@"seated on %@ · target %@",
-                                                          NSStringFromClass([host class]),
-                                                          NSStringFromClass([target class])]);
+    SPKCommentSortNote([NSString stringWithFormat:@"SEATED on window · host %@", NSStringFromClass([host class])]);
 }
 
-// The sheet fills its content asynchronously, so one pass on appearance is not
-// enough on its own.
-static void SPKSeatCommentSortEntryWithRetry(UIViewController *host) {
-    SPKSeatCommentSortEntry(host);
-
-    __weak UIViewController *weakHost = host;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        UIViewController *strongHost = weakHost;
-        if (strongHost)
-            SPKSeatCommentSortEntry(strongHost);
-    });
+static void SPKRemoveCommentSortEntry(UIViewController *host) {
+    UIButton *button = objc_getAssociatedObject(host, kSPKCommentSortEntryAssocKey);
+    if (!button)
+        return;
+    [button removeFromSuperview];
+    objc_setAssociatedObject(host, kSPKCommentSortEntryAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(host, kSPKCommentSortTargetAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 #pragma mark - Hooks
 
 %group SPKCommentSortMenuHooks
 
-// Comments opened as a sheet: the thread controller is a descendant.
-%hook IGDSDefaultPartialModalSheetViewController
-
-- (void)viewDidAppear:(BOOL)animated {
-    %orig;
-    SPKSeatCommentSortEntryWithRetry((UIViewController *)self);
-}
-
-%end
-
-// Comments opened on their own, from a permalink or a notification.
 %hook IGCommentThreadViewController
 
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
-    SPKSeatCommentSortEntryWithRetry((UIViewController *)self);
+    SPKCommentSortNote([NSString stringWithFormat:@"HOOK FIRED · %@", NSStringFromClass([self class])]);
+    SPKSeatCommentSortEntry((UIViewController *)self);
+
+    // The window is not always attached on the first pass.
+    __weak UIViewController *weakSelf = (UIViewController *)self;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.4 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UIViewController *strongSelf = weakSelf;
+        if (strongSelf)
+            SPKSeatCommentSortEntry(strongSelf);
+    });
+}
+
+- (void)viewDidDisappear:(BOOL)animated {
+    SPKRemoveCommentSortEntry((UIViewController *)self);
+    %orig;
 }
 
 %end
@@ -319,10 +278,14 @@ static void SPKSeatCommentSortEntryWithRetry(UIViewController *host) {
 %end
 
 void SPKInstallCommentSortMenuHooksIfEnabled(void) {
-    if (![SPKUtils getBoolPref:kSPKCommentSortMenuKey])
+    BOOL enabled = [SPKUtils getBoolPref:kSPKCommentSortMenuKey];
+    SPKCommentSortNote([NSString stringWithFormat:@"installer ran · pref %@", enabled ? @"ON" : @"OFF"]);
+    if (!enabled)
         return;
+
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         %init(SPKCommentSortMenuHooks);
+        SPKCommentSortNote(@"hooks installed");
     });
 }
