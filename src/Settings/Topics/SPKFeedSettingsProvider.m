@@ -51,6 +51,19 @@ static NSArray *SPKFeedCommentsSections(void) {
     commentSort.helpText = @"Instagram builds a comment sorting menu but never shows the button. This puts the button back on the thread. Instagram supplies the options, so a post it sends none for says so instead of opening an empty menu.";
     commentSort.searchKeywords = @"comment sort order chronological newest oldest top recent menu";
 
+    // Reads back what each stage of the feature did, so a build that seats no
+    // control can be told apart from one whose hooks never installed.
+    NSArray *sortReport = [[NSUserDefaults standardUserDefaults] arrayForKey:@"spk_diag_comment_sort"];
+    SPKSetting *commentSortReport = [SPKSetting buttonCellWithTitle:@"Sort Menu Report"
+                                                           subtitle:sortReport.count > 0
+                                                                        ? [sortReport componentsJoinedByString:@"\n"]
+                                                                        : @"nothing recorded yet"
+                                                               icon:SPKSettingsIcon(@"logs")
+                                                             action:^(void) { }];
+    commentSortReport.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"feed_comments_sort_menu"];
+    };
+
     SPKSetting *hideCommentShopping = [SPKSetting switchCellWithTitle:@"Hide Shopping Carousel"
                                                                  icon:SPKSettingsIcon(@"shopping_bag")
                                                           defaultsKey:@"general_comments_hide_shopping"];
@@ -67,6 +80,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     return @[
     SPKTopicSection(@"Comments", @[
                 commentSort,
+                commentSortReport,
                 copyComment,
                 commentMediaActions,
                 commentGalleryUpload,
