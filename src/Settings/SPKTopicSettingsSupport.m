@@ -257,6 +257,14 @@ UIMenu *SPKReelsTapControlMenu(void) {
     ]];
 }
 
+UIMenu *SPKCommentSortModeMenu(void) {
+    return [UIMenu menuWithChildren:@[
+        SPKMenuCommand(@"Instagram's Order", @"sort", nil, @"feed_comments_sort_mode", @"default", NO),
+        SPKMenuCommand(@"Newest First", @"clock", nil, @"feed_comments_sort_mode", @"newest", NO),
+        SPKMenuCommand(@"Oldest First", @"clock", nil, @"feed_comments_sort_mode", @"oldest", NO)
+    ]];
+}
+
 UIMenu *SPKMainFeedModeMenu(void) {
     return [UIMenu menuWithChildren:@[
         SPKMenuCommand(@"For You", @"heart", nil, @"feed_mode", @"default", YES),
