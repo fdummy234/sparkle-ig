@@ -565,6 +565,9 @@
 @end
 
 @interface IGCommentThreadViewController : UIViewController
+// Data source call that decides the order of the whole comment thread.
+// Declared so the hook on it type checks and %orig returns the right type.
+- (NSArray *)objectsForListAdapter:(id)listAdapter;
 @end
 
 @interface IGSeeAllItemConfiguration : NSObject
