@@ -68,7 +68,7 @@ static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 // times a second, so it has to tolerate being called while a page is already in
 // flight. Asking on a short tick therefore costs nothing when the answer has
 // not arrived yet, and starts the next page the instant it has.
-static const NSTimeInterval kSPKCommentSortPreloadTick = 0.18;
+static const NSTimeInterval kSPKCommentSortPreloadTick = 0.06;
 
 // Progress is measured by the comment count. When it stops moving for this many
 // ticks the thread is treated as finished, which covers a page that fails, a
@@ -83,6 +83,12 @@ static const NSUInteger kSPKCommentSortPreloadMaxRounds = 200;
 static const void *kSPKCommentSortEntryAssocKey = &kSPKCommentSortEntryAssocKey;
 static const void *kSPKCommentSortTargetAssocKey = &kSPKCommentSortTargetAssocKey;
 static const void *kSPKCommentSortPreloadedAssocKey = &kSPKCommentSortPreloadedAssocKey;
+
+// While a finger is on the list, the order handed back is the one already on
+// screen. Pages that land mid gesture are held until it ends, so nothing moves
+// under the reader; they appear in one go the moment the list comes to rest.
+static const void *kSPKCommentSortFrozenAssocKey = &kSPKCommentSortFrozenAssocKey;
+static const void *kSPKCommentSortCacheAssocKey = &kSPKCommentSortCacheAssocKey;
 
 static NSString *SPKCommentSortMode(void) {
     NSString *mode = [SPKUtils getStringPref:kSPKCommentSortModeKey];
@@ -339,7 +345,7 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     if (!button)
         return;
     UIImageSymbolConfiguration *configuration =
-        [UIImageSymbolConfiguration configurationWithPointSize:17.0 weight:UIImageSymbolWeightSemibold];
+        [UIImageSymbolConfiguration configurationWithPointSize:19.0 weight:UIImageSymbolWeightSemibold];
     UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
                               withConfiguration:configuration];
     [button setImage:symbol forState:UIControlStateNormal];
@@ -465,7 +471,7 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
         [button.widthAnchor constraintEqualToConstant:44.0],
         [button.heightAnchor constraintEqualToConstant:44.0],
         [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
-        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:4.0],
+        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:0.5],
     ]];
 
     objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -504,7 +510,17 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
     if ([mode isEqualToString:kSPKCommentSortModeDefault])
         return objects;
 
+    // A page arriving mid scroll would otherwise slide the thread under the
+    // finger. Handing back what is already displayed makes the adapter see no
+    // change at all, so the list holds still until the gesture ends.
+    if (objc_getAssociatedObject(self, kSPKCommentSortFrozenAssocKey)) {
+        NSArray *frozen = objc_getAssociatedObject(self, kSPKCommentSortCacheAssocKey);
+        if (frozen.count > 0)
+            return frozen;
+    }
+
     NSArray *reordered = SPKCommentSortReorder(objects, mode);
+    objc_setAssociatedObject(self, kSPKCommentSortCacheAssocKey, reordered, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     // Recorded only when the count moves rather than on every pass: the adapter
     // asks for its objects repeatedly, and identical lines would bury the rest.
@@ -515,6 +531,23 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
                                                       mode, (unsigned long)objects.count]);
     }
     return reordered;
+}
+
+// Finger down: hold the order still for the length of the gesture.
+- (void)scrollViewWillBeginDragging:(id)scrollView {
+    %orig;
+    objc_setAssociatedObject(self, kSPKCommentSortFrozenAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+// At rest: let go, and fold in whatever arrived while the list was held.
+- (void)scrollViewDidEndScrolling:(id)scrollView {
+    %orig;
+    objc_setAssociatedObject(self, kSPKCommentSortFrozenAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+    id listAdapter = SPKCommentSortIvarValue(self, "_listAdapter");
+    SEL performUpdates = NSSelectorFromString(@"performUpdatesAnimated:completion:");
+    if ([listAdapter respondsToSelector:performUpdates])
+        ((void (*)(id, SEL, BOOL, id))objc_msgSend)(listAdapter, performUpdates, NO, nil);
 }
 
 - (void)viewDidAppear:(BOOL)animated {
