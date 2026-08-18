@@ -62,7 +62,7 @@ static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 // Stamped into the report at launch. Two builds that look alike on screen are
 // impossible to tell apart otherwise, and guessing which one is running has
 // cost more than one round of chasing an already fixed problem.
-static NSString *const kSPKCommentSortBuildTag = @"v12";
+static NSString *const kSPKCommentSortBuildTag = @"v14";
 
 // Preloading pulls the whole thread in before it is read, because sorting can
 // only order what has been loaded and a thread that keeps loading keeps
@@ -372,10 +372,12 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     // 17 pt or at 19 pt.
     //
     // The size is calibrated against Instagram's own send button rather than
-    // picked: measured at 20.3 pt tall with a 2.33 pt stroke, which 22 pt at
-    // medium weight matches within a fifth of a point.
+    // picked. That button measures 20.3 pt tall with a 2.33 pt stroke, matched
+    // exactly by 22 pt at medium weight; this sits one step under it, at
+    // roughly 18.5 pt and a 2.12 pt stroke, so the arrow reads a little lighter
+    // than the send button beside it without looking thin.
     UIImageSymbolConfiguration *configuration =
-        [UIImageSymbolConfiguration configurationWithPointSize:22.0 weight:UIImageSymbolWeightMedium];
+        [UIImageSymbolConfiguration configurationWithPointSize:20.0 weight:UIImageSymbolWeightMedium];
     UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
                               withConfiguration:configuration];
     [button setImage:symbol forState:UIControlStateNormal];
@@ -497,11 +499,15 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
     // the control takes the leading side at the same height. Measuring from the
     // safe area keeps it right whether the sheet is partial, where the inset is
     // zero, or raised to full height, where it is not.
+    //
+    // The side inset mirrors the send button rather than being chosen: that
+    // button sits 19.7 pt from the trailing edge, measured on a capture, so the
+    // same figure on the leading side puts the two in balance across the title.
     UILayoutGuide *guide = container.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
         [button.widthAnchor constraintEqualToConstant:44.0],
         [button.heightAnchor constraintEqualToConstant:44.0],
-        [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
+        [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:19.7],
         [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:0.5],
     ]];
 
