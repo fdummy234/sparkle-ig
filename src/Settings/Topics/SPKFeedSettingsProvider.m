@@ -44,17 +44,26 @@ static NSArray *SPKFeedCommentsSections(void) {
         return ![SPKUtils getBoolPref:@"general_comments_swipe_close"];
     };
 
-    SPKSetting *commentSort = [SPKSetting switchCellWithTitle:@"Sort Menu"
+    SPKSetting *commentSort = [SPKSetting switchCellWithTitle:@"Sort Comments"
                                                          icon:SPKSettingsIcon(@"sort")
                                                   defaultsKey:@"feed_comments_sort_menu"
                                               requiresRestart:YES];
-    commentSort.helpText = @"Instagram builds a comment sorting menu but never shows the button. This puts the button back on the thread. Instagram supplies the options, so a post it sends none for says so instead of opening an empty menu.";
-    commentSort.searchKeywords = @"comment sort order chronological newest oldest top recent menu";
+    commentSort.helpText = @"Instagram ranks comments by engagement, which scatters a conversation. This reorders the thread by the date each comment was posted, and puts a button on the thread to switch order without leaving it. Only loaded comments are reordered, so each Load More brings in comments that are sorted on the next pass.";
+    commentSort.searchKeywords = @"comment sort order chronological newest oldest top recent date";
+
+    SPKSetting *commentSortMode = [SPKSetting menuCellWithTitle:@"Comment Order"
+                                                           icon:SPKSettingsIcon(@"clock")
+                                                           menu:SPKCommentSortModeMenu()];
+    commentSortMode.helpText = @"Order the thread opens in. The button on the thread cycles through the same three.";
+    commentSortMode.searchKeywords = @"comment order newest oldest chronological date";
+    commentSortMode.hiddenProvider = ^BOOL {
+        return ![SPKUtils getBoolPref:@"feed_comments_sort_menu"];
+    };
 
     // Reads back what each stage of the feature did, so a build that seats no
     // control can be told apart from one whose hooks never installed.
     NSArray *sortReport = [[NSUserDefaults standardUserDefaults] arrayForKey:@"spk_diag_comment_sort"];
-    SPKSetting *commentSortReport = [SPKSetting buttonCellWithTitle:@"Sort Menu Report"
+    SPKSetting *commentSortReport = [SPKSetting buttonCellWithTitle:@"Sort Report"
                                                            subtitle:sortReport.count > 0
                                                                         ? [sortReport componentsJoinedByString:@"\n"]
                                                                         : @"nothing recorded yet"
@@ -80,6 +89,7 @@ static NSArray *SPKFeedCommentsSections(void) {
     return @[
     SPKTopicSection(@"Comments", @[
                 commentSort,
+                commentSortMode,
                 commentSortReport,
                 copyComment,
                 commentMediaActions,
