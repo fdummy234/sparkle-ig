@@ -59,6 +59,11 @@ static NSString *const kSPKCommentSortModeOldest = @"oldest";
 // signal on a device without a console.
 static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 
+// Stamped into the report at launch. Two builds that look alike on screen are
+// impossible to tell apart otherwise, and guessing which one is running has
+// cost more than one round of chasing an already fixed problem.
+static NSString *const kSPKCommentSortBuildTag = @"v11";
+
 // Preloading pulls the whole thread in before it is read, because sorting can
 // only order what has been loaded and a thread that keeps loading keeps
 // reshuffling under the reader.
@@ -89,6 +94,7 @@ static const void *kSPKCommentSortPreloadedAssocKey = &kSPKCommentSortPreloadedA
 // under the reader; they appear in one go the moment the list comes to rest.
 static const void *kSPKCommentSortFrozenAssocKey = &kSPKCommentSortFrozenAssocKey;
 static const void *kSPKCommentSortCacheAssocKey = &kSPKCommentSortCacheAssocKey;
+static const void *kSPKCommentSortPendingAssocKey = &kSPKCommentSortPendingAssocKey;
 
 static NSString *SPKCommentSortMode(void) {
     NSString *mode = [SPKUtils getStringPref:kSPKCommentSortModeKey];
@@ -344,11 +350,16 @@ static void SPKCommentSortStartPreload(UIViewController *controller) {
 static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     if (!button)
         return;
+    // Measured across builds: the same arrow came out 16.7 pt wide whether the
+    // image was built at 17 pt or at 19 pt, so the configuration carried on the
+    // image alone was being ignored. A button applies its own preferred symbol
+    // configuration over that, which is the one that has to be set.
     UIImageSymbolConfiguration *configuration =
-        [UIImageSymbolConfiguration configurationWithPointSize:19.0 weight:UIImageSymbolWeightSemibold];
+        [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightRegular];
     UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
                               withConfiguration:configuration];
     [button setImage:symbol forState:UIControlStateNormal];
+    [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
     button.accessibilityValue = SPKCommentSortModeTitle(mode);
 }
 
@@ -513,10 +524,22 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
     // A page arriving mid scroll would otherwise slide the thread under the
     // finger. Handing back what is already displayed makes the adapter see no
     // change at all, so the list holds still until the gesture ends.
-    if (objc_getAssociatedObject(self, kSPKCommentSortFrozenAssocKey)) {
+    //
+    // The scroll view is asked directly rather than trusting a delegate call to
+    // arrive: measured on a recording, content still changed during every drag
+    // while a flag set from the delegate was supposed to prevent exactly that.
+    // Its own dragging state cannot be missed the way a callback can.
+    UIScrollView *listView = SPKCommentSortIvarValue(self, "_collectionView");
+    BOOL inMotion = [listView isKindOfClass:[UIScrollView class]] &&
+                    (listView.isTracking || listView.isDragging || listView.isDecelerating);
+    if (inMotion || objc_getAssociatedObject(self, kSPKCommentSortFrozenAssocKey)) {
         NSArray *frozen = objc_getAssociatedObject(self, kSPKCommentSortCacheAssocKey);
-        if (frozen.count > 0)
+        if (frozen.count > 0) {
+            // Remember that an update was withheld, so it can be applied once
+            // the list comes to rest even if no delegate call announces it.
+            objc_setAssociatedObject(self, kSPKCommentSortPendingAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
             return frozen;
+        }
     }
 
     NSArray *reordered = SPKCommentSortReorder(objects, mode);
@@ -533,21 +556,62 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
     return reordered;
 }
 
+// Applies a withheld update once the list is at rest.
+//
+// The delegate callbacks are hooked as well, but a callback that never arrives
+// would leave the thread frozen on stale content; this check cannot be skipped.
+static void SPKCommentSortFlushWhenIdle(UIViewController *controller) {
+    if (!objc_getAssociatedObject(controller, kSPKCommentSortPendingAssocKey))
+        return;
+
+    UIScrollView *listView = SPKCommentSortIvarValue(controller, "_collectionView");
+    BOOL inMotion = [listView isKindOfClass:[UIScrollView class]] &&
+                    (listView.isTracking || listView.isDragging || listView.isDecelerating);
+
+    if (!inMotion) {
+        objc_setAssociatedObject(controller, kSPKCommentSortPendingAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        objc_setAssociatedObject(controller, kSPKCommentSortFrozenAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        id listAdapter = SPKCommentSortIvarValue(controller, "_listAdapter");
+        SEL performUpdates = NSSelectorFromString(@"performUpdatesAnimated:completion:");
+        if ([listAdapter respondsToSelector:performUpdates])
+            ((void (*)(id, SEL, BOOL, id))objc_msgSend)(listAdapter, performUpdates, NO, nil);
+        return;
+    }
+
+    __weak UIViewController *weakController = controller;
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        UIViewController *strongController = weakController;
+        if (strongController)
+            SPKCommentSortFlushWhenIdle(strongController);
+    });
+}
+
 // Finger down: hold the order still for the length of the gesture.
 - (void)scrollViewWillBeginDragging:(id)scrollView {
     %orig;
     objc_setAssociatedObject(self, kSPKCommentSortFrozenAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SPKCommentSortFlushWhenIdle((UIViewController *)self);
 }
 
 // At rest: let go, and fold in whatever arrived while the list was held.
 - (void)scrollViewDidEndScrolling:(id)scrollView {
     %orig;
     objc_setAssociatedObject(self, kSPKCommentSortFrozenAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    SPKCommentSortFlushWhenIdle((UIViewController *)self);
+}
 
-    id listAdapter = SPKCommentSortIvarValue(self, "_listAdapter");
-    SEL performUpdates = NSSelectorFromString(@"performUpdatesAnimated:completion:");
-    if ([listAdapter respondsToSelector:performUpdates])
-        ((void (*)(id, SEL, BOOL, id))objc_msgSend)(listAdapter, performUpdates, NO, nil);
+// Earliest point the thread exists. Preloading from here rather than from the
+// appearance callback buys the whole presentation animation, which is where the
+// first pages can land before anything is on screen to be moved by them.
+- (void)viewDidLoad {
+    %orig;
+    SPKCommentSortStartPreload((UIViewController *)self);
+}
+
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    SPKCommentSortStartPreload((UIViewController *)self);
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -575,7 +639,8 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
 
 void SPKInstallCommentSortMenuHooksIfEnabled(void) {
     BOOL enabled = [SPKUtils getBoolPref:kSPKCommentSortEnabledKey];
-    SPKCommentSortNote([NSString stringWithFormat:@"installer ran · pref %@", enabled ? @"ON" : @"OFF"]);
+    SPKCommentSortNote([NSString stringWithFormat:@"installer ran · %@ · pref %@",
+                                                  kSPKCommentSortBuildTag, enabled ? @"ON" : @"OFF"]);
     if (!enabled)
         return;
 
