@@ -309,7 +309,7 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     if (!button)
         return;
     UIImageSymbolConfiguration *configuration =
-        [UIImageSymbolConfiguration configurationWithPointSize:14.0 weight:UIImageSymbolWeightBold];
+        [UIImageSymbolConfiguration configurationWithPointSize:17.0 weight:UIImageSymbolWeightSemibold];
     UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
                               withConfiguration:configuration];
     [button setImage:symbol forState:UIControlStateNormal];
@@ -359,29 +359,43 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
 
 @end
 
-// The sheet that presents the thread, so the control can ride along with it.
+// The sheet's own view, so the control rides along with it.
 //
-// Comments open in a partial modal sheet and the thread controller sits inside
-// it. Anchoring to the window instead makes the control drift, because the
-// sheet moves and the window does not.
-static UIViewController *SPKCommentSortSheetHost(UIViewController *controller) {
-    UIViewController *host = controller;
-    NSUInteger hops = 0;
-    while (host.parentViewController && hops < 5) {
-        host = host.parentViewController;
-        hops++;
+// Comments open in a partial modal sheet that the reader can drag up and down,
+// and the thread sits inside it. Anchoring to the window puts the control on
+// the media above the sheet and leaves it there while the sheet moves; walking
+// the controllers lands on a full screen ancestor for the same reason.
+//
+// The views are walked instead. Starting at the thread and climbing towards the
+// window, the sheet is the highest view still shorter than the window: every
+// view above it spans the screen, and the sheet is what carries the grabber,
+// the "Comments" title and the send button. A sheet dragged to full height
+// stops being shorter, so the last view below the window is kept as a fallback
+// and is the right answer in that case too.
+static UIView *SPKCommentSortSheetView(UIViewController *controller) {
+    UIView *view = [controller isViewLoaded] ? controller.view : nil;
+    UIWindow *window = view.window;
+    if (!view || !window)
+        return nil;
+
+    CGFloat windowHeight = CGRectGetHeight(window.bounds);
+    UIView *lastBelowWindow = view;
+    UIView *shortest = nil;
+
+    for (UIView *candidate = view; candidate && candidate != window; candidate = candidate.superview) {
+        if (candidate.superview == window)
+            lastBelowWindow = candidate;
+        if (CGRectGetHeight(candidate.bounds) < windowHeight - 1.0)
+            shortest = candidate;
     }
-    return host;
+    return shortest ?: lastBelowWindow;
 }
 
 static void SPKSeatCommentSortEntry(UIViewController *controller) {
     if (objc_getAssociatedObject(controller, kSPKCommentSortEntryAssocKey))
         return;
 
-    UIViewController *sheet = SPKCommentSortSheetHost(controller);
-    UIView *container = [sheet isViewLoaded] ? sheet.view : nil;
-    if (!container.window)
-        container = controller.view.window;
+    UIView *container = SPKCommentSortSheetView(controller);
     if (!container) {
         SPKCommentSortNote(@"seat skipped · no container");
         return;
@@ -402,8 +416,8 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
     // A fill under the glass rather than glass alone: on the white comment
     // sheet a clear capsule leaves the glyph with nothing to read against.
     button.backgroundColor = [UIColor.secondarySystemBackgroundColor colorWithAlphaComponent:0.94];
-    SPKChipApplyGlass(button, NO, 17.0, nil);
-    button.layer.cornerRadius = 17.0;
+    SPKChipApplyGlass(button, NO, 22.0, nil);
+    button.layer.cornerRadius = 22.0;
     button.layer.cornerCurve = kCACornerCurveContinuous;
     button.layer.borderWidth = 0.5;
     button.layer.borderColor = [UIColor.separatorColor colorWithAlphaComponent:0.4].CGColor;
@@ -418,8 +432,8 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
     // zero, or raised to full height, where it is not.
     UILayoutGuide *guide = container.safeAreaLayoutGuide;
     [NSLayoutConstraint activateConstraints:@[
-        [button.widthAnchor constraintEqualToConstant:34.0],
-        [button.heightAnchor constraintEqualToConstant:34.0],
+        [button.widthAnchor constraintEqualToConstant:44.0],
+        [button.heightAnchor constraintEqualToConstant:44.0],
         [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
         [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:20.0],
     ]];
@@ -427,8 +441,10 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
     objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(controller, kSPKCommentSortEntryAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    SPKCommentSortNote([NSString stringWithFormat:@"seated on %@ · mode %@",
-                                                  NSStringFromClass([sheet class]), SPKCommentSortMode()]);
+    SPKCommentSortNote([NSString stringWithFormat:@"seated on %@ h%.0f · mode %@",
+                                                  NSStringFromClass([container class]),
+                                                  CGRectGetHeight(container.bounds),
+                                                  SPKCommentSortMode()]);
 }
 
 static void SPKRemoveCommentSortEntry(UIViewController *controller) {
