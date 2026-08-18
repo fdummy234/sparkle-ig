@@ -62,7 +62,7 @@ static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 // Stamped into the report at launch. Two builds that look alike on screen are
 // impossible to tell apart otherwise, and guessing which one is running has
 // cost more than one round of chasing an already fixed problem.
-static NSString *const kSPKCommentSortBuildTag = @"v11";
+static NSString *const kSPKCommentSortBuildTag = @"v12";
 
 // Preloading pulls the whole thread in before it is read, because sorting can
 // only order what has been loaded and a thread that keeps loading keeps
@@ -225,29 +225,45 @@ static double SPKCommentSortDateForObject(id object) {
 // sorted among themselves and written back into those same slots. Every other
 // index is left exactly as the adapter produced it, which is what keeps the
 // caption pinned to the top and the composer helpers where Instagram put them.
+//
+// Each date is read once and carried alongside its object rather than being
+// read again inside the comparison. A sort asks for the same value on the order
+// of n log n times, and every read here is two ivar lookups and two message
+// sends; on a thread of several hundred comments that is tens of thousands of
+// sends per pass, on the main thread, while a page is landing. Reading up front
+// turns that back into one read per comment.
 static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
     if (objects.count < 2)
         return objects;
 
-    NSMutableArray *sortableIndexes = [NSMutableArray array];
-    NSMutableArray *sortableObjects = [NSMutableArray array];
+    NSUInteger count = objects.count;
+    NSMutableArray *sortableIndexes = [NSMutableArray arrayWithCapacity:count];
+    NSMutableArray *sortableObjects = [NSMutableArray arrayWithCapacity:count];
+    NSMutableArray<NSNumber *> *sortableDates = [NSMutableArray arrayWithCapacity:count];
 
-    for (NSUInteger index = 0; index < objects.count; index++) {
+    for (NSUInteger index = 0; index < count; index++) {
         id object = objects[index];
         double date = SPKCommentSortDateForObject(object);
         if (isnan(date))
             continue;
         [sortableIndexes addObject:@(index)];
         [sortableObjects addObject:object];
+        [sortableDates addObject:@(date)];
     }
 
     if (sortableObjects.count < 2)
         return objects;
 
+    // Positions are sorted rather than the objects, so each object keeps the
+    // date already read for it.
     BOOL newestFirst = [mode isEqualToString:kSPKCommentSortModeNewest];
-    [sortableObjects sortUsingComparator:^NSComparisonResult(id first, id second) {
-        double firstDate = SPKCommentSortDateForObject(first);
-        double secondDate = SPKCommentSortDateForObject(second);
+    NSMutableArray<NSNumber *> *order = [NSMutableArray arrayWithCapacity:sortableObjects.count];
+    for (NSUInteger position = 0; position < sortableObjects.count; position++)
+        [order addObject:@(position)];
+
+    [order sortUsingComparator:^NSComparisonResult(NSNumber *first, NSNumber *second) {
+        double firstDate = sortableDates[first.unsignedIntegerValue].doubleValue;
+        double secondDate = sortableDates[second.unsignedIntegerValue].doubleValue;
         if (firstDate == secondDate)
             return NSOrderedSame;
         BOOL firstComesFirst = newestFirst ? (firstDate > secondDate) : (firstDate < secondDate);
@@ -255,9 +271,9 @@ static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
     }];
 
     NSMutableArray *reordered = [objects mutableCopy];
-    for (NSUInteger position = 0; position < sortableIndexes.count; position++) {
-        NSUInteger index = [sortableIndexes[position] unsignedIntegerValue];
-        reordered[index] = sortableObjects[position];
+    for (NSUInteger position = 0; position < order.count; position++) {
+        NSUInteger slot = [sortableIndexes[position] unsignedIntegerValue];
+        reordered[slot] = sortableObjects[order[position].unsignedIntegerValue];
     }
     return reordered;
 }
@@ -350,12 +366,16 @@ static void SPKCommentSortStartPreload(UIViewController *controller) {
 static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     if (!button)
         return;
-    // Measured across builds: the same arrow came out 16.7 pt wide whether the
-    // image was built at 17 pt or at 19 pt, so the configuration carried on the
-    // image alone was being ignored. A button applies its own preferred symbol
-    // configuration over that, which is the one that has to be set.
+    // A button applies its own preferred symbol configuration over the one
+    // carried by the image, which is why point sizes set on the image alone had
+    // no effect and the same arrow measured 16.7 pt whether it was built at
+    // 17 pt or at 19 pt.
+    //
+    // The size is calibrated against Instagram's own send button rather than
+    // picked: measured at 20.3 pt tall with a 2.33 pt stroke, which 22 pt at
+    // medium weight matches within a fifth of a point.
     UIImageSymbolConfiguration *configuration =
-        [UIImageSymbolConfiguration configurationWithPointSize:15.0 weight:UIImageSymbolWeightRegular];
+        [UIImageSymbolConfiguration configurationWithPointSize:22.0 weight:UIImageSymbolWeightMedium];
     UIImage *symbol = [UIImage systemImageNamed:SPKCommentSortModeSymbol(mode)
                               withConfiguration:configuration];
     [button setImage:symbol forState:UIControlStateNormal];
