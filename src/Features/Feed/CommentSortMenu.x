@@ -59,15 +59,26 @@ static NSString *const kSPKCommentSortModeOldest = @"oldest";
 // signal on a device without a console.
 static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 
-// Pages pulled in ahead of the reader when a thread opens. Sorting can only
-// order what has been loaded, so a thread that keeps loading keeps reshuffling;
-// pulling a few pages up front settles the order before it is read. Bounded
-// because each page is a network round trip and a busy post has hundreds.
-static const NSUInteger kSPKCommentSortPreloadPages = 3;
+// Preloading pulls the whole thread in before it is read, because sorting can
+// only order what has been loaded and a thread that keeps loading keeps
+// reshuffling under the reader.
+//
+// The pace is set by the network rather than by a fixed wait. Instagram's own
+// pagination entry point is the one a scroll fires, and a scroll fires it many
+// times a second, so it has to tolerate being called while a page is already in
+// flight. Asking on a short tick therefore costs nothing when the answer has
+// not arrived yet, and starts the next page the instant it has.
+static const NSTimeInterval kSPKCommentSortPreloadTick = 0.18;
 
-// Spacing between preload rounds. Long enough for a page to come back and be
-// folded into the thread before the next one is asked for.
-static const NSTimeInterval kSPKCommentSortPreloadInterval = 1.1;
+// Progress is measured by the comment count. When it stops moving for this many
+// ticks the thread is treated as finished, which covers a page that fails, a
+// flag that never clears, and a connection that drops.
+static const NSUInteger kSPKCommentSortPreloadStallTicks = 25;
+
+// Runaway guard. Not a target: the loop is meant to end on the thread saying it
+// has nothing more, or on the stall detector. This is what stops a thread with
+// tens of thousands of comments from pulling all of them.
+static const NSUInteger kSPKCommentSortPreloadMaxRounds = 200;
 
 static const void *kSPKCommentSortEntryAssocKey = &kSPKCommentSortEntryAssocKey;
 static const void *kSPKCommentSortTargetAssocKey = &kSPKCommentSortTargetAssocKey;
@@ -241,25 +252,45 @@ static NSArray *SPKCommentSortReorder(NSArray *objects, NSString *mode) {
 
 #pragma mark - Preloading
 
-// Asks Instagram for the next page the same way scrolling would.
-//
-// The controller's own pagination entry point takes a "triggered by manual
-// check" flag, so being called outside a scroll is a case Instagram already
-// accounts for. The rounds stop as soon as the thread reports nothing more
-// below, and in any case after the page cap.
-static void SPKCommentSortPreloadRound(UIViewController *controller, NSUInteger remaining) {
-    if (!controller || remaining == 0)
+// Number of comments the thread holds right now, which is the only honest
+// measure of whether a page actually arrived.
+static NSUInteger SPKCommentSortLoadedCount(id thread) {
+    NSArray *comments = SPKCommentSortSend(thread, NSSelectorFromString(@"comments"));
+    if (![comments isKindOfClass:[NSArray class]])
+        comments = SPKCommentSortIvarValue(thread, "_comments");
+    return [comments isKindOfClass:[NSArray class]] ? comments.count : 0;
+}
+
+// One tick of the preload loop: ask for more, then look at whether more came.
+static void SPKCommentSortPreloadTick(UIViewController *controller,
+                                      NSUInteger round,
+                                      NSUInteger lastCount,
+                                      NSUInteger stalled) {
+    if (!controller || round >= kSPKCommentSortPreloadMaxRounds) {
+        if (controller)
+            SPKCommentSortNote([NSString stringWithFormat:@"preload capped · %lu rounds",
+                                                          (unsigned long)round]);
         return;
+    }
 
     id thread = SPKCommentSortThread(controller);
     if (!thread)
         return;
 
-    // Default YES: an unreadable flag should not make the loop stop silently on
-    // the first round, and the page cap still bounds it.
+    NSUInteger count = SPKCommentSortLoadedCount(thread);
+
+    // Default YES: an unreadable flag should not end the loop on the first tick,
+    // and the stall detector still bounds it.
     if (!SPKCommentSortBoolIvar(thread, "_moreCommentsAvailableBelow", YES)) {
-        SPKCommentSortNote([NSString stringWithFormat:@"preload done · %lu page(s) left unused",
-                                                      (unsigned long)remaining]);
+        SPKCommentSortNote([NSString stringWithFormat:@"preload done · %lu comments · %lu rounds",
+                                                      (unsigned long)count, (unsigned long)round]);
+        return;
+    }
+
+    NSUInteger nextStalled = (count > lastCount) ? 0 : (stalled + 1);
+    if (nextStalled >= kSPKCommentSortPreloadStallTicks) {
+        SPKCommentSortNote([NSString stringWithFormat:@"preload stalled · %lu comments · %lu rounds",
+                                                      (unsigned long)count, (unsigned long)round]);
         return;
     }
 
@@ -273,11 +304,11 @@ static void SPKCommentSortPreloadRound(UIViewController *controller, NSUInteger 
     ((void (*)(id, SEL, id, BOOL))objc_msgSend)(controller, nearBottom, collectionView, YES);
 
     __weak UIViewController *weakController = controller;
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSPKCommentSortPreloadInterval * NSEC_PER_SEC)),
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSPKCommentSortPreloadTick * NSEC_PER_SEC)),
                    dispatch_get_main_queue(), ^{
         UIViewController *strongController = weakController;
         if (strongController)
-            SPKCommentSortPreloadRound(strongController, remaining - 1);
+            SPKCommentSortPreloadTick(strongController, round + 1, count, nextStalled);
     });
 }
 
@@ -290,9 +321,8 @@ static void SPKCommentSortStartPreload(UIViewController *controller) {
         return;
 
     objc_setAssociatedObject(controller, kSPKCommentSortPreloadedAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SPKCommentSortNote([NSString stringWithFormat:@"preload start · %lu pages",
-                                                  (unsigned long)kSPKCommentSortPreloadPages]);
-    SPKCommentSortPreloadRound(controller, kSPKCommentSortPreloadPages);
+    SPKCommentSortNote(@"preload start · whole thread");
+    SPKCommentSortPreloadTick(controller, 0, 0, 0);
 }
 
 #pragma mark - Entry control
@@ -435,7 +465,7 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
         [button.widthAnchor constraintEqualToConstant:44.0],
         [button.heightAnchor constraintEqualToConstant:44.0],
         [button.leadingAnchor constraintEqualToAnchor:guide.leadingAnchor constant:12.0],
-        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:20.0],
+        [button.topAnchor constraintEqualToAnchor:guide.topAnchor constant:4.0],
     ]];
 
     objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
