@@ -41,7 +41,7 @@ static void SPKSettingsLockReloadPresenter(UIViewController *presenter) {
 }
 
 static NSDictionary *SPKSettingsLockSection(void) {
-    SPKSetting *lockSwitch = [SPKSetting switchCellWithTitle:@"Passcode Lock"
+    SPKSetting *lockSwitch = [SPKSetting switchCellWithTitle:@"Passcode lock"
                                                         icon:SPKSettingsIcon(@"lock")
                                                  defaultsKey:@""];
     lockSwitch.helpText = @"Ask for a passcode before opening Sparkle Settings.";
@@ -81,7 +81,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
         }
     };
 
-    SPKSetting *changePasscode = [SPKSetting buttonCellWithTitle:@"Change Passcode"
+    SPKSetting *changePasscode = [SPKSetting buttonCellWithTitle:@"Change passcode"
                                                         subtitle:nil
                                                             icon:SPKSettingsIcon(@"key")
                                                           action:^{
@@ -96,7 +96,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
         return !([SPKSettingsLockManager sharedManager].isLockEnabled);
     };
 
-    return SPKTopicSection(@"Settings Lock", @[ lockSwitch, changePasscode ], @"Require the independent Settings passcode or biometrics when opening Sparkle Settings, including topic sheets.");
+    return SPKTopicSection(@"Settings lock", @[ lockSwitch, changePasscode ], @"Require the independent Settings passcode or biometrics when opening Sparkle Settings, including topic sheets.");
 }
 
 @implementation SPKToolsSettingsProvider
@@ -106,17 +106,17 @@ static NSDictionary *SPKSettingsLockSection(void) {
     NSString *flexFooter = flexInstalled
                                ? @"The first time FLEX is opened in a session it can take a moment to initialize."
                                : @"FLEX is not installed. Rebuild with \"--flex\" flag or install \"libFLEX.dylib\" to enable these options.";
-    SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger Hold"
+    SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger hold"
                                                         icon:SPKSettingsIcon(@"pinch")
                                                  defaultsKey:@"tools_flex_instagram"];
 flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FLEX inspector.";
-    SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch"
+    SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on app launch"
                                                         icon:SPKSettingsIcon(@"play")
                                                  defaultsKey:@"tools_flex_app_launch"];
-    SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on App Focus"
+    SPKSetting *flexFocus = [SPKSetting switchCellWithTitle:@"Open on app focus"
                                                         icon:SPKSettingsIcon(@"arrow_up_right")
                                                  defaultsKey:@"tools_flex_app_start"];
-    SPKSetting *flexOpen = [SPKSetting buttonCellWithTitle:@"Open FLEX Now"
+    SPKSetting *flexOpen = [SPKSetting buttonCellWithTitle:@"Open FLEX now"
                                                   subtitle:nil
                                                       icon:SPKSettingsIcon(@"toolbox")
                                                     action:^(void) {
@@ -132,11 +132,11 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
     // On dev builds, we keep a toggle to allow disabling it for testing.
     NSMutableArray *instagramCells = [NSMutableArray array];
 #if SPK_DEV
-    [instagramCells addObject:[SPKSetting switchCellWithTitle:@"[DEV] Hide TestFlight Popup"
+    [instagramCells addObject:[SPKSetting switchCellWithTitle:@"[DEV] Hide TestFlight popup"
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
-    SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
+    SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix duplicate notifications"
                                                            icon:SPKSettingsIcon(@"notification")
                                                     defaultsKey:@"tools_fix_duplicate_notifications"];
     fixDuplicates.helpText = @"Drop the duplicate push notifications Instagram sends to sideloaded builds.";
@@ -151,7 +151,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
 
     // Safe mode is one subject: this row keeps it from engaging, "Clear Safe
     // Mode" lifts it once it has. Both live in Recovery.
-    SPKSetting *disableSafeMode = [SPKSetting switchCellWithTitle:@"Disable Safe Mode"
+    SPKSetting *disableSafeMode = [SPKSetting switchCellWithTitle:@"Disable safe mode"
                                                              icon:SPKSettingsIcon(@"warning")
                                                       defaultsKey:@"tools_disable_safe_mode"];
     disableSafeMode.helpText = @"Stops Sparkle from disabling itself after a crash at launch. Leave it off unless you are debugging.";
@@ -177,7 +177,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
         SPKTopicSection(@"Instagram", instagramCells, instagramFooter),
         SPKTopicSection(@"Tweak", @[
             ({
-                SPKSetting *row0 = [SPKSetting buttonCellWithTitle:@"Show Onboarding"
+                SPKSetting *row0 = [SPKSetting buttonCellWithTitle:@"Show onboarding"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"compass")
                                      action:^(void) {
@@ -186,7 +186,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
                 row0;
             }),
             ({
-                SPKSetting *row1 = [SPKSetting buttonCellWithTitle:@"Show What's New"
+                SPKSetting *row1 = [SPKSetting buttonCellWithTitle:@"Show what's new"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"notes")
                                      action:^(void) {
@@ -207,7 +207,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
         SPKTopicSection(@"Recovery", @[
             disableSafeMode,
             ({
-                SPKSetting *row2 = [SPKSetting buttonCellWithTitle:@"Clear Safe Mode"
+                SPKSetting *row2 = [SPKSetting buttonCellWithTitle:@"Clear safe mode"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"undo_circle")
                                      action:^(void) {
@@ -218,7 +218,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
                 row2;
             }),
             ({
-                SPKSetting *row3 = [SPKSetting switchCellWithTitle:@"Turn Off All Features"
+                SPKSetting *row3 = [SPKSetting switchCellWithTitle:@"Turn off all features"
                            icon:SPKSettingsIcon(@"circle_off")
                                 defaultsKey:@"tools_disable_all"
                             requiresRestart:YES];
@@ -228,7 +228,7 @@ flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FL
 #if SPK_DEV
             // Dev builds only: wipe the intro-sheet state so the onboarding /
             // What's New gating fires from scratch on the next launch.
-            [SPKSetting buttonCellWithTitle:@"[DEV] Reset Intro State"
+            [SPKSetting buttonCellWithTitle:@"[DEV] Reset intro state"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"beaker")
                                      action:^(void) {

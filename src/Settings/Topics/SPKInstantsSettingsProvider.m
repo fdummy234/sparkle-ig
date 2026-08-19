@@ -33,14 +33,14 @@ static NSArray *SPKInstantsSettingsSections(void) {
         // does, so the two sections become one.
         SPKTopicSection(@"Instants", @[
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable screenshot detection"
                                        icon:SPKSettingsIcon(@"warning")
                                 defaultsKey:@"instants_allow_screenshot"];
                 row.helpText = @"Screenshot an Instant without the sender being told.";
                 row;
             }),
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants Creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
     s.helpText = @"Blocks capture in the Instants camera.";
                 s.reloadsTableOnSwitchChange = YES;
     s.searchKeywords = @"disable camera control";
@@ -53,9 +53,9 @@ static NSArray *SPKInstantsSettingsSections(void) {
         ],
                         nil),
         // The capture screen itself: what happens once you are in the camera.
-        SPKTopicSection(@"Capture Screen", @[
+        SPKTopicSection(@"Capture screen", @[
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Skip Camera After Sending"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Skip camera after sending"
                                        icon:SPKSettingsIcon(@"photo")
                                 defaultsKey:@"instants_skip_camera_after_viewing"];
                 row.helpText = @"Return to the conversation instead of staying on the camera.";
@@ -65,7 +65,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             // Merged in from its own untitled one-row section — it is a camera
             // setting like the three above.
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Camera View Button"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Camera view button"
                                        icon:SPKSettingsIcon(SPKActionButtonOpenMenuIconName())
                                 defaultsKey:@"instants_camera_btn"];
                 row.helpText = @"Adds the Sparkle button to the camera, for the actions you picked in Action Button.";
@@ -73,7 +73,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             }),
             ({
                 BOOL cameraControlAvailable = SPKPrefIsAvailable(@"instants_disable_camera_control");
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Ignore Camera Button"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Ignore camera button"
                                                        subtitle:cameraControlAvailable ? @"" : @"Requires an iPhone with Camera Control"
                                                            icon:SPKSettingsSystemIcon(@"button.vertical.right.press", SPKSettingsCellIconPointSize, UIImageSymbolWeightSemibold)
                                                     defaultsKey:@"instants_disable_camera_control"];
@@ -89,7 +89,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             SPKActionButtonRowSetting(kSPKInstantsActionButtonEnabledKey,
                                       @"Choose what tapping the action button does. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Show Action Button"
+                [SPKSetting switchCellWithTitle:@"Show action button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKInstantsActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceInstants),

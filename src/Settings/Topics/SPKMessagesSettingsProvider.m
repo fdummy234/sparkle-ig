@@ -65,7 +65,7 @@ manualSeenList.hiddenProvider = ^BOOL {
 
     // ---- Action Button -------------------------------------------------
 
-    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Show Action Button"
+    SPKSetting *masterActionButton = [SPKSetting switchCellWithTitle:@"Show action button"
                                                                 icon:SPKSettingsIcon(@"action")
                                                          defaultsKey:kSPKMessagesActionButtonEnabledKey];
     // Same wording as the Feed master toggle — the six action-button pages share
@@ -75,7 +75,7 @@ manualSeenList.hiddenProvider = ^BOOL {
     // Extends the action button to the full-screen viewer for permanent chat media
     // (camera-roll photos/videos, chat-menu media), replacing IG's native Save.
     // Only meaningful while the master action button toggle is on.
-    SPKSetting *chatMediaActionButton = [SPKSetting switchCellWithTitle:@"Also Show on Chat Media"
+    SPKSetting *chatMediaActionButton = [SPKSetting switchCellWithTitle:@"Also show on chat media"
                                                                   icon:SPKSettingsIcon(@"photo")
                                                            defaultsKey:kSPKMessagesActionButtonChatMediaKey];
     chatMediaActionButton.enabledProvider = ^BOOL {
@@ -85,13 +85,13 @@ manualSeenList.hiddenProvider = ^BOOL {
 
     // ---- Messaging -----------------------------------------------------
 
-    SPKSetting *unlockPreview = [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
+    SPKSetting *unlockPreview = [SPKSetting switchCellWithTitle:@"Preview without being seen"
                                                            icon:SPKSettingsIcon(@"story")
                                                     defaultsKey:@"msgs_unlock_preview"];
     unlockPreview.searchKeywords = @"unlock preview";
     unlockPreview.helpText = @"The chat long-press menu shows the real messages without marking them seen.";
 
-    SPKSetting *manualSeenSwitch = [SPKSetting switchCellWithTitle:@"Manually Mark Chats Seen"
+    SPKSetting *manualSeenSwitch = [SPKSetting switchCellWithTitle:@"Manually mark chats seen"
                                                               icon:SPKSettingsIcon(@"eye")
                                                        defaultsKey:@"msgs_manual_seen"];
 manualSeenSwitch.reloadsTableOnSwitchChange = YES;
@@ -103,11 +103,11 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // guard moves onto the gate itself — the family greys out together when
     // Manually Mark Seen is off.
     SPKSetting *markSeenGate = ({
-        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark Seen On…", @"eye", @[
-            [SPKToggleMenuItem itemWithTitle:@"Message Send"
+        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark seen on…", @"eye", @[
+            [SPKToggleMenuItem itemWithTitle:@"Message send"
                                     iconName:@"messages"
                                  defaultsKey:@"msgs_seen_on_send"],
-            [SPKToggleMenuItem itemWithTitle:@"Message Reply"
+            [SPKToggleMenuItem itemWithTitle:@"Message reply"
                                     iconName:@"reply"
                                  defaultsKey:@"msgs_seen_on_reply"],
             [SPKToggleMenuItem itemWithTitle:@"Reaction"
@@ -127,7 +127,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // Chooses where the manual-seen eye button lives: the top nav bar, or a
     // draggable bubble above the composer. Only meaningful while manual seen is on.
     // Up/Down arrows mirror the placement on both the menu items and the cell.
-    SPKSetting *seenButtonPosition = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Seen Button Position"
+    SPKSetting *seenButtonPosition = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Seen button position"
                                                                                               icon:SPKSettingsIcon(@"pin")
                                                                                               menu:SPKSeenButtonPositionMenu()],
                                                                      SPKSettingsIcon(@"arrow_up"));
@@ -138,7 +138,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 
     // ---- Deleted Messages ----------------------------------------------
 
-    SPKSetting *keepDeleted = [SPKSetting switchCellWithTitle:@"Keep Deleted Messages"
+    SPKSetting *keepDeleted = [SPKSetting switchCellWithTitle:@"Keep deleted messages"
                                                          icon:SPKSettingsIcon(@"undo_circle")
                                                   defaultsKey:@"msgs_keep_deleted"];
     keepDeleted.reloadsTableOnSwitchChange = YES;
@@ -150,7 +150,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // accessoryTextProvider, which would re-read the log JSON on every cell pass.
     NSString *ownerPK = SPKAccountManager.currentAccountPK;
     NSUInteger deletedLogCount = ownerPK.length > 0 ? [SPKDeletedMessagesStorage allMessagesForOwnerPK:ownerPK].count : 0;
-    SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"View Deleted Messages"
+    SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"View deleted messages"
                                                             subtitle:nil
                                                                 icon:SPKSettingsIcon(@"trash")
                                                       viewController:[SPKDeletedMessagesViewController new]];
@@ -163,12 +163,12 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 
     // Tri-state control for reformatting the chat-header last-active presence
     // label: Off / Smart / Date & Time.
-    SPKSetting *hideCreateGroup = [SPKSetting switchCellWithTitle:@"Hide Create Group Button"
+    SPKSetting *hideCreateGroup = [SPKSetting switchCellWithTitle:@"Hide create group button"
                                                              icon:SPKSettingsIcon(@"group")
                                                       defaultsKey:@"general_hide_create_group"];
     hideCreateGroup.searchKeywords = @"send share sheet";
 
-    SPKSetting *lastActiveFormat = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Last Active"
+    SPKSetting *lastActiveFormat = SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"Last active"
                                                                                             icon:SPKSettingsIcon(@"clock")
                                                                                             menu:SPKLastActiveFormatMenu()],
                                                                    SPKSettingsIcon(@"clock"));
@@ -179,20 +179,20 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // ---- Visual Messages -----------------------------------------------
 
     // Advancing after a manual seen only applies while visual manual seen is on.
-    SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance After Manual Seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
+    SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance after manual seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
 advanceVisual.helpText = @"Moves to the next photo once you mark the current one as seen yourself.";
     advanceVisual.hiddenProvider = ^BOOL {
         return ![SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
     };
 
     // Lexicon rename ("Stop …" → "Disable …"); old phrasing kept searchable.
-    SPKSetting *disableAutoAdvance = [SPKSetting switchCellWithTitle:@"Stay on Current Message"
+    SPKSetting *disableAutoAdvance = [SPKSetting switchCellWithTitle:@"Stay on current message"
                                                                 icon:SPKSettingsIcon(@"autoplay_off")
                                                          defaultsKey:@"msgs_stop_visual_auto_advance"];
 disableAutoAdvance.helpText = @"Keeps a vanishing photo open instead of jumping to the next one on its own.";
     disableAutoAdvance.searchKeywords = @"stop next replay end";
 
-    SPKSetting *disableViewOnce = [SPKSetting switchCellWithTitle:@"Disable View-Once Limitations"
+    SPKSetting *disableViewOnce = [SPKSetting switchCellWithTitle:@"Disable view-once limitations"
                                                              icon:SPKSettingsIcon(@"view_once")
                                                       defaultsKey:@"msgs_disable_view_once"];
     disableViewOnce.searchKeywords = @"replay view twice limit";
@@ -201,34 +201,34 @@ disableAutoAdvance.helpText = @"Keeps a vanishing photo open instead of jumping 
     // The composer entry points used to live in the section footers; they stay
     // findable through the search keywords below.
 
-    SPKSetting *downloadVoice = SPKAudioGatedSwitch(@"Download Voice Messages", SPKSettingsIcon(@"audio_download"), @"msgs_download_audio_messages");
+    SPKSetting *downloadVoice = SPKAudioGatedSwitch(@"Download voice messages", SPKSettingsIcon(@"audio_download"), @"msgs_download_audio_messages");
     // Its master lives on another page, so the row names where to find it.
     downloadVoice.helpText = @"Shown while Audio Downloads is on in the Downloads page.";
     downloadVoice.searchKeywords = @"voice message audio save";
 
-    SPKSetting *uploadAudio = [SPKSetting switchCellWithTitle:@"Upload Audio"
+    SPKSetting *uploadAudio = [SPKSetting switchCellWithTitle:@"Upload audio"
                                                          icon:SPKSettingsIcon(@"audio_upload")
                                                   defaultsKey:@"msgs_upload_audio_messages"];
 uploadAudio.helpText = @"Send an audio file from your device as a voice message.";
     uploadAudio.searchKeywords = @"composer plus menu voice video send";
 
-    SPKSetting *trimAudio = [SPKSetting switchCellWithTitle:@"Trim Before Sending"
+    SPKSetting *trimAudio = [SPKSetting switchCellWithTitle:@"Trim before sending"
                                                        icon:SPKSettingsIcon(@"trim")
                                                 defaultsKey:@"msgs_audio_upload_trim"];
 trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before it goes out.";
     trimAudio.searchKeywords = @"cut editor length";
 
-    SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Send Photo from Gallery"
+    SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Send photo from gallery"
                                                                 icon:SPKSettingsIcon(@"photo")
                                                          defaultsKey:@"msgs_upload_gallery_media"];
     uploadGalleryPhoto.searchKeywords = @"composer plus menu picture send upload photo gallery";
 
     // ---- Notes ---------------------------------------------------------
 
-    SPKSetting *downloadNotesAudio = SPKAudioGatedSwitch(@"Download Notes Audio", SPKSettingsIcon(@"audio"), @"msgs_download_notes_audio");
+    SPKSetting *downloadNotesAudio = SPKAudioGatedSwitch(@"Download Notes audio", SPKSettingsIcon(@"audio"), @"msgs_download_notes_audio");
     downloadNotesAudio.helpText = @"Long-press a note in the tray — the option appears when the note has audio.";
 
-    SPKSetting *copyNoteText = [SPKSetting switchCellWithTitle:@"Copy Note Text"
+    SPKSetting *copyNoteText = [SPKSetting switchCellWithTitle:@"Copy note text"
                                                           icon:SPKSettingsIcon(@"copy")
                                                    defaultsKey:@"msgs_copy_note_text"];
     copyNoteText.helpText = @"Long-press a note in the tray — the option appears when the note has text.";
@@ -236,11 +236,11 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
     return @[
         // Everything about the chat screen itself. Was split across "Messaging"
         // and a section literally called "Interface".
-        SPKTopicSection(@"Disappearing Messages", @[
+        SPKTopicSection(@"Disappearing messages", @[
             ({
                 // One switch for both surfaces: view-once media and vanish mode
                 // keep their own keys, written together so they never diverge.
-                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Screenshot Detection"
+                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable screenshot detection"
                                                             icon:SPKSettingsIcon(@"warning")
                                                      defaultsKey:@""];
                 sw.switchValueProvider = ^BOOL {
@@ -258,7 +258,7 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
             disableAutoAdvance,
             disableViewOnce,
             ({
-                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable Vanish Swipe-Up"
+                SPKSetting *sw = [SPKSetting switchCellWithTitle:@"Disable vanish swipe-up"
                                                             icon:SPKSettingsIcon(@"arrow_up")
                                                      defaultsKey:@"msgs_disable_vanish_swipe_up"];
                 sw.searchKeywords = @"gesture vanish mode";
@@ -269,17 +269,17 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
 
         // Keeping and reading removed messages is archiving, not a
         // disappearing-message behaviour.
-        SPKTopicSection(@"Deleted Messages", @[
+        SPKTopicSection(@"Deleted messages", @[
             keepDeleted,
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Logging", @"notes", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Log Deleted Messages"
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Save deleted messages", @"notes", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Log deleted messages"
                                             iconName:@"logs"
                                          defaultsKey:@"msgs_deleted_log"],
-                    [SPKToggleMenuItem itemWithTitle:@"Log Removed Reactions"
+                    [SPKToggleMenuItem itemWithTitle:@"Log removed reactions"
                                             iconName:@"reactions"
                                          defaultsKey:@"msgs_deleted_log_reactions"],
-                    [SPKToggleMenuItem itemWithTitle:@"Skip Excluded Chats"
+                    [SPKToggleMenuItem itemWithTitle:@"Skip excluded chats"
                                             iconName:@"eye"
                                          defaultsKey:@"msgs_deleted_log_respect_seen_list"],
                 ]);
@@ -297,14 +297,14 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
                         nil),
         // Ordered so each master switch is followed by what it controls:
         // conversations first, then photos and videos.
-        SPKTopicSection(@"Seen Receipts", @[
+        SPKTopicSection(@"Seen receipts", @[
             unlockPreview,
             manualSeenSwitch,
             markSeenGate,
             seenButtonPosition,
             manualSeenList,
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Media Seen"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually mark media seen"
                                            icon:SPKSettingsIcon(@"eye")
                                     defaultsKey:@"msgs_manual_visual_seen"];
                 row.reloadsTableOnSwitchChange = YES;  // R5: reveals Advance After Manual Seen in place.
@@ -314,12 +314,12 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
             advanceVisual,
         ],
                         nil),
-        SPKTopicSection(@"Chat Screen", @[
+        SPKTopicSection(@"Chat screen", @[
             ({
                 // Lives with the inbox it changes. Kept tied to Disable Instants
                 // Creation: hiding the entry without disabling capture would
                 // leave a shutter with no way back.
-                SPKSetting *hideInstants = [SPKSetting switchCellWithTitle:@"Hide Instants Button"
+                SPKSetting *hideInstants = [SPKSetting switchCellWithTitle:@"Hide Instants button"
                                                                      icon:SPKSettingsIcon(@"instants")
                                                               defaultsKey:@"instants_hide_inbox_entry"];
                 hideInstants.helpText = @"Removes the + from the inbox. Requires Disable Instants Creation, on the Camera page.";
@@ -333,23 +333,23 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
             // Six hides of the same screen, one gate — the verb lives on the
             // row; Typing Status keeps its noun (it is not a button).
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Chat Elements", @"eye_off", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Typing Status"
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide chat elements", @"eye_off", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Typing status"
                                             iconName:@"keyboard"
                                          defaultsKey:@"msgs_disable_typing"],
-                    [SPKToggleMenuItem itemWithTitle:@"Reels Blend"
+                    [SPKToggleMenuItem itemWithTitle:@"Reels blend"
                                             iconName:@"blend"
                                          defaultsKey:@"msgs_hide_reels_blend"],
-                    [SPKToggleMenuItem itemWithTitle:@"Audio Call"
+                    [SPKToggleMenuItem itemWithTitle:@"Audio call"
                                             iconName:@"call"
                                          defaultsKey:@"msgs_hide_audio_call_btn"],
-                    [SPKToggleMenuItem itemWithTitle:@"Video Call"
+                    [SPKToggleMenuItem itemWithTitle:@"Video call"
                                             iconName:@"video"
                                          defaultsKey:@"msgs_hide_video_call_btn"],
-                    [SPKToggleMenuItem itemWithTitle:@"Flag Button"
+                    [SPKToggleMenuItem itemWithTitle:@"Flag button"
                                             iconName:@"flag"
                                          defaultsKey:@"msgs_hide_flag_btn"],
-                    [SPKToggleMenuItem itemWithTitle:@"Suggested Chats"
+                    [SPKToggleMenuItem itemWithTitle:@"Suggested chats"
                                             iconName:@"question"
                                          defaultsKey:@"msgs_hide_suggested_chats"],
                 ]);
@@ -362,17 +362,17 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
         // disappear) — and it resolves the duplicated "Disable Screenshot
         // Detection" row: one gate, two context-named items.
 SPKTopicSection(@"Notes", @[
-            [SPKSetting switchCellWithTitle:@"Hide Notes Tray"
+            [SPKSetting switchCellWithTitle:@"Hide Notes tray"
                                        icon:SPKSettingsIcon(@"notes")
                                 defaultsKey:@"msgs_hide_notes_tray"],
-            [SPKSetting switchCellWithTitle:@"Hide Friends Map"
+            [SPKSetting switchCellWithTitle:@"Hide friends map"
                                        icon:SPKSettingsIcon(@"map")
                                 defaultsKey:@"msgs_hide_friends_map"],
             downloadNotesAudio,
             copyNoteText,
         ],
                         nil),
-        SPKTopicSection(@"Audio & Media", @[
+        SPKTopicSection(@"Audio & media", @[
             downloadVoice,
             uploadAudio,
             trimAudio,
@@ -394,36 +394,36 @@ SPKTopicSection(@"Notes", @[
                                       ]),
             ({
                 SPKSetting *g = SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
-                [SPKToggleMenuItem itemWithTitle:@"Create Group"
+                [SPKToggleMenuItem itemWithTitle:@"Create group"
                                         iconName:@"group"
                                      defaultsKey:@"general_confirm_create_group"],
                 // Was a row in "Deleted Messages" — it is a confirmation like
                 // the others, and it belongs where the user looks for them.
-                [SPKToggleMenuItem itemWithTitle:@"Inbox Refresh"
+                [SPKToggleMenuItem itemWithTitle:@"Inbox refresh"
                                         iconName:@"arrow_cw"
                                      defaultsKey:@"msgs_confirm_refresh"],
-                [SPKToggleMenuItem itemWithTitle:@"Audio Call"
+                [SPKToggleMenuItem itemWithTitle:@"Audio call"
                                         iconName:@"call"
                                      defaultsKey:kSPKMessagesAudioCallConfirmKey],
-                [SPKToggleMenuItem itemWithTitle:@"Video Call"
+                [SPKToggleMenuItem itemWithTitle:@"Video call"
                                         iconName:@"video"
                                      defaultsKey:kSPKMessagesVideoCallConfirmKey],
-                [SPKToggleMenuItem itemWithTitle:@"Double Tap"
+                [SPKToggleMenuItem itemWithTitle:@"Double tap"
                                         iconName:@"heart"
                                      defaultsKey:@"msgs_confirm_double_tap"],
                 [SPKToggleMenuItem itemWithTitle:@"Reactions"
                                         iconName:@"reactions"
                                      defaultsKey:@"msgs_confirm_reaction"],
-                [SPKToggleMenuItem itemWithTitle:@"Voice Messages"
+                [SPKToggleMenuItem itemWithTitle:@"Voice messages"
                                         iconName:@"voice"
                                      defaultsKey:@"msgs_confirm_voice_msg"],
-                [SPKToggleMenuItem itemWithTitle:@"Follow Requests"
+                [SPKToggleMenuItem itemWithTitle:@"Follow requests"
                                         iconName:@"user_request"
                                      defaultsKey:@"msgs_confirm_follow_request"],
-                [SPKToggleMenuItem itemWithTitle:@"Vanish Mode"
+                [SPKToggleMenuItem itemWithTitle:@"Vanish mode"
                                         iconName:@"vanish"
                                      defaultsKey:@"msgs_confirm_vanish_mode"],
-                [SPKToggleMenuItem itemWithTitle:@"Theme Change"
+                [SPKToggleMenuItem itemWithTitle:@"Theme change"
                                         iconName:@"palette"
                                      defaultsKey:@"msgs_confirm_theme_change"],
             ]);

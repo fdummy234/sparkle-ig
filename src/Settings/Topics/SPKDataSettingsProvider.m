@@ -73,7 +73,7 @@
                                                       }];
     galleryRow.userInfo = @{@"checkmarked" : @(self.includeGallery)};
 
-    SPKSetting *deletedMessagesRow = [SPKSetting buttonCellWithTitle:@"Deleted Messages"
+    SPKSetting *deletedMessagesRow = [SPKSetting buttonCellWithTitle:@"Deleted messages"
                                                             subtitle:nil
                                                                 icon:SPKSettingsIcon(@"channels")
                                                               action:^{
@@ -83,7 +83,7 @@
                                                               }];
     deletedMessagesRow.userInfo = @{@"checkmarked" : @(self.includeDeletedMessages)};
 
-    SPKSetting *profileAnalyzerRow = [SPKSetting buttonCellWithTitle:@"Profile Analyzer"
+    SPKSetting *profileAnalyzerRow = [SPKSetting buttonCellWithTitle:@"Profile analyzer"
                                                             subtitle:nil
                                                                 icon:SPKSettingsIcon(@"profile_analyzer")
                                                               action:^{
@@ -141,7 +141,7 @@
 @implementation SPKDataSettingsProvider
 
 + (SPKSetting *)rootSetting {
-    SPKSetting *resetAllSettings = [SPKSetting buttonCellWithTitle:@"Reset All Settings"
+    SPKSetting *resetAllSettings = [SPKSetting buttonCellWithTitle:@"Reset all settings"
                                                           subtitle:nil
                                                               icon:SPKSettingsIcon(@"arrow_ccw")
                                                             action:^(void) {
@@ -155,18 +155,18 @@
     resetAllSettings.iconTintColor = [SPKUtils SPKColor_InstagramDestructive];
 
     NSArray *sections = @[
-        SPKTopicSection(@"Backup & Transfer", @[
-            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export Settings"
+        SPKTopicSection(@"Backup & transfer", @[
+            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Export settings"
                                                                subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_up")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:NO]],
                                     [SPKUtils SPKColor_InstagramPrimaryText]),
-            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Import Settings"
+            SPKSettingApplyIconTint([SPKSetting navigationCellWithTitle:@"Import settings"
                                                                subtitle:nil
                                                                    icon:SPKSettingsIcon(@"arrow_down")
                                                          viewController:[[SPKSettingsTransferSelectionViewController alloc] initWithImportMode:YES]],
                                     [SPKUtils SPKColor_InstagramPrimaryText]),
-            [SPKSetting navigationCellWithTitle:@"Storage Usage"
+            [SPKSetting navigationCellWithTitle:@"Storage usage"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"info")
                                  viewController:[SPKStorageUsageViewController new]]],

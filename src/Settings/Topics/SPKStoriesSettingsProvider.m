@@ -60,7 +60,7 @@ manualSeenList.hiddenProvider = ^BOOL {
     // in Messages: transversal uniformity wins over the size threshold. The
     // shared guard moves onto the gate.
     SPKSetting *markSeenGate = ({
-        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark Seen On…", @"eye", @[
+        SPKSetting *g = SPKToggleMenuRowSetting(@"Mark seen on…", @"eye", @[
             [SPKToggleMenuItem itemWithTitle:@"Like"
                                     iconName:@"heart"
                                  defaultsKey:@"stories_mark_seen_on_like"],
@@ -75,12 +75,12 @@ manualSeenList.hiddenProvider = ^BOOL {
         g;
     });
 
-    return SPKTopicSection(@"Seen Receipts", @[
-            [SPKSetting switchCellWithTitle:@"Preview Without Being Seen"
+    return SPKTopicSection(@"Seen receipts", @[
+            [SPKSetting switchCellWithTitle:@"Preview without being seen"
                                        icon:SPKSettingsIcon(@"story")
                                 defaultsKey:@"stories_unlock_preview"],
             ({
-            SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually Mark Seen"
+            SPKSetting *row = [SPKSetting switchCellWithTitle:@"Manually mark seen"
                                        icon:SPKSettingsIcon(@"eye")
                                 defaultsKey:@"stories_manual_seen"];
             row.reloadsTableOnSwitchChange = YES;  // R5: reveals the dependent seen-receipt rows in place.
@@ -92,7 +92,7 @@ manualSeenList.hiddenProvider = ^BOOL {
             // Acts on the story viewer list; help text replaces the former
             // numbered footer note.
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Search Viewer List"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Search viewer list"
                                                            icon:SPKSettingsIcon(@"search")
                                                     defaultsKey:@"stories_search_viewer_list"];
                 s.helpText = @"Adds a search button to your story's viewer list, to search and filter viewers.";
@@ -108,11 +108,11 @@ static NSArray *SPKStoriesSettingsSections(void) {
 
         // "Other" was the confession that no subject had been found — these four
         // all act while viewing a story.
-        SPKTopicSection(@"While Viewing", @[
+        SPKTopicSection(@"While viewing", @[
             ({
                 // Renamed from "Stop Auto Advance" — aligned with the Messages
                 // twin (lot 1) and the Disable lexicon; "stop" stays searchable.
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Stay on Current Story"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Stay on current story"
                                                            icon:SPKSettingsIcon(@"autoplay_off")
                                                     defaultsKey:@"stories_stop_auto_advance"];
                 s.searchKeywords = @"stop next skip";
@@ -121,8 +121,8 @@ static NSArray *SPKStoriesSettingsSections(void) {
             // The three "Advance on…" rows, one gate. Their three footer notes
             // become the gate's ⓘ — a numbered footer can only point at rows.
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Advance On…", @"autoscroll", @[
-                    [SPKToggleMenuItem itemWithTitle:@"Eye Button"
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Advance on…", @"autoscroll", @[
+                    [SPKToggleMenuItem itemWithTitle:@"Eye button"
                                             iconName:@"eye"
                                          defaultsKey:@"stories_advance_on_manual_seen"],
                     [SPKToggleMenuItem itemWithTitle:@"Like"
@@ -136,16 +136,16 @@ static NSArray *SPKStoriesSettingsSections(void) {
                 g.searchKeywords = @"advance auto next story eye button like reply";
                 g;
             }),
-            [SPKSetting switchCellWithTitle:@"Hide Trending Prompts"
+            [SPKSetting switchCellWithTitle:@"Hide trending prompts"
                                        icon:SPKSettingsIcon(@"arrow_up_right")
                                 defaultsKey:@"stories_hide_join_trending"],
-            [SPKSetting switchCellWithTitle:@"Show Story Mentions"
+            [SPKSetting switchCellWithTitle:@"Show story mentions"
                                        icon:SPKSettingsIcon(@"mention")
                                 defaultsKey:@"stories_mentions_btn"],
-            [SPKSetting switchCellWithTitle:@"Show Poll Vote Counts"
+            [SPKSetting switchCellWithTitle:@"Show poll vote counts"
                                        icon:SPKSettingsIcon(@"poll")
                                 defaultsKey:@"stories_poll_vote_counts"],
-            [SPKSetting switchCellWithTitle:@"Hide Instagram Plus Button"
+            [SPKSetting switchCellWithTitle:@"Hide Instagram plus button"
                                        icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:@"stories_hide_ig_plus_button"]],
                         @"1. Prevent automatically moving to the next story.\n"
@@ -161,17 +161,17 @@ static NSArray *SPKStoriesSettingsSections(void) {
         // section (mid-page, plural header); now closes the page like everywhere.
         SPKTopicSection(@"Creation", @[
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Allow Videos in Photo Sticker"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Allow videos in photo sticker"
                                        icon:SPKSettingsIcon(@"video")
                                 defaultsKey:@"stories_allow_video_sticker"];
                 row.helpText = @"Lets the photo sticker pick a video from your library, not just a still.";
                 row;
             }),
-            [SPKSetting switchCellWithTitle:@"Show Gallery Upload Button"
+            [SPKSetting switchCellWithTitle:@"Show gallery upload button"
                                        icon:SPKSettingsIcon(@"sparkle_gallery")
                                 defaultsKey:@"stories_gallery_upload_sticker"],
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Use Detailed Color Picker"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Use detailed color picker"
                                        icon:SPKSettingsIcon(@"eyedropper")
                                 defaultsKey:@"stories_detailed_color_picker"];
                 row.helpText = @"Long-press the eyedropper to open the full colour picker instead of the swatches.";
@@ -186,7 +186,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                       @"1. Add an action button above the bottom story bar.\n"
                                       @"2. Choose the default action. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Show Action Button"
+                [SPKSetting switchCellWithTitle:@"Show action button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKStoriesActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceStories),
@@ -197,10 +197,10 @@ static NSArray *SPKStoriesSettingsSections(void) {
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
                                      defaultsKey:@"stories_confirm_like"],
-                [SPKToggleMenuItem itemWithTitle:@"Quick Reaction"
+                [SPKToggleMenuItem itemWithTitle:@"Quick reaction"
                                         iconName:@"reactions"
                                      defaultsKey:@"stories_confirm_quick_reaction"],
-                [SPKToggleMenuItem itemWithTitle:@"Sticker Interaction"
+                [SPKToggleMenuItem itemWithTitle:@"Sticker interaction"
                                         iconName:@"sticker"
                                      defaultsKey:@"stories_confirm_sticker"],
             ])

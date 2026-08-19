@@ -125,9 +125,9 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
     return SPKTopicNavigationSetting(@"Profile", @"user_circle", 24.0, @[
         // "Profile Screen" names what these rows change; a header repeating the
         // page name would say nothing — and without a header there is no ⓘ.
-        SPKTopicSection(@"Profile Screen", @[
+        SPKTopicSection(@"Profile screen", @[
             ({
-                SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution Photo"
+                SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution photo"
                                                                  icon:SPKSettingsIcon(@"hd")
                                                           defaultsKey:@"profile_full_res_photo"
                                                       requiresRestart:YES];
@@ -136,28 +136,28 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                 fullRes;
             }),
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Expand Photo"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Expand photo"
                                        icon:SPKSettingsIcon(@"expand")
                                 defaultsKey:@"profile_photo_zoom"];
                 row.helpText = @"Long-press a profile picture to open it full screen.";
                 row;
             }),
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Notes bubble"
                                        icon:SPKSettingsIcon(@"notes")
                                 defaultsKey:@"profile_hide_notes_bubble"];
                 row.helpText = @"Removes the note bubble above your own profile picture.";
                 row;
             }),
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Threads Button"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Threads button"
                                        icon:SPKSettingsIcon(@"threads")
                                 defaultsKey:@"profile_hide_threads_btn"];
                 row.helpText = @"Removes the Threads badge from the profile header.";
                 row;
             }),
             ({
-                SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following Indicator"
+                SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following indicator"
                                                             icon:SPKSettingsIcon(@"user_check")
                                                             menu:SPKFollowIndicatorModeMenu()];
     mode.helpText = @"Marks profiles that already follow you, as an icon, a label, or both.";
@@ -178,7 +178,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                 // doesn't stand out as modded. On = the colored green/red. Uses a
                 // custom value provider so the legacy fallback (pre-menu users who
                 // had the indicator on keep colored) is reflected accurately.
-                SPKSetting *colorful = [SPKSetting switchCellWithTitle:@"Colorful Indicator"
+                SPKSetting *colorful = [SPKSetting switchCellWithTitle:@"Colorful indicator"
                                                                   icon:SPKSettingsIcon(@"palette")
                                                            defaultsKey:kSPKFollowIndicatorColorfulKey];
     colorful.helpText = @"Tint that mark instead of showing it in grey.";
@@ -201,12 +201,12 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
             SPKActionButtonRowSetting(@"profile_action_btn",
                                       @"Choose what tapping the action button does. Copy Info Default controls what gets copied when Default Tap Action is Copy Info.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Show Action Button"
+                [SPKSetting switchCellWithTitle:@"Show action button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:@"profile_action_btn"],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceProfile),
                 SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSourceProfile, @"Profile", SPKActionButtonSupportedActionsForSource(SPKActionButtonSourceProfile), SPKActionButtonDefaultSectionsForSource(SPKActionButtonSourceProfile)),
-                SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"What Copy Info Copies" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
+                SPKSettingApplySelectedMenuIcon([SPKSetting menuCellWithTitle:@"What copy info copies" icon:SPKSettingsIcon(@"copy") menu:SPKProfileDefaultCopyInfoMenu()], SPKSettingsIcon(@"copy"))
         
                                       ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[

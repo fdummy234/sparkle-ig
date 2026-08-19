@@ -12,15 +12,15 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
 + (SPKSetting *)rootSetting {
     return SPKTopicNavigationSetting(@"Reels", @"reels", 24.0, @[
         SPKTopicSection(@"Layout", @[
-            [SPKSetting switchCellWithTitle:@"Hide Reels Header"
+            [SPKSetting switchCellWithTitle:@"Hide Reels header"
                                        icon:SPKSettingsIcon(@"reels")
                                 defaultsKey:@"reels_hide_header"],
-            [SPKSetting switchCellWithTitle:@"Hide Repost Button"
+            [SPKSetting switchCellWithTitle:@"Hide repost button"
                                        icon:SPKSettingsIcon(@"repost")
                                 defaultsKey:@"reels_hide_repost_btn"
                             requiresRestart:YES],
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Counts", @"heart", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide counts", @"heart", @[
                     [SPKToggleMenuItem itemWithTitle:@"Likes"
                                             iconName:@"poll"
                                          defaultsKey:@"reels_hide_like_count"],
@@ -44,31 +44,31 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                         nil),
         SPKTopicSection(@"Playback", @[
             ({
-                SPKSetting *row = [SPKSetting menuCellWithTitle:@"Tap Action"
+                SPKSetting *row = [SPKSetting menuCellWithTitle:@"Tap action"
                                          icon:SPKSettingsIcon(@"play")
                                          menu:SPKReelsTapControlMenu()];
                 row.searchKeywords = @"tap controls";
                 row;
             }),
-            [SPKSetting switchCellWithTitle:@"Show Progress Scrubber"
+            [SPKSetting switchCellWithTitle:@"Show progress bar"
                                        icon:SPKSettingsIcon(@"slider")
                                 defaultsKey:@"reels_show_scrubber"],
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Keep Reels Muted"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Keep Reels muted"
                                        icon:SPKSettingsIcon(@"volume_off")
                                 defaultsKey:@"reels_disable_auto_unmute"
                             requiresRestart:YES];
                 row.helpText = @"Reels stay muted even after you press a volume button.";
                 row;
             }),
-            [SPKSetting switchCellWithTitle:@"Disable Reels Tab Refresh"
+            [SPKSetting switchCellWithTitle:@"Disable Reels tab refresh"
                                        icon:SPKSettingsIcon(@"arrow_cw")
                                 defaultsKey:@"reels_disable_tab_refresh"]
         ],
                         @"Tap Controls changes what happens when you tap on a reel. Auto-unmuting controls prevent reels from unmuting when volume or silent mode changes."),
         SPKTopicSection(@"Limits", @[
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"One Reel at a Time"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"One reel at a time"
                                        icon:SPKSettingsIcon(@"autoscroll")
                                 defaultsKey:@"reels_disable_scrolling"
                             requiresRestart:YES];
@@ -76,7 +76,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                 row;
             }),
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Limit Reels per Session"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Limit Reels per session"
                                                            icon:SPKSettingsIcon(@"arrow_down")
                                                     defaultsKey:@"reels_prevent_doom_scroll"];
                 s.searchKeywords = @"doom scrolling doom scrolling limit";
@@ -86,7 +86,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                 s;
             }),
             ({
-                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Reels per Session"
+                SPKSetting *s = [SPKSetting stepperCellWithTitle:@"Reels per session"
                                     subtitle:@"Only loads %@ %@"
                             icon:SPKSettingsIcon(@"chest")
                                  defaultsKey:@"reels_doom_scroll_limit"
@@ -111,7 +111,7 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             SPKActionButtonRowSetting(kSPKReelsActionButtonEnabledKey,
                                       @"Choose what tapping the action button does. Long press opens the full menu.",
                                       @[
-                [SPKSetting switchCellWithTitle:@"Show Action Button"
+                [SPKSetting switchCellWithTitle:@"Show action button"
                                            icon:SPKSettingsIcon(@"action")
                                     defaultsKey:kSPKReelsActionButtonEnabledKey],
                 SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSourceReels),
@@ -121,10 +121,10 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
                 [SPKToggleMenuItem itemWithTitle:@"Like"
                                         iconName:@"heart"
                                      defaultsKey:@"reels_confirm_like"],
-                [SPKToggleMenuItem itemWithTitle:@"Double Tap"
+                [SPKToggleMenuItem itemWithTitle:@"Double tap"
                                         iconName:@"heart"
                                      defaultsKey:@"reels_confirm_double_tap_like"],
-                [SPKToggleMenuItem itemWithTitle:@"Reel Refresh"
+                [SPKToggleMenuItem itemWithTitle:@"Reel refresh"
                                         iconName:@"arrow_cw"
                                      defaultsKey:@"reels_confirm_refresh"],
                 [SPKToggleMenuItem itemWithTitle:@"Repost"

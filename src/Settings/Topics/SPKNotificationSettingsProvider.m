@@ -68,7 +68,7 @@
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Appearance", @[
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Glow Effect"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Glow effect"
                                    subtitle:@"Show glow effect around notifications"
                            icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:kSPKNotificationPillGlowEnabledKey];
@@ -81,11 +81,11 @@
                                                  : @"Requires iOS 26 or later")
                               icon:SPKSettingsIcon(@"mirror")
                                    defaultsKey:kSPKNotificationPillLiquidGlassEnabledKey],
-            [SPKSetting menuCellWithTitle:@"Download Progress"
+            [SPKSetting menuCellWithTitle:@"Download progress"
                                  subtitle:nil
                                 icon:SPKSettingsIcon(@"download")
                                      menu:SPKNotificationProgressSubtitleStyleMenu()],
-            [SPKSetting menuCellWithTitle:@"Position"
+            [SPKSetting menuCellWithTitle:@"Banner position"
                                  subtitle:nil
                                 icon:SPKSettingsIcon(@"pin")
                                      menu:SPKNotificationPillPositionMenu()],
@@ -101,13 +101,13 @@
         ],
                         nil),
         SPKTopicSection(@"", @[
-            [SPKSetting buttonCellWithTitle:@"Test Notification"
+            [SPKSetting buttonCellWithTitle:@"Test notification"
                                    subtitle:nil
                                        icon:SPKSettingsIcon(@"notification")
                                      action:^{
                                          [self spk_showNextNotificationPreview];
                                      }],
-            [SPKSetting navigationCellWithTitle:@"Notification Haptics"
+            [SPKSetting navigationCellWithTitle:@"Haptics with banners"
                                        subtitle:nil
                                            icon:SPKSettingsIcon(@"haptics")
                                     navSections:[self spk_featureSectionsForHaptics:YES]]],

@@ -53,13 +53,13 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     // The order glossary used to live in the section footer; it moves onto the
     // two rows it explains.
 
-    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab Order"
+    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab order"
                                                         icon:SPKSettingsIcon(@"sort")
                                                         menu:SPKNavigationIconOrderingMenu()];
     tabIconOrder.helpText = @"Standard: Home, Reels, Messages, Explore, Profile. Classic puts Messages top-right; Alternate swaps Home and Reels.";
     tabIconOrder.searchKeywords = @"standard classic alternate layout order tab icon order";
 
-    SPKSetting *swipeBetweenTabs = [SPKSetting menuCellWithTitle:@"Swipe Between Tabs"
+    SPKSetting *swipeBetweenTabs = [SPKSetting menuCellWithTitle:@"Swipe between tabs"
                                                             icon:SPKSettingsIcon(@"left_right")
                                                             menu:SPKSwipeBetweenTabsMenu()];
     swipeBetweenTabs.helpText = @"For Instagram's old layout, pick the Classic order and turn swiping off.";
@@ -71,7 +71,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     // below when available — same pattern as the tab bar.
     NSMutableArray *screenRows = [@[
         ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide UI on Capture"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide controls on capture"
                                                            icon:SPKSettingsIcon(@"eye_off")
                                                     defaultsKey:@"interface_hide_ui_on_capture"];
                 s.switchChangeHandler = ^(BOOL isOn) {
@@ -90,31 +90,31 @@ static BOOL SPKIsMessagesOnlyMode(void) {
         // Was the untitled section — six homogeneous rows deserve their name.
         // No gate here (doctrine R4): Create requires a restart and two rows
         // have conditional visibility.
-        SPKTopicSection(@"Explore & Search", @[
+        SPKTopicSection(@"Explore & search", @[
             ({
                 // Shortened from "Hide Explore Posts Grid" — the section header
                 // already carries "Explore"; the old title stays searchable.
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Posts Grid"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide posts grid"
                                                            icon:SPKSettingsIcon(@"explore_grid")
                                                     defaultsKey:@"interface_hide_explore_grid"];
                 s.searchKeywords = @"explore suggested grid";
                 s;
             }),
-            [SPKSetting switchCellWithTitle:@"Hide Trending Searches"
+            [SPKSetting switchCellWithTitle:@"Hide trending searches"
                                        icon:SPKSettingsIcon(@"trending")
                                 defaultsKey:@"interface_hide_trending_searches"],
             ({
                 // Moved from General (was "No Recent Searches") — it belongs
                 // with the rest of the search screen. The hook gates logging,
                 // hence "Disable"; the key is unchanged, so nothing migrates.
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Recent Searches"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide recent searches"
                                                            icon:SPKSettingsIcon(@"search")
                                                     defaultsKey:@"general_no_recent_searches"];
                 s.searchKeywords = @"no history log recent";
                 s;
             }),
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Open Clipboard Link"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Open clipboard link"
                                                            icon:SPKSettingsIcon(@"link")
                                                     defaultsKey:@"interface_open_clipboard_link"];
                 s.helpText = @"Long-press the Explore tab to open the Instagram link in your clipboard.";
@@ -128,7 +128,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     // Hoisted to function scope: the row is assembled inside the block below
     // but consumed after it, once the gate and its dependants are in place.
     SPKSetting *(^tabBarBehaviorCell)(void) = ^SPKSetting * {
-        SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Hide on Scroll"
+        SPKSetting *tabBarBehavior = [SPKSetting menuCellWithTitle:@"Hide on scroll"
                                                               icon:SPKSettingsIcon(@"arrow_down")
                                                               menu:SPKLiquidGlassTabBarStateMenu()];
     tabBarBehavior.searchKeywords = @"tab bar behavior";
@@ -156,7 +156,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             };
             liquidGlass.helpText = @"Turns on Instagram's native Liquid Glass interface even where it hasn't rolled out yet.";
 
-            SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive Blur"
+            SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive blur"
                                                         icon:SPKSettingsIcon(@"blend")
                                                              defaultsKey:kSPKPrefInterfaceProgressiveBlur
                                                           requiresRestart:YES];
@@ -168,7 +168,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             // Pre-iOS 26 can't render the glass material, but the same tab bar
             // experiment gates still reshape the bar into the floating pill.
             // Expose that as a focused toggle sharing the Liquid Glass pref.
-            SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-Shaped Tab Bar"
+            SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-Shaped tab bar"
                                                    icon:SPKSettingsIcon(@"circle")
                                                         defaultsKey:kSPKPrefInterfaceLiquidGlass
                                                     requiresRestart:YES];
@@ -226,7 +226,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                     return ![[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
                 };
 
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide Tabs", @"eye_off", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"Hide tabs", @"eye_off", @[
                     tabItem(@"Feed", @"home", @"interface_hide_feed_tab"),
                     tabItem(@"Explore", @"search", @"interface_hide_explore_tab"),
                     messagesItem,
@@ -238,7 +238,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                 g;
             }),
             ({
-                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide Tab Bar"
+                SPKSetting *s = [SPKSetting switchCellWithTitle:@"Hide tab bar"
                                                            icon:SPKSettingsIcon(@"eye_off")
                                                     defaultsKey:@"interface_hide_tab_bar_in_messages_only"];
                 s.enabledProvider = ^BOOL {
@@ -263,12 +263,12 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     [tabBarRows addObjectsFromArray:@[
         swipeBetweenTabs,
         tabBarBehaviorCell(),
-        [SPKSetting menuCellWithTitle:@"Launch Tab"
+        [SPKSetting menuCellWithTitle:@"Launch tab"
                                  icon:SPKSettingsIcon(@"home")
                                  menu:SPKLaunchTabMenu()],
         tabIconOrder,
     ]];
-    [sections insertObject:SPKTopicSection(@"Tab Bar", tabBarRows, nil) atIndex:0];
+    [sections insertObject:SPKTopicSection(@"Tab bar", tabBarRows, nil) atIndex:0];
 
     return SPKTopicNavigationSetting(@"Interface", @"interface", 24.0, sections);
 }

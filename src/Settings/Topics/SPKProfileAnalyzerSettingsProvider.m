@@ -11,7 +11,7 @@
 + (SPKSetting *)rootSetting {
     // Opens straight into the analyzer dashboard — no intermediate settings page.
     // Track Visits, Visited Profiles, About and Reset all live inside the dashboard.
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Profile Analyzer"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Profile analyzer"
                                                      subtitle:nil
                                                          icon:SPKSettingsIcon(@"profile_analyzer")
                                                viewController:[SPKProfileAnalyzerViewController new]];

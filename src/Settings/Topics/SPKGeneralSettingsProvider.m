@@ -51,7 +51,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                                                           }];
     controller.title = @"Open Menu Icon";
 
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Open Menu Icon"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Open menu icon"
                                                      subtitle:nil
                                                          icon:SPKSettingsIcon(@"action")
                                                viewController:controller];
@@ -67,7 +67,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 + (SPKSetting *)appIconSetting {
     SPKAppIconPickerViewController *controller = [[SPKAppIconPickerViewController alloc] initWithSelectedIdentifier:[SPKAppIconCatalog currentAppIconIdentifier]
                                                                                                            onSelect:nil];
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"App Icon"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"App icon"
                                                      subtitle:nil
                                                          icon:SPKSettingsIcon(@"app")
                                                viewController:controller];
@@ -81,7 +81,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 }
 
 + (SPKSetting *)perAccountSetting {
-    SPKSetting *setting = [SPKSetting switchCellWithTitle:@"Per-Account Settings"
+    SPKSetting *setting = [SPKSetting switchCellWithTitle:@"Per-Account settings"
                                                      icon:SPKSettingsIcon(@"user_circle")
                                               defaultsKey:kSPKPrefPerAccountSettings];
     // Changes which key namespace every feature reads, and most enabled-state is
@@ -109,7 +109,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 }
 
 + (SPKSetting *)rootSetting {
-    SPKSetting *clearCacheSetting = [SPKSetting buttonCellWithTitle:@"Clear Cache"
+    SPKSetting *clearCacheSetting = [SPKSetting buttonCellWithTitle:@"Clear cache"
                                                            subtitle:nil
                                                                icon:SPKSettingsIcon(@"trash")
                                                              action:^(void) {
@@ -127,19 +127,19 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // ---- Behavior ------------------------------------------------------
 
-    SPKSetting *copyText = [SPKSetting switchCellWithTitle:@"Copy Text"
+    SPKSetting *copyText = [SPKSetting switchCellWithTitle:@"Copy text"
                                                       icon:SPKSettingsIcon(@"text")
                                                defaultsKey:@"general_copy_text"];
     copyText.helpText = @"Long-press any text field in the app.";
     copyText.searchKeywords = @"long press clipboard select";
 
-    SPKSetting *stripTracking = [SPKSetting switchCellWithTitle:@"Copy Links Without Tracking"
+    SPKSetting *stripTracking = [SPKSetting switchCellWithTitle:@"Copy links without tracking"
                                                            icon:SPKSettingsIcon(@"user_unfollow")
                                                     defaultsKey:@"general_strip_share_link_tracking"];
     stripTracking.helpText = @"The copied link loses the IDs Instagram uses to track who shared it.";
     stripTracking.searchKeywords = @"igshid utm referrer identifiers url";
 
-    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Long-Press Send to Copy Link"
+    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Long-Press send to copy link"
                                                               icon:SPKSettingsIcon(@"link")
                                                        defaultsKey:@"general_hold_send_copy_link"];
     holdSendCopyLink.helpText = @"Long-press the send or share button to get the post link.";
@@ -150,12 +150,12 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // ---- Media Preview & Menu ------------------------------------------
 
-    SPKSetting *showMediaInfo = [SPKSetting switchCellWithTitle:@"Show Media Info"
+    SPKSetting *showMediaInfo = [SPKSetting switchCellWithTitle:@"Show media info"
                                                            icon:SPKSettingsIcon(@"info")
                                                     defaultsKey:@"general_preview_show_metadata"];
     showMediaInfo.searchKeywords = @"author date overlay metadata";
 
-    SPKSetting *showDateInMenu = [SPKSetting switchCellWithTitle:@"Show Date in Menu"
+    SPKSetting *showDateInMenu = [SPKSetting switchCellWithTitle:@"Show date in menu"
                                                             icon:SPKSettingsIcon(@"calendar")
                                                      defaultsKey:@"general_action_btn_show_date"];
     showDateInMenu.searchKeywords = @"timestamp posted exact time";
@@ -164,7 +164,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // ---- Storage -------------------------------------------------------
 
-    SPKSetting *autoClearCache = [SPKSetting menuCellWithTitle:@"Auto Clear Cache"
+    SPKSetting *autoClearCache = [SPKSetting menuCellWithTitle:@"Auto clear cache"
                                                           icon:SPKSettingsIcon(@"clock")
                                                           menu:SPKCacheAutoClearMenu()];
     autoClearCache.helpText = @"Runs each time you open Instagram — not on a timer.";
@@ -174,12 +174,12 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // The footer line only restated the title; "vibrations" was the one word
     // worth keeping, so it moves to the search keywords.
-    SPKSetting *disableHaptics = [SPKSetting switchCellWithTitle:@"Disable Haptics"
+    SPKSetting *disableHaptics = [SPKSetting switchCellWithTitle:@"Disable haptics"
                                                             icon:SPKSettingsIcon(@"haptics")
                                                      defaultsKey:@"general_disable_haptics"];
     disableHaptics.searchKeywords = @"app vibration vibrations taptic feedback";
 
-    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show Header Button"
+    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show header button"
                                                           icon:SPKSettingsIcon(@"action")
                                                    defaultsKey:kSPKHeaderButtonEnabledKey];
     headerButton.reloadsTableOnSwitchChange = YES;
@@ -191,7 +191,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     // SPKHeaderButtonAllDestinations() and is not editable here., so even
     // reconnected it would have opened blank. These are the five destinations
     // SPKHeaderDestPrefKey() still reads at runtime.
-    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure Destinations"
+    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure destinations"
                                                                    subtitle:nil
                                                                        icon:SPKSettingsIcon(@"slider")
                                                                 navSections:@[
@@ -199,16 +199,16 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                                                         [SPKSetting switchCellWithTitle:@"Gallery"
                                                                                                    icon:SPKSettingsIcon(@"sparkle_gallery")
                                                                                             defaultsKey:@"feed_header_button_dest_gallery"],
-                                                                        [SPKSetting switchCellWithTitle:@"Profile Analyzer"
+                                                                        [SPKSetting switchCellWithTitle:@"Profile analyzer"
                                                                                                    icon:SPKSettingsIcon(@"profile_analyzer")
                                                                                             defaultsKey:@"feed_header_button_dest_analyzer"],
-                                                                        [SPKSetting switchCellWithTitle:@"Deleted Messages"
+                                                                        [SPKSetting switchCellWithTitle:@"Deleted messages"
                                                                                                    icon:SPKSettingsIcon(@"channels")
                                                                                             defaultsKey:@"feed_header_button_dest_deleted"],
                                                                         [SPKSetting switchCellWithTitle:@"Downloads"
                                                                                                    icon:SPKSettingsIcon(@"download")
                                                                                             defaultsKey:@"feed_header_button_dest_downloads"],
-                                                                        [SPKSetting switchCellWithTitle:@"Sparkle Settings"
+                                                                        [SPKSetting switchCellWithTitle:@"Sparkle settings"
                                                                                                    icon:SPKSettingsIcon(@"settings")
                                                                                             defaultsKey:@"feed_header_button_dest_settings"],
                                                                     ], nil)
@@ -221,7 +221,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     // Fires when this button's menu opens, so it follows the same visibility
     // rule as the row above.
-    SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Shortcut Haptics"
+    SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Haptics on shortcuts"
                                                              icon:SPKSettingsIcon(@"haptics")
                                                       defaultsKey:@"tools_shortcut_haptics"];
     shortcutHaptics.hiddenProvider = ^BOOL {
@@ -232,7 +232,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 
     SPKSetting *root = SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
         // The button opens Sparkle's own screens from the header on any tab.
-        SPKTopicSection(@"Header Shortcut", @[
+        SPKTopicSection(@"Header shortcut", @[
             headerButton,
             SPKFeedHeaderButtonDefaultActionNavigationSetting(),
             shortcutHaptics,
@@ -242,7 +242,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // Behavior + Sharing merged: four rows, one subject — copying and
         // sharing. (No Recent Searches moved to Interface › Explore & Search;
         // the two Confirm rows live in the Confirmations gate row below.)
-        SPKTopicSection(@"Sharing & Media", @[
+        SPKTopicSection(@"Sharing & media", @[
             copyText,
             stripTracking,
             holdSendCopyLink,
@@ -256,7 +256,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         // its depth. Meta AI's two per-item helps live in its gate's ⓘ.
         SPKTopicSection(@"Recommendations", @[
             ({
-                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Ads", @"ads", @[
+                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide ads", @"ads", @[
                     [SPKToggleMenuItem itemWithTitle:@"Feed"
                                             iconName:@"feed"
                                          defaultsKey:@"general_hide_ads_feed"],
@@ -269,7 +269,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Explore"
                                             iconName:@"explore_grid"
                                          defaultsKey:@"general_hide_ads_explore"],
-                    [SPKToggleMenuItem itemWithTitle:@"Reels Shopping Button"
+                    [SPKToggleMenuItem itemWithTitle:@"Reels shopping button"
                                             iconName:@"shopping_bag"
                                          defaultsKey:@"general_hide_reels_shopping_cta"],
                 ]);
@@ -281,16 +281,16 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Messages"
                                             iconName:@"messages"
                                          defaultsKey:@"general_hide_meta_ai_msgs"],
-                    [SPKToggleMenuItem itemWithTitle:@"Explore & Search"
+                    [SPKToggleMenuItem itemWithTitle:@"Explore & search"
                                             iconName:@"search"
                                          defaultsKey:@"general_hide_meta_ai_explore"],
                     [SPKToggleMenuItem itemWithTitle:@"Comments"
                                             iconName:@"comment"
                                          defaultsKey:@"general_hide_meta_ai_comments"],
-                    [SPKToggleMenuItem itemWithTitle:@"Creation Tools"
+                    [SPKToggleMenuItem itemWithTitle:@"Creation tools"
                                             iconName:@"photo"
                                          defaultsKey:@"general_hide_meta_ai_creation"],
-                    [SPKToggleMenuItem itemWithTitle:@"Everywhere Else"
+                    [SPKToggleMenuItem itemWithTitle:@"Everywhere else"
                                             iconName:@"app"
                                          defaultsKey:@"general_hide_meta_ai_global"],
                 ]);
@@ -301,7 +301,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                 gate;
             }),
             ({
-                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide Suggested Users", @"users", @[
+                SPKSetting *gate = SPKToggleMenuRowSetting(@"Hide suggested users", @"users", @[
                     [SPKToggleMenuItem itemWithTitle:@"Feed"
                                             iconName:@"feed"
                                          defaultsKey:@"general_hide_suggested_users_feed"],
@@ -320,7 +320,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                     [SPKToggleMenuItem itemWithTitle:@"Activity"
                                             iconName:@"notification"
                                          defaultsKey:@"general_hide_suggested_users_activity"],
-                    [SPKToggleMenuItem itemWithTitle:@"Followers & Following"
+                    [SPKToggleMenuItem itemWithTitle:@"Followers & following"
                                             iconName:@"users"
                                          defaultsKey:@"general_hide_suggested_users_follow_lists"],
                     [SPKToggleMenuItem itemWithTitle:@"Subscriptions"
@@ -336,7 +336,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
             // Moved in from Feed: the gesture opens Instagram's icon picker and
             // Sparkle's own picker is two rows up — they belong side by side.
             ({
-                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable App Icon Gesture"
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Disable app icon gesture"
                                                              icon:SPKSettingsIcon(@"app")
                                                       defaultsKey:@"feed_disable_appicon_gesture"];
                 row.helpText = @"Stops the header-logo long-press from opening Instagram's icon picker. Sparkle's own picker is App Icon, above.";
@@ -361,13 +361,13 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
         SPKTopicSection(@"", @[
             ({
                 SPKSetting *confirmations = SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
-                [SPKToggleMenuItem itemWithTitle:@"New Post"
+                [SPKToggleMenuItem itemWithTitle:@"New post"
                                         iconName:@"messages"
                                      defaultsKey:@"general_confirm_send"],
-                [SPKToggleMenuItem itemWithTitle:@"Comment Like"
+                [SPKToggleMenuItem itemWithTitle:@"Comment like"
                                         iconName:@"heart"
                                      defaultsKey:@"general_comments_confirm_like"],
-                [SPKToggleMenuItem itemWithTitle:@"Opening a Link"
+                [SPKToggleMenuItem itemWithTitle:@"Opening a link"
                                         iconName:@"external_link"
                                      defaultsKey:@"general_confirm_open_link"],
                 ]);
