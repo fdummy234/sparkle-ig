@@ -21,7 +21,6 @@ FOUNDATION_EXPORT void SPKInstallBackgroundRefreshHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallSeenButtonHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallFollowConfirmHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallExternalLinkConfirmHooksIfNeeded(void);
-FOUNDATION_EXPORT void SPKInstallProfileAccountAgeHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallProfileFullResPhotoHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallCreateGroupButtonControlHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallConfirmSendHooksIfEnabled(void);
@@ -287,7 +286,6 @@ void SPKInstallProfileSurfaceHooksIfNeeded(void) {
     SPKHookBisectSetCurrentSurface(@"Profile");
     SPK_INSTALL(SPKInstallProfileActionButtonHooksIfEnabled);
     SPK_INSTALL(SPKInstallProfilePhotoZoomHooksIfEnabled);
-    SPK_INSTALL(SPKInstallProfileAccountAgeHooksIfEnabled);
     SPK_INSTALL(SPKInstallProfileFullResPhotoHooksIfEnabled);
     SPK_INSTALL(SPKInstallFollowConfirmHooksIfNeeded);
     SPK_INSTALL(SPKInstallNoSuggestedUsersHooksIfEnabled);

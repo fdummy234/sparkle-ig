@@ -69,7 +69,6 @@ static NSDictionary *SPKFeatureDefaults(void) {
         @"general_confirm_create_group" : @(NO),
         @"general_confirm_send" : @(NO),
         @"general_confirm_open_link" : @(NO),
-        @"profile_show_account_age" : @(NO),
         @"profile_full_res_photo" : @(NO),
         @"msgs_keep_deleted" : @(NO),
         @"msgs_deleted_log" : @(NO),
