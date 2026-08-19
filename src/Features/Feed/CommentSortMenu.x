@@ -54,15 +54,7 @@ static NSString *const kSPKCommentSortModeDefault = @"default";
 static NSString *const kSPKCommentSortModeNewest = @"newest";
 static NSString *const kSPKCommentSortModeOldest = @"oldest";
 
-// Rolling record of what each stage did, surfaced by the Sort Report row in
-// Feed → Comments. Kept because a thread that refuses to reorder gives no other
-// signal on a device without a console.
-static NSString *const kSPKCommentSortReportKey = @"spk_diag_comment_sort";
 
-// Stamped into the report at launch. Two builds that look alike on screen are
-// impossible to tell apart otherwise, and guessing which one is running has
-// cost more than one round of chasing an already fixed problem.
-static NSString *const kSPKCommentSortBuildTag = @"v14";
 
 // Preloading pulls the whole thread in before it is read, because sorting can
 // only order what has been loaded and a thread that keeps loading keeps
@@ -124,22 +116,6 @@ static NSString *SPKCommentSortModeSymbol(NSString *mode) {
     return @"arrow.up.arrow.down";
 }
 
-#pragma mark - Report
-
-// Five entries rather than one: reaching the settings crosses other screens, and
-// a single slot is overwritten before it can be read.
-static void SPKCommentSortNote(NSString *line) {
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"HH:mm:ss";
-
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSMutableArray *history = [([defaults arrayForKey:kSPKCommentSortReportKey] ?: @[]) mutableCopy];
-    [history insertObject:[NSString stringWithFormat:@"%@ %@", [formatter stringFromDate:[NSDate date]], line]
-                  atIndex:0];
-    while (history.count > 5)
-        [history removeLastObject];
-    [defaults setObject:history forKey:kSPKCommentSortReportKey];
-}
 
 #pragma mark - Runtime reading
 
@@ -295,9 +271,6 @@ static void SPKCommentSortPreloadTick(UIViewController *controller,
                                       NSUInteger lastCount,
                                       NSUInteger stalled) {
     if (!controller || round >= kSPKCommentSortPreloadMaxRounds) {
-        if (controller)
-            SPKCommentSortNote([NSString stringWithFormat:@"preload capped · %lu rounds",
-                                                          (unsigned long)round]);
         return;
     }
 
@@ -310,21 +283,16 @@ static void SPKCommentSortPreloadTick(UIViewController *controller,
     // Default YES: an unreadable flag should not end the loop on the first tick,
     // and the stall detector still bounds it.
     if (!SPKCommentSortBoolIvar(thread, "_moreCommentsAvailableBelow", YES)) {
-        SPKCommentSortNote([NSString stringWithFormat:@"preload done · %lu comments · %lu rounds",
-                                                      (unsigned long)count, (unsigned long)round]);
         return;
     }
 
     NSUInteger nextStalled = (count > lastCount) ? 0 : (stalled + 1);
     if (nextStalled >= kSPKCommentSortPreloadStallTicks) {
-        SPKCommentSortNote([NSString stringWithFormat:@"preload stalled · %lu comments · %lu rounds",
-                                                      (unsigned long)count, (unsigned long)round]);
         return;
     }
 
     SEL nearBottom = NSSelectorFromString(@"scrollViewWillScrollNearBottom:triggeredByManualCheck:");
     if (![controller respondsToSelector:nearBottom]) {
-        SPKCommentSortNote(@"preload unavailable · no pagination entry");
         return;
     }
 
@@ -349,7 +317,6 @@ static void SPKCommentSortStartPreload(UIViewController *controller) {
         return;
 
     objc_setAssociatedObject(controller, kSPKCommentSortPreloadedAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-    SPKCommentSortNote(@"preload start · whole thread");
     SPKCommentSortPreloadTick(controller, 0, 0, 0);
 }
 
@@ -402,7 +369,6 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
 
     SPKPreferenceSetObject(next, kSPKCommentSortModeKey);
     SPKCommentSortApplySymbol(sender, next);
-    SPKCommentSortNote([NSString stringWithFormat:@"mode -> %@", next]);
 
     UIViewController *controller = self.controller;
     if (!controller)
@@ -414,8 +380,6 @@ static void SPKCommentSortApplySymbol(UIButton *button, NSString *mode) {
     SEL performUpdates = NSSelectorFromString(@"performUpdatesAnimated:completion:");
     if ([listAdapter respondsToSelector:performUpdates]) {
         ((void (*)(id, SEL, BOOL, id))objc_msgSend)(listAdapter, performUpdates, YES, nil);
-    } else {
-        SPKCommentSortNote(@"list adapter missing performUpdates");
     }
 
     // Leaving Instagram's order needs the pages that sorting will draw from.
@@ -466,7 +430,6 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
 
     UIView *container = SPKCommentSortSheetView(controller);
     if (!container) {
-        SPKCommentSortNote(@"seat skipped · no container");
         return;
     }
 
@@ -514,10 +477,6 @@ static void SPKSeatCommentSortEntry(UIViewController *controller) {
     objc_setAssociatedObject(controller, kSPKCommentSortTargetAssocKey, target, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     objc_setAssociatedObject(controller, kSPKCommentSortEntryAssocKey, button, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    SPKCommentSortNote([NSString stringWithFormat:@"seated on %@ h%.0f · mode %@",
-                                                  NSStringFromClass([container class]),
-                                                  CGRectGetHeight(container.bounds),
-                                                  SPKCommentSortMode()]);
 }
 
 static void SPKRemoveCommentSortEntry(UIViewController *controller) {
@@ -571,14 +530,6 @@ static void SPKRemoveCommentSortEntry(UIViewController *controller) {
     NSArray *reordered = SPKCommentSortReorder(objects, mode);
     objc_setAssociatedObject(self, kSPKCommentSortCacheAssocKey, reordered, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
-    // Recorded only when the count moves rather than on every pass: the adapter
-    // asks for its objects repeatedly, and identical lines would bury the rest.
-    static NSUInteger lastCount = 0;
-    if (objects.count != lastCount) {
-        lastCount = objects.count;
-        SPKCommentSortNote([NSString stringWithFormat:@"sorted %@ · %lu objects",
-                                                      mode, (unsigned long)objects.count]);
-    }
     return reordered;
 }
 
@@ -665,14 +616,11 @@ static void SPKCommentSortFlushWhenIdle(UIViewController *controller) {
 
 void SPKInstallCommentSortMenuHooksIfEnabled(void) {
     BOOL enabled = [SPKUtils getBoolPref:kSPKCommentSortEnabledKey];
-    SPKCommentSortNote([NSString stringWithFormat:@"installer ran · %@ · pref %@",
-                                                  kSPKCommentSortBuildTag, enabled ? @"ON" : @"OFF"]);
     if (!enabled)
         return;
 
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         %init(SPKCommentSortHooks);
-        SPKCommentSortNote(@"hooks installed");
     });
 }
