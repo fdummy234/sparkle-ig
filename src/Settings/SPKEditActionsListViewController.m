@@ -501,7 +501,7 @@ static NSString *const kSPKSubmenuRowActionKey = @"action";
 
 - (void)copyInfoEditorTapped {
     SPKBulkActionMenuEditViewController *editor =
-        [[SPKBulkActionMenuEditViewController alloc] initWithTitle:@"Copy Info Menu"
+        [[SPKBulkActionMenuEditViewController alloc] initWithTitle:@"Copy info menu"
                                                             source:self.source
                                                   supportedActions:SPKProfileCopyInfoSupportedActions()
                                                  configuredActions:SPKProfileConfiguredCopyInfoActions()

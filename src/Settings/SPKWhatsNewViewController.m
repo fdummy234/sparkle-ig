@@ -9,7 +9,7 @@
 // SPKAssetUtils override keys — never SF Symbols. Keep in sync with README/FEATURES.
 - (NSArray<SPKPagedSheetPage *> *)buildPages {
     return @[
-        [SPKPagedSheetPage pageWithTitle:@"New Features"
+        [SPKPagedSheetPage pageWithTitle:@"New features"
                                     body:[NSString stringWithFormat:@"What's new in %@", SPKVersionString]
                                     rows:@[
                                         @{ @"icon": @"sparkle_gallery", @"text": @"Import media into the Gallery from Files or a Regram vault" },
@@ -20,7 +20,7 @@
                                         @{ @"icon": @"download", @"text": @"Auto-save stories, view-once messages and instants as you view them" },
                                         @{ @"icon": @"external_link", @"text": @"Profiles, posts and reels open as real Instagram pages" },
                                     ]],
-        [SPKPagedSheetPage pageWithTitle:@"More To Explore"
+        [SPKPagedSheetPage pageWithTitle:@"More to Explore"
                                     body:@""
                                     rows:@[
                                         @{ @"icon": @"hd_check_filled", @"text": @"Refined photo quality tiers with 4K fetching" },
@@ -34,7 +34,7 @@
                                         @{ @"icon": @"filter", @"text": @"Sort, filter and search the Gallery picker across folders" },
                                         @{ @"text": @"...and plenty more!" },
                                     ]],
-        [SPKPagedSheetPage pageWithTitle:@"Fixes & Improvements"
+        [SPKPagedSheetPage pageWithTitle:@"Fixes & improvements"
                                     body:@""
                                     rows:@[
                                         @{ @"icon": @"subtract", @"text": @"Fixed a long-standing freeze that made the app crawl after a few screens" },

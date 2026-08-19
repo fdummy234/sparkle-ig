@@ -147,12 +147,12 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
     NSMutableArray<SPKSetting *> *menuRows = [NSMutableArray array];
     NSMutableArray<SPKSetting *> *finalRows = [NSMutableArray array];
     for (SPKSetting *entry in rows) {
-        if ([entry.title isEqualToString:@"On Tap"] ||
-            [entry.title isEqualToString:@"Configure Menu"]) {
+        if ([entry.title isEqualToString:@"Tap action"] ||
+            [entry.title isEqualToString:@"Configure menu"]) {
             // The tweak explains a row through the section's help sheet, never
             // through footer text (SPKSettingsViewController.m:1219). Per row it
             // also reads better than one line trying to cover both.
-            if ([entry.title isEqualToString:@"On Tap"])
+            if ([entry.title isEqualToString:@"Tap action"])
                 entry.helpText = @"What a single tap on the action button does. Open Menu opens the whole menu instead of running an action.";
             else
                 entry.helpText = @"Everything the action button opens. Swipe an action left to take it out of the menu, right to put it back, and hold to drag it \u2014 between the first level, a submenu, or a new one.";
@@ -166,23 +166,23 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
 
     // Sparkle's own menu, off by default: the native menu stays until he turns
     // this on, so a fault here is one switch away from being undone.
-    SPKSetting *sparkleMenuRow = [SPKSetting switchCellWithTitle:@"Sparkle Menu"
+    SPKSetting *sparkleMenuRow = [SPKSetting switchCellWithTitle:@"Sparkle menu"
                                                             icon:SPKSettingsIcon(@"sparkle")
                                                      defaultsKey:@"action_button_sparkle_menu"];
     sparkleMenuRow.helpText = @"Draws the action button's menu the way Sparkle draws its own: a line between every row, tighter margins. Off keeps the iPhone's menu.";
     [menuRows addObject:sparkleMenuRow];
 
     NSMutableArray *navSections = [NSMutableArray array];
-    [navSections addObject:SPKTopicSection(@"The Button", buttonRows, nil)];
+    [navSections addObject:SPKTopicSection(@"The button", buttonRows, nil)];
     if (menuRows.count > 0)
         // Not rendered: section footers only feed the search index. This one
         // makes the section findable on "swipe", "reorder" and "submenu".
-        [navSections addObject:SPKTopicSection(@"Its Menu", menuRows,
+        [navSections addObject:SPKTopicSection(@"Its menu", menuRows,
             @"On Tap is what a single tap does. Configure Menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
     if (finalRows.count > 0)
         [navSections addObject:SPKTopicSection(@"", finalRows, footer)];
 
-    SPKSetting *row = [SPKSetting navigationCellWithTitle:@"Action Button"
+    SPKSetting *row = [SPKSetting navigationCellWithTitle:@"Action button"
                                                  subtitle:nil
                                                      icon:SPKSettingsIcon(@"action")
                                               navSections:navSections];
@@ -194,7 +194,7 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
 }
 
 SPKSetting *SPKActionButtonDefaultActionNavigationSetting(SPKActionButtonSource source) {
-    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"On Tap"
+    SPKSetting *setting = [SPKSetting navigationCellWithTitle:@"Tap action"
                                                      subtitle:@""
                                                          icon:SPKSettingsIcon(@"action")
                                                viewController:[[SPKActionButtonDefaultActionPickerViewController alloc] initWithSource:source]];
@@ -237,7 +237,7 @@ SPKSetting *SPKActionButtonConfigurationNavigationSetting(SPKActionButtonSource 
     SPKEditActionsListViewController *controller = [[SPKEditActionsListViewController alloc] initWithSource:source topicTitle:topicTitle];
     (void)supportedActions;
     (void)defaultSections;
-    return [SPKSetting navigationCellWithTitle:@"Configure Menu"
+    return [SPKSetting navigationCellWithTitle:@"Configure menu"
                                       subtitle:@""
                                           icon:SPKSettingsIcon(@"slider")
                                 viewController:controller];
@@ -259,15 +259,15 @@ UIMenu *SPKReelsTapControlMenu(void) {
 
 UIMenu *SPKCommentSortModeMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Instagram's Order", @"sort", nil, @"feed_comments_sort_mode", @"default", NO),
-        SPKMenuCommand(@"Newest First", @"clock", nil, @"feed_comments_sort_mode", @"newest", NO),
-        SPKMenuCommand(@"Oldest First", @"clock", nil, @"feed_comments_sort_mode", @"oldest", NO)
+        SPKMenuCommand(@"Instagram's order", @"sort", nil, @"feed_comments_sort_mode", @"default", NO),
+        SPKMenuCommand(@"Newest first", @"clock", nil, @"feed_comments_sort_mode", @"newest", NO),
+        SPKMenuCommand(@"Oldest first", @"clock", nil, @"feed_comments_sort_mode", @"oldest", NO)
     ]];
 }
 
 UIMenu *SPKMainFeedModeMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"For You", @"heart", nil, @"feed_mode", @"default", YES),
+        SPKMenuCommand(@"For you", @"heart", nil, @"feed_mode", @"default", YES),
         SPKMenuCommand(@"Following", @"users", nil, @"feed_mode", @"following", YES)
     ]];
 }
@@ -283,7 +283,7 @@ UIMenu *SPKLastActiveFormatMenu(void) {
     return [UIMenu menuWithChildren:@[
         SPKMenuCommand(@"Off", nil, nil, @"msgs_last_active_format", @"off", NO),
         SPKMenuCommand(@"Smart", nil, nil, @"msgs_last_active_format", @"smart", NO),
-        SPKMenuCommand(@"Date & Time", nil, nil, @"msgs_last_active_format", @"datetime", NO)
+        SPKMenuCommand(@"Date & time", nil, nil, @"msgs_last_active_format", @"datetime", NO)
     ]];
 }
 
@@ -342,7 +342,7 @@ UIMenu *SPKLiquidGlassTabBarStateMenu(void) {
                       options:UIMenuOptionsDisplayInline
                      children:@[
                          SPKMenuCommand(@"Fixed", nil, nil, kSPKPrefInterfaceLiquidGlassTabBarMode, @"fixed", YES),
-                         SPKMenuCommand(@"Hide on Scroll", nil, nil, kSPKPrefInterfaceLiquidGlassTabBarMode, @"hide", YES)
+                         SPKMenuCommand(@"Hide on scroll", nil, nil, kSPKPrefInterfaceLiquidGlassTabBarMode, @"hide", YES)
                      ]]
     ]];
 }
@@ -390,7 +390,7 @@ UIMenu *SPKMediaVideoQualityMenu(void) {
                    identifier:nil
                       options:UIMenuOptionsDisplayInline
                      children:@[
-                         SPKMenuCommand(@"Always Ask", nil, nil, @"downloads_video_quality", @"always_ask", NO),
+                         SPKMenuCommand(@"Always ask", nil, nil, @"downloads_video_quality", @"always_ask", NO),
                          SPKMenuCommand(@"High", nil, nil, @"downloads_video_quality", @"high", NO),
                          SPKMenuCommand(@"Medium", nil, nil, @"downloads_video_quality", @"medium", NO),
                          SPKMenuCommand(@"Low", nil, nil, @"downloads_video_quality", @"low", NO)
@@ -400,7 +400,7 @@ UIMenu *SPKMediaVideoQualityMenu(void) {
 
 UIMenu *SPKMediaPhotoQualityMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Always Ask", nil, nil, @"downloads_photo_quality", @"always_ask", NO),
+        SPKMenuCommand(@"Always ask", nil, nil, @"downloads_photo_quality", @"always_ask", NO),
         SPKMenuCommand(@"Max", nil, nil, @"downloads_photo_quality", @"max", NO),
         SPKMenuCommand(@"High", nil, nil, @"downloads_photo_quality", @"high", NO),
         SPKMenuCommand(@"Medium", nil, nil, @"downloads_photo_quality", @"medium", NO),
@@ -414,8 +414,8 @@ UIMenu *SPKMediaPhotoQualityMenu(void) {
 // every story you happen to watch.
 UIMenu *SPKAutoSaveDestinationMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Sparkle Gallery", nil, nil, kSPKAutoSaveDestinationKey, @"gallery", NO),
-        SPKMenuCommand(@"Photos App", nil, nil, kSPKAutoSaveDestinationKey, @"photos", NO)
+        SPKMenuCommand(@"Sparkle gallery", nil, nil, kSPKAutoSaveDestinationKey, @"gallery", NO),
+        SPKMenuCommand(@"Photos app", nil, nil, kSPKAutoSaveDestinationKey, @"photos", NO)
     ]];
 }
 
@@ -457,20 +457,20 @@ UIMenu *SPKStoryAutoSaveFilterModeMenu(void) {
 SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void) {
     // A menu, like every other single-choice selector. The values are the ones
     // SPKHeaderDestinationForIdentifier() reads; "menu" opens the full list.
-    SPKSetting *setting = [SPKSetting menuCellWithTitle:@"Default Tap Action"
+    SPKSetting *setting = [SPKSetting menuCellWithTitle:@"Tap action"
                                                    icon:SPKSettingsIcon(@"action")
                                                    menu:[UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Open Menu", @"action", nil, kSPKHeaderButtonDefaultActionKey, @"menu", NO),
+        SPKMenuCommand(@"Open menu", @"action", nil, kSPKHeaderButtonDefaultActionKey, @"menu", NO),
         [UIMenu menuWithTitle:@""
                         image:nil
                    identifier:nil
                       options:UIMenuOptionsDisplayInline
                      children:@[
                          SPKMenuCommand(@"Gallery", @"sparkle_gallery", nil, kSPKHeaderButtonDefaultActionKey, @"gallery", NO),
-                         SPKMenuCommand(@"Profile Analyzer", @"profile_analyzer", nil, kSPKHeaderButtonDefaultActionKey, @"analyzer", NO),
-                         SPKMenuCommand(@"Deleted Messages", @"channels", nil, kSPKHeaderButtonDefaultActionKey, @"deleted", NO),
+                         SPKMenuCommand(@"Profile analyzer", @"profile_analyzer", nil, kSPKHeaderButtonDefaultActionKey, @"analyzer", NO),
+                         SPKMenuCommand(@"Deleted messages", @"channels", nil, kSPKHeaderButtonDefaultActionKey, @"deleted", NO),
                          SPKMenuCommand(@"Downloads", @"download", nil, kSPKHeaderButtonDefaultActionKey, @"downloads", NO),
-                         SPKMenuCommand(@"Sparkle Settings", @"settings", nil, kSPKHeaderButtonDefaultActionKey, @"settings", NO)
+                         SPKMenuCommand(@"Sparkle settings", @"settings", nil, kSPKHeaderButtonDefaultActionKey, @"settings", NO)
                      ]]
     ]]];
     setting.helpText = @"What a single tap on the header button does. A long press always opens the menu of enabled destinations.";

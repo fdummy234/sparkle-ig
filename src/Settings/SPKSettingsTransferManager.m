@@ -952,7 +952,7 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                                         title:@"Which accounts?"
                                                       message:scopeMessage
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"All Accounts"
+                                                          [SPKIGAlertAction actionWithTitle:@"All accounts"
                                                                                       style:SPKIGAlertActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf exportFromController:controller includeSettings:includeSettings includeGallery:includeGallery includeDeletedMessages:includeDeletedMessages includeProfileAnalyzer:includeProfileAnalyzer settingsScope:SPKTransferAccountScopeAllAccounts];
@@ -1369,12 +1369,12 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                                           title:@"Files from Another Account"
                                                         message:message
                                                         actions:@[
-                                                            [SPKIGAlertAction actionWithTitle:@"Claim for This Account"
+                                                            [SPKIGAlertAction actionWithTitle:@"Claim for this account"
                                                                                         style:SPKIGAlertActionStyleDefault
                                                                                       handler:^{
                                                                                           mergeGalleryThenFinish(SPKGalleryImportConflictStrategyClaim);
                                                                                       }],
-                                                            [SPKIGAlertAction actionWithTitle:@"Keep a Separate Copy"
+                                                            [SPKIGAlertAction actionWithTitle:@"Keep a separate copy"
                                                                                         style:SPKIGAlertActionStyleDefault
                                                                                       handler:^{
                                                                                           mergeGalleryThenFinish(SPKGalleryImportConflictStrategyDuplicate);
@@ -1408,7 +1408,7 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                                         title:@"Which Accounts?"
                                                       message:@"Per-account settings are on. Reset every account's settings, or only the active account's."
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"All Accounts"
+                                                          [SPKIGAlertAction actionWithTitle:@"All accounts"
                                                                                       style:SPKIGAlertActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf confirmResetFromController:controller scope:SPKTransferAccountScopeAllAccounts];

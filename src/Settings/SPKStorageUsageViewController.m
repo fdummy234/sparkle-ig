@@ -67,19 +67,19 @@
                   [SPKSetting valueCellWithTitle:@"Downloads"
                     subtitle:[self formattedKey:@"downloads"]
                         icon:SPKSettingsIcon(@"download")],
-                  [SPKSetting valueCellWithTitle:@"Deleted Messages"
+                  [SPKSetting valueCellWithTitle:@"Deleted messages"
                     subtitle:[self formattedKey:@"deletedMessages"]
                         icon:SPKSettingsIcon(@"channels")],
-                  [SPKSetting valueCellWithTitle:@"Profile Analyzer"
+                  [SPKSetting valueCellWithTitle:@"Profile analyzer"
                     subtitle:[self formattedKey:@"profileAnalyzer"]
                         icon:SPKSettingsIcon(@"profile_analyzer")],
-                  [SPKSetting valueCellWithTitle:@"Profile Pictures"
+                  [SPKSetting valueCellWithTitle:@"Profile pictures"
                     subtitle:[self formattedKey:@"avatars"]
                         icon:SPKSettingsIcon(@"user_circle")],
               ],
                                         nil)];
 
-    SPKSetting *clearAvatars = [SPKSetting buttonCellWithTitle:@"Clear Cached Pictures"
+    SPKSetting *clearAvatars = [SPKSetting buttonCellWithTitle:@"Clear stored profile pictures"
                                                       subtitle:nil
                                                           icon:SPKSettingsIcon(@"trash")
                                                         action:^{
