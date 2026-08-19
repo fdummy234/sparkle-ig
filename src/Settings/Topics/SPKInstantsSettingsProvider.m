@@ -41,7 +41,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
             }),
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Disable Instants Creation" icon:SPKSettingsIcon(@"instants") defaultsKey:@"instants_disable_creation"];
-    s.helpText = @"Block capture in the Instants camera.";
+    s.helpText = @"Blocks capture in the Instants camera.";
                 s.reloadsTableOnSwitchChange = YES;
     s.searchKeywords = @"disable camera control";
                 s.switchChangeHandler = ^(BOOL isOn) {
@@ -68,7 +68,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Camera View Button"
                                        icon:SPKSettingsIcon(SPKActionButtonOpenMenuIconName())
                                 defaultsKey:@"instants_camera_btn"];
-                row.helpText = @"Add the Sparkle button to the camera, for the actions you picked in Action Button.";
+                row.helpText = @"Adds the Sparkle button to the camera, for the actions you picked in Action Button.";
                 row;
             }),
             ({
@@ -77,7 +77,7 @@ static NSArray *SPKInstantsSettingsSections(void) {
                                                        subtitle:cameraControlAvailable ? @"" : @"Requires an iPhone with Camera Control"
                                                            icon:SPKSettingsSystemIcon(@"button.vertical.right.press", SPKSettingsCellIconPointSize, UIImageSymbolWeightSemibold)
                                                     defaultsKey:@"instants_disable_camera_control"];
-                s.helpText = @"Stop the iPhone's Camera Control from opening the Instants camera.";
+                s.helpText = @"Stops the iPhone's Camera Control from opening the Instants camera.";
                 s;
             })
         ],

@@ -48,7 +48,7 @@ static NSArray *SPKFeedCommentsSections(void) {
                                                          icon:SPKSettingsIcon(@"sort")
                                                   defaultsKey:@"feed_comments_sort_menu"
                                               requiresRestart:YES];
-    commentSort.helpText = @"Instagram ranks comments by engagement, which scatters a conversation. This reorders the thread by the date each comment was posted, and puts a button on the thread to switch order without leaving it. Only loaded comments are reordered, so each Load More brings in comments that are sorted on the next pass.";
+    commentSort.helpText = @"Reorders the thread by the date each comment was posted, and adds a button on the thread to switch order. Only loaded comments are reordered.";
     commentSort.searchKeywords = @"comment sort order chronological newest oldest top recent date";
 
     SPKSetting *commentSortMode = [SPKSetting menuCellWithTitle:@"Comment Order"
@@ -57,19 +57,6 @@ static NSArray *SPKFeedCommentsSections(void) {
     commentSortMode.helpText = @"Order the thread opens in. The button on the thread cycles through the same three.";
     commentSortMode.searchKeywords = @"comment order newest oldest chronological date";
     commentSortMode.hiddenProvider = ^BOOL {
-        return ![SPKUtils getBoolPref:@"feed_comments_sort_menu"];
-    };
-
-    // Reads back what each stage of the feature did, so a build that seats no
-    // control can be told apart from one whose hooks never installed.
-    NSArray *sortReport = [[NSUserDefaults standardUserDefaults] arrayForKey:@"spk_diag_comment_sort"];
-    SPKSetting *commentSortReport = [SPKSetting buttonCellWithTitle:@"Sort Report"
-                                                           subtitle:sortReport.count > 0
-                                                                        ? [sortReport componentsJoinedByString:@"\n"]
-                                                                        : @"nothing recorded yet"
-                                                               icon:SPKSettingsIcon(@"logs")
-                                                             action:^(void) { }];
-    commentSortReport.hiddenProvider = ^BOOL {
         return ![SPKUtils getBoolPref:@"feed_comments_sort_menu"];
     };
 
@@ -90,7 +77,6 @@ static NSArray *SPKFeedCommentsSections(void) {
     SPKTopicSection(@"Comments", @[
                 commentSort,
                 commentSortMode,
-                commentSortReport,
                 copyComment,
                 commentMediaActions,
                 commentGalleryUpload,
@@ -196,13 +182,21 @@ static NSArray *SPKFeedCommentsSections(void) {
                         nil),
         SPKTopicSection(@"Playback & Refresh", @[
             longPressExpand,
-            [SPKSetting switchCellWithTitle:@"Tap to Play Videos"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Tap to Play Videos"
                                        icon:SPKSettingsIcon(@"autoplay_off")
                                 defaultsKey:@"feed_disable_autoplay"
-                            requiresRestart:YES],
-            [SPKSetting switchCellWithTitle:@"Expand Videos Muted"
+                            requiresRestart:YES];
+                row.helpText = @"Videos wait for a tap instead of starting on their own. Takes effect after a restart.";
+                row;
+            }),
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Expand Videos Muted"
                                        icon:SPKSettingsIcon(@"volume_off")
-                                defaultsKey:@"feed_expanded_vid_start_muted"],
+                                defaultsKey:@"feed_expanded_vid_start_muted"];
+                row.helpText = @"A video opened full screen starts with no sound.";
+                row;
+            }),
             disableHomeRefresh,
             [SPKSetting switchCellWithTitle:@"Disable Background Refresh"
                                        icon:SPKSettingsIcon(@"arrow_cw")

@@ -109,6 +109,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
     SPKSetting *flexGesture = [SPKSetting switchCellWithTitle:@"Three-finger Hold"
                                                         icon:SPKSettingsIcon(@"pinch")
                                                  defaultsKey:@"tools_flex_instagram"];
+flexGesture.helpText = @"Hold three fingers anywhere in Instagram to open the FLEX inspector.";
     SPKSetting *flexLaunch = [SPKSetting switchCellWithTitle:@"Open on App Launch"
                                                         icon:SPKSettingsIcon(@"play")
                                                  defaultsKey:@"tools_flex_app_launch"];
@@ -135,15 +136,6 @@ static NSDictionary *SPKSettingsLockSection(void) {
                                                   defaultsKey:@"tools_hide_testflight_popup"
                                               requiresRestart:YES]];
 #endif
-    // Says which accessor the last profile answered, so a profile without an age
-    // can be told apart from a bug.
-    SPKSetting *ageProbe = [SPKSetting buttonCellWithTitle:@"Account Age Probe"
-                                                  subtitle:[[NSUserDefaults standardUserDefaults]
-                                                               stringForKey:@"spk_diag_account_probe"] ?: @"no profile opened yet"
-                                                      icon:SPKSettingsIcon(@"logs")
-                                                    action:^(void) { }];
-    [instagramCells addObject:ageProbe];
-
     SPKSetting *fixDuplicates = [SPKSetting switchCellWithTitle:@"Fix Duplicate Notifications"
                                                            icon:SPKSettingsIcon(@"notification")
                                                     defaultsKey:@"tools_fix_duplicate_notifications"];
@@ -162,7 +154,7 @@ static NSDictionary *SPKSettingsLockSection(void) {
     SPKSetting *disableSafeMode = [SPKSetting switchCellWithTitle:@"Disable Safe Mode"
                                                              icon:SPKSettingsIcon(@"warning")
                                                       defaultsKey:@"tools_disable_safe_mode"];
-    disableSafeMode.helpText = @"Stop Sparkle from disabling itself after a crash at launch. Leave it off unless you are debugging.";
+    disableSafeMode.helpText = @"Stops Sparkle from disabling itself after a crash at launch. Leave it off unless you are debugging.";
 
 #if SPK_DEV
     NSString *instagramFooter =

@@ -53,20 +53,28 @@ static NSString *const kSPKReelsActionButtonEnabledKey = @"reels_action_btn";
             [SPKSetting switchCellWithTitle:@"Show Progress Scrubber"
                                        icon:SPKSettingsIcon(@"slider")
                                 defaultsKey:@"reels_show_scrubber"],
-            [SPKSetting switchCellWithTitle:@"Keep Reels Muted"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Keep Reels Muted"
                                        icon:SPKSettingsIcon(@"volume_off")
                                 defaultsKey:@"reels_disable_auto_unmute"
-                            requiresRestart:YES],
+                            requiresRestart:YES];
+                row.helpText = @"Reels stay muted even after you press a volume button.";
+                row;
+            }),
             [SPKSetting switchCellWithTitle:@"Disable Reels Tab Refresh"
                                        icon:SPKSettingsIcon(@"arrow_cw")
                                 defaultsKey:@"reels_disable_tab_refresh"]
         ],
                         @"Tap Controls changes what happens when you tap on a reel. Auto-unmuting controls prevent reels from unmuting when volume or silent mode changes."),
         SPKTopicSection(@"Limits", @[
-            [SPKSetting switchCellWithTitle:@"One Reel at a Time"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"One Reel at a Time"
                                        icon:SPKSettingsIcon(@"autoscroll")
                                 defaultsKey:@"reels_disable_scrolling"
-                            requiresRestart:YES],
+                            requiresRestart:YES];
+                row.helpText = @"Stops the next reel from scrolling in by itself when one ends.";
+                row;
+            }),
             ({
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Limit Reels per Session"
                                                            icon:SPKSettingsIcon(@"arrow_down")

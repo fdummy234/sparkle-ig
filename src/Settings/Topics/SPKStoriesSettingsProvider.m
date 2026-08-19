@@ -95,7 +95,7 @@ manualSeenList.hiddenProvider = ^BOOL {
                 SPKSetting *s = [SPKSetting switchCellWithTitle:@"Search Viewer List"
                                                            icon:SPKSettingsIcon(@"search")
                                                     defaultsKey:@"stories_search_viewer_list"];
-                s.helpText = @"Add a search button to your story's viewer list to search and filter any viewer.";
+                s.helpText = @"Adds a search button to your story's viewer list, to search and filter viewers.";
                 s;
             })],
                            footer);
@@ -132,7 +132,7 @@ static NSArray *SPKStoriesSettingsSections(void) {
                                             iconName:@"reply"
                                          defaultsKey:@"stories_advance_on_reply_seen"],
                 ]);
-                g.helpText = @"Move to the next story when you press the eye button.\nMove to the next story when you press like.\nMove to the next story when you reply.";
+                g.helpText = @"Moves to the next story when you press the eye button, like it, or reply.";
                 g.searchKeywords = @"advance auto next story eye button like reply";
                 g;
             }),
@@ -160,15 +160,23 @@ static NSArray *SPKStoriesSettingsSections(void) {
         // Convention v1.2 gate row — see SPKToggleMenu.h. Was the "Confirmations"
         // section (mid-page, plural header); now closes the page like everywhere.
         SPKTopicSection(@"Creation", @[
-            [SPKSetting switchCellWithTitle:@"Allow Videos in Photo Sticker"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Allow Videos in Photo Sticker"
                                        icon:SPKSettingsIcon(@"video")
-                                defaultsKey:@"stories_allow_video_sticker"],
+                                defaultsKey:@"stories_allow_video_sticker"];
+                row.helpText = @"Lets the photo sticker pick a video from your library, not just a still.";
+                row;
+            }),
             [SPKSetting switchCellWithTitle:@"Show Gallery Upload Button"
                                        icon:SPKSettingsIcon(@"sparkle_gallery")
                                 defaultsKey:@"stories_gallery_upload_sticker"],
-            [SPKSetting switchCellWithTitle:@"Use Detailed Color Picker"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Use Detailed Color Picker"
                                        icon:SPKSettingsIcon(@"eyedropper")
-                                defaultsKey:@"stories_detailed_color_picker"]
+                                defaultsKey:@"stories_detailed_color_picker"];
+                row.helpText = @"Long-press the eyedropper to open the full colour picker instead of the swatches.";
+                row;
+            })
         ],
                         @"1. Allow selecting videos from your library in the story photo sticker.\n"
                         @"2. Use media from Sparkle Gallery as stickers.\n"

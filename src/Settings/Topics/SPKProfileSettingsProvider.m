@@ -127,15 +127,6 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
         // page name would say nothing — and without a header there is no ⓘ.
         SPKTopicSection(@"Profile Screen", @[
             ({
-                SPKSetting *age = [SPKSetting switchCellWithTitle:@"Show Account Age"
-                                                             icon:SPKSettingsIcon(@"clock")
-                                                      defaultsKey:@"profile_show_account_age"
-                                                  requiresRestart:YES];
-                age.helpText = @"Adds how long the account has existed next to its post and follower counts. Instagram does not send the date for every profile; the column is left out when it is missing.";
-                age.searchKeywords = @"account age created joined date";
-                age;
-            }),
-            ({
                 SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution Photo"
                                                                  icon:SPKSettingsIcon(@"hd")
                                                           defaultsKey:@"profile_full_res_photo"
@@ -155,21 +146,21 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Notes Bubble"
                                        icon:SPKSettingsIcon(@"notes")
                                 defaultsKey:@"profile_hide_notes_bubble"];
-                row.helpText = @"Remove the note bubble above your own profile picture.";
+                row.helpText = @"Removes the note bubble above your own profile picture.";
                 row;
             }),
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Hide Threads Button"
                                        icon:SPKSettingsIcon(@"threads")
                                 defaultsKey:@"profile_hide_threads_btn"];
-                row.helpText = @"Remove the Threads badge from the profile header.";
+                row.helpText = @"Removes the Threads badge from the profile header.";
                 row;
             }),
             ({
                 SPKSetting *mode = [SPKSetting menuCellWithTitle:@"Following Indicator"
                                                             icon:SPKSettingsIcon(@"user_check")
                                                             menu:SPKFollowIndicatorModeMenu()];
-    mode.helpText = @"Mark profiles that already follow you, as an icon, a label, or both.";
+    mode.helpText = @"Marks profiles that already follow you, as an icon, a label, or both.";
                 mode.accessoryTextProvider = ^NSString * {
                     NSString *value = SPKFollowIndicatorEffectiveMode();
                     if ([value isEqualToString:kSPKFollowIndicatorModeText])

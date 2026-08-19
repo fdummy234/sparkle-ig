@@ -67,10 +67,14 @@
 + (NSArray *)sections {
     NSMutableArray *sections = [NSMutableArray arrayWithArray:@[
         SPKTopicSection(@"Appearance", @[
-            [SPKSetting switchCellWithTitle:@"Glow Effect"
+            ({
+                SPKSetting *row = [SPKSetting switchCellWithTitle:@"Glow Effect"
                                    subtitle:@"Show glow effect around notifications"
                            icon:SPKSettingsIcon(@"aura")
-                                defaultsKey:kSPKNotificationPillGlowEnabledKey],
+                                defaultsKey:kSPKNotificationPillGlowEnabledKey];
+                row.helpText = @"Adds a soft halo around the banner so it reads against a busy screen.";
+                row;
+            }),
             [SPKSetting switchCellWithTitle:@"Liquid Glass"
                                    subtitle:(SPKPrefIsAvailable(kSPKNotificationPillLiquidGlassEnabledKey)
                                                  ? @"Render notifications with iOS 26 Liquid Glass"

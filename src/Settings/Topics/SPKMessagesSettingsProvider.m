@@ -180,6 +180,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
 
     // Advancing after a manual seen only applies while visual manual seen is on.
     SPKSetting *advanceVisual = [SPKSetting switchCellWithTitle:@"Advance After Manual Seen" icon:SPKSettingsIcon(@"autoscroll") defaultsKey:@"msgs_advance_visual_on_seen"];
+advanceVisual.helpText = @"Moves to the next photo once you mark the current one as seen yourself.";
     advanceVisual.hiddenProvider = ^BOOL {
         return ![SPKUtils getBoolPref:@"msgs_manual_visual_seen"];
     };
@@ -188,6 +189,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     SPKSetting *disableAutoAdvance = [SPKSetting switchCellWithTitle:@"Stay on Current Message"
                                                                 icon:SPKSettingsIcon(@"autoplay_off")
                                                          defaultsKey:@"msgs_stop_visual_auto_advance"];
+disableAutoAdvance.helpText = @"Keeps a vanishing photo open instead of jumping to the next one on its own.";
     disableAutoAdvance.searchKeywords = @"stop next replay end";
 
     SPKSetting *disableViewOnce = [SPKSetting switchCellWithTitle:@"Disable View-Once Limitations"
@@ -207,11 +209,13 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     SPKSetting *uploadAudio = [SPKSetting switchCellWithTitle:@"Upload Audio"
                                                          icon:SPKSettingsIcon(@"audio_upload")
                                                   defaultsKey:@"msgs_upload_audio_messages"];
+uploadAudio.helpText = @"Send an audio file from your device as a voice message.";
     uploadAudio.searchKeywords = @"composer plus menu voice video send";
 
     SPKSetting *trimAudio = [SPKSetting switchCellWithTitle:@"Trim Before Sending"
                                                        icon:SPKSettingsIcon(@"trim")
                                                 defaultsKey:@"msgs_audio_upload_trim"];
+trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before it goes out.";
     trimAudio.searchKeywords = @"cut editor length";
 
     SPKSetting *uploadGalleryPhoto = [SPKSetting switchCellWithTitle:@"Send Photo from Gallery"
@@ -280,7 +284,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
                                          defaultsKey:@"msgs_deleted_log_respect_seen_list"],
                 ]);
                 // Per-item help text for the menu items above.
-                g.helpText = @"Log Deleted Messages: saves each message before it disappears, including view-once media, until you clear the log.\n"
+                g.helpText = @"Saves each message before it disappears, including view-once media, until you clear the log."
                              @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
                 g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
                 // R5: hidden while Keep Deleted Messages is off.

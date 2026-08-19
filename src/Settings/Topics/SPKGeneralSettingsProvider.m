@@ -295,7 +295,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                          defaultsKey:@"general_hide_meta_ai_global"],
                 ]);
                 // Was the two per-item helps of the old sub-page.
-                gate.helpText = @"Direct covers the inbox, composer, recipients, themes and message menus.\n"
+                gate.helpText = @"Direct covers the inbox, composer, recipients, themes and message menus."
                                 @"Global AI Chrome removes generic Meta AI buttons, placeholders and branded entry points.";
                 gate.searchKeywords = @"ai assistant llama global ai chrome direct";
                 gate;
