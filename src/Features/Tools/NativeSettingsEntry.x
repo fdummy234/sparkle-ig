@@ -11,6 +11,7 @@
 static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKey;
 
 @interface SPKNativeSettingsEntryTarget : NSObject
+@property (nonatomic, weak) UIViewController *owner;
 + (instancetype)sharedTarget;
 - (void)openSparkleSettings:(id)sender;
 @end
@@ -27,7 +28,11 @@ static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKe
 }
 
 - (void)openSparkleSettings:(id)sender {
-    [SPKUtils showSettingsVC:UIApplication.sharedApplication.keyWindow];
+    // Present from the screen this button lives on. Going through the key
+    // window presented from its root — but Instagram's settings sit over that
+    // root, and a controller already presenting refuses to present again, which
+    // is why the tap did nothing at all.
+    [SPKUtils showSettingsFromController:self.owner];
 }
 
 @end
@@ -45,51 +50,83 @@ static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
     return [controller.title isEqualToString:@"Settings and activity"];
 }
 
+// Puts the bar in the shape the screen has when Instagram opens it itself.
+//
+// Colour: tinting the item alone left Done blue, because on iOS 26 a bar button
+// takes the navigation bar's tint unless the item overrides it, and Instagram
+// sets neither. Both are set here.
+//
+// Shape and side: "Done" appears nowhere in Instagram's own navigation. It is
+// there because this screen was routed to as a modal rather than pushed from a
+// profile. The back chevron is what the screen carries when reached the usual
+// way — and a back control belongs on the leading edge, so it moves there and
+// the Sparkle entry takes the trailing edge. Only the look moves; the action is
+// left alone.
+//
+// A custom-view item ignores the image and the title, and that only shows at
+// runtime — hence the guard.
+static void SPKArrangeSettingsBar(UIViewController *controller,
+                                  UIBarButtonItem *entry,
+                                  NSArray<UIBarButtonItem *> *instagramItems) {
+    UIColor *ink = [SPKUtils SPKColor_InstagramPrimaryText];
+    controller.navigationController.navigationBar.tintColor = ink;
+    entry.tintColor = ink;
+
+    UIImage *chevron =
+        [UIImage systemImageNamed:@"chevron.backward"
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:17.0
+                                                                                  weight:UIImageSymbolWeightSemibold]];
+
+    for (UIBarButtonItem *instagramItem in instagramItems) {
+        instagramItem.tintColor = ink;
+        [instagramItem setTitleTextAttributes:@{ NSForegroundColorAttributeName : ink }
+                                     forState:UIControlStateNormal];
+
+        if (instagramItem.customView || !chevron)
+            continue;
+        instagramItem.title = nil;
+        instagramItem.image = chevron;
+        instagramItem.accessibilityLabel = @"Back";
+    }
+
+    controller.navigationItem.leftBarButtonItems = instagramItems;
+    controller.navigationItem.rightBarButtonItems = @[ entry ];
+}
+
 static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     if (!SPKIsNativeSettingsController(controller))
         return;
 
-    UIBarButtonItem *existing = objc_getAssociatedObject(controller, kSPKSettingsEntryItemAssocKey);
-    NSArray<UIBarButtonItem *> *right = controller.navigationItem.rightBarButtonItems;
-    if (existing && ([right containsObject:existing] ||
-                     [controller.navigationItem.leftBarButtonItems containsObject:existing]))
-        return;
+    // The entry is built once and kept. The arranging runs on every appearance,
+    // because Instagram restyles this bar and would otherwise take its blue Done
+    // back the moment the screen is revisited.
+    UIBarButtonItem *entry = objc_getAssociatedObject(controller, kSPKSettingsEntryItemAssocKey);
 
-    UIImage *icon = [UIImage systemImageNamed:@"sparkles"
-                            withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:18.0
-                                                                                              weight:UIImageSymbolWeightRegular]];
-    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:icon
-                                                            style:UIBarButtonItemStylePlain
-                                                           target:[SPKNativeSettingsEntryTarget sharedTarget]
-                                                           action:@selector(openSparkleSettings:)];
-    item.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-    item.accessibilityLabel = @"Sparkle";
-    objc_setAssociatedObject(controller, kSPKSettingsEntryItemAssocKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-    // Index 0 is the trailing edge: rightBarButtonItems is ordered right to left.
-    // When the screen is presented modally Instagram puts its own Done button on
-    // the right, and iOS 26 packs both into one glass pill where the two glyphs
-    // touch and the second stops taking taps. The left side is empty on that
-    // screen, so the entry goes there instead and keeps its own hit area.
-    if (right.count > 0) {
-        // Instagram's Done is tinted its link blue, which reads as the only
-        // actionable thing up there. Black puts it level with the rest of the
-        // bar, and with the entry now sitting opposite it.
-        for (UIBarButtonItem *existingItem in right)
-            existingItem.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-
-        NSArray<UIBarButtonItem *> *left = controller.navigationItem.leftBarButtonItems;
-        if ([left containsObject:item])
-            return;
-        NSMutableArray<UIBarButtonItem *> *items = left ? [left mutableCopy] : [NSMutableArray array];
-        [items addObject:item];
-        controller.navigationItem.leftBarButtonItems = items;
-        return;
+    NSMutableArray<UIBarButtonItem *> *instagramItems = [NSMutableArray array];
+    for (UIBarButtonItem *barItem in controller.navigationItem.rightBarButtonItems) {
+        if (barItem != entry)
+            [instagramItems addObject:barItem];
+    }
+    for (UIBarButtonItem *barItem in controller.navigationItem.leftBarButtonItems) {
+        if (barItem != entry && ![instagramItems containsObject:barItem])
+            [instagramItems addObject:barItem];
     }
 
-    NSMutableArray<UIBarButtonItem *> *items = [NSMutableArray array];
-    [items addObject:item];
-    controller.navigationItem.rightBarButtonItems = items;
+    if (!entry) {
+        UIImage *icon =
+            [UIImage systemImageNamed:@"sparkles"
+                    withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:18.0
+                                                                                      weight:UIImageSymbolWeightRegular]];
+        entry = [[UIBarButtonItem alloc] initWithImage:icon
+                                                 style:UIBarButtonItemStylePlain
+                                                target:[SPKNativeSettingsEntryTarget sharedTarget]
+                                                action:@selector(openSparkleSettings:)];
+        entry.accessibilityLabel = @"Sparkle";
+        objc_setAssociatedObject(controller, kSPKSettingsEntryItemAssocKey, entry, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+
+    [SPKNativeSettingsEntryTarget sharedTarget].owner = controller;
+    SPKArrangeSettingsBar(controller, entry, instagramItems);
 }
 
 %group SPKNativeSettingsEntryHooks

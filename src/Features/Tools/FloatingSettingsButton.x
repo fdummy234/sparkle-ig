@@ -16,6 +16,9 @@
 // way, it stays where you put it, and it returns to its corner on its own.
 
 static const void *kSPKFloatingButtonAssocKey = &kSPKFloatingButtonAssocKey;
+// Set while the reader has the button somewhere of their own choosing, so
+// layout leaves it alone until it returns home by itself.
+static const void *kSPKFloatingButtonMovedAssocKey = &kSPKFloatingButtonMovedAssocKey;
 
 static const CGFloat kSPKFloatingButtonDiameter = 44.0;
 static const CGFloat kSPKFloatingButtonMargin = 16.0;
@@ -277,6 +280,7 @@ static BOOL SPKFloatingButtonOpenInstagramSettings(void) {
         center.y = MAX(safe.top + half, MIN(CGRectGetHeight(host.bounds) - safe.bottom - half, center.y));
 
         button.center = center;
+        objc_setAssociatedObject(button, kSPKFloatingButtonMovedAssocKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         [pan setTranslation:CGPointZero inView:host];
         [host bringSubviewToFront:button];
         break;
@@ -289,8 +293,10 @@ static BOOL SPKFloatingButtonOpenInstagramSettings(void) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSPKFloatingButtonReturnDelay * NSEC_PER_SEC)),
                        dispatch_get_main_queue(), ^{
             UIView *strongButton = weakButton;
-            if (strongButton && strongButton.superview)
+            if (strongButton && strongButton.superview) {
+                objc_setAssociatedObject(strongButton, kSPKFloatingButtonMovedAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                 SPKFloatingButtonSendHome(strongButton, YES);
+            }
         });
         break;
     }
@@ -320,9 +326,16 @@ static void SPKFloatingButtonInstallInWindow(UIWindow *window) {
 
     SPKChromeButton *button = objc_getAssociatedObject(window, kSPKFloatingButtonAssocKey);
     if (button.superview == window) {
-        // Already seated. The corner is re-read on every layout pass, and a
-        // dragged button returns on its own, so there is nothing to redo here.
+        // The corner has to be recomputed, not just re-fronted. The first layout
+        // pass often runs before Instagram's tab bar exists, so the button lands
+        // on the safe area and — until this was here — stayed there for good,
+        // sitting on the bar once it appeared.
         [window bringSubviewToFront:button];
+        if (!objc_getAssociatedObject(button, kSPKFloatingButtonMovedAssocKey)) {
+            CGPoint home = SPKFloatingButtonHomeCenter(window);
+            if (!CGPointEqualToPoint(button.center, home))
+                button.center = home;
+        }
         return;
     }
 
