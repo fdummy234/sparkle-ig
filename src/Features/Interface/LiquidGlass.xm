@@ -12,8 +12,8 @@ typedef BOOL (*SPK_BOOL_MSG)(id self, SEL _cmd);
 typedef void (*SPK_VOID_MSG)(id self, SEL _cmd);
 typedef void (*SPK_SET_CGFLOAT_MSG)(id self, SEL _cmd, CGFloat value);
 
-static BOOL SPKIsLiquidGlassEnabled(void) {
-    return [SPKUtils spk_isLiquidGlassEffectivelyEnabled];
+static BOOL SPKIsLiquidGlassDisabled(void) {
+    return [SPKUtils spk_isLiquidGlassDisabled];
 }
 
 // MARK: - Experiment-helper overrides (IG 433+)
@@ -58,7 +58,7 @@ static void SPKLiquidGlassCallOverrideBool(id target, SEL sel, BOOL value) {
 // observed on a server-enabled account (isEnabled=YES, everything else left at
 // its natural value).
 extern "C" void SPKApplyLiquidGlassExperimentOverridesIfEnabled(void) {
-    if (!SPKIsLiquidGlassEnabled())
+    if (!SPKIsLiquidGlassDisabled())
         return;
     id nav = SPKLiquidGlassSharedSingleton(SPKLiquidGlassNavHelperClass());
     if (!nav) {
@@ -80,17 +80,17 @@ extern "C" void SPKApplyLiquidGlassExperimentOverridesIfEnabled(void) {
 
 static SPK_BOOL_MSG orig_swizzleToggle_isEnabled;
 static BOOL hook_swizzleToggle_isEnabled(id self, SEL _cmd) {
-    return SPKIsLiquidGlassEnabled() ? YES : (orig_swizzleToggle_isEnabled ? orig_swizzleToggle_isEnabled(self, _cmd) : NO);
+    return SPKIsLiquidGlassDisabled() ? YES : (orig_swizzleToggle_isEnabled ? orig_swizzleToggle_isEnabled(self, _cmd) : NO);
 }
 
 static SPK_BOOL_MSG orig_navigationExperiment_isEnabled;
 static BOOL hook_navigationExperiment_isEnabled(id self, SEL _cmd) {
-    return SPKIsLiquidGlassEnabled() ? YES : (orig_navigationExperiment_isEnabled ? orig_navigationExperiment_isEnabled(self, _cmd) : NO);
+    return SPKIsLiquidGlassDisabled() ? YES : (orig_navigationExperiment_isEnabled ? orig_navigationExperiment_isEnabled(self, _cmd) : NO);
 }
 
 static SPK_BOOL_MSG orig_navigationExperiment_isHomeFeedHeaderEnabled;
 static BOOL hook_navigationExperiment_isHomeFeedHeaderEnabled(id self, SEL _cmd) {
-    return SPKIsLiquidGlassEnabled() ? YES : (orig_navigationExperiment_isHomeFeedHeaderEnabled ? orig_navigationExperiment_isHomeFeedHeaderEnabled(self, _cmd) : NO);
+    return SPKIsLiquidGlassDisabled() ? YES : (orig_navigationExperiment_isHomeFeedHeaderEnabled ? orig_navigationExperiment_isHomeFeedHeaderEnabled(self, _cmd) : NO);
 }
 
 // MARK: - Native surface feature symbols
@@ -102,9 +102,9 @@ static BOOL (*orig_IGTabBarHomecomingWithFloatingTabEnabled)(void);
 static BOOL (*orig_IGTabBarViewPointFixEnabled)(void);
 static NSInteger (*orig_IGTabBarStyleForLauncherSet)(NSInteger launcherSet);
 
-#define SPK_LIQUID_GLASS_BOOL_FISHHOOK(name)                                         \
-    static BOOL hook_##name(void) {                                                  \
-        return SPKIsLiquidGlassEnabled() ? YES : (orig_##name ? orig_##name() : NO); \
+#define SPK_LIQUID_GLASS_BOOL_FISHHOOK(name)                                        \
+    static BOOL hook_##name(void) {                                                 \
+        return SPKIsLiquidGlassDisabled() ? NO : (orig_##name ? orig_##name() : NO); \
     }
 
 SPK_LIQUID_GLASS_BOOL_FISHHOOK(IGFloatingTabBarEnabled)
@@ -113,8 +113,9 @@ SPK_LIQUID_GLASS_BOOL_FISHHOOK(IGTabBarEnhancedDynamicSizingEnabled)
 SPK_LIQUID_GLASS_BOOL_FISHHOOK(IGTabBarHomecomingWithFloatingTabEnabled)
 SPK_LIQUID_GLASS_BOOL_FISHHOOK(IGTabBarViewPointFixEnabled)
 
+// Style 0 is the solid bar; 1 is the floating glass one.
 static NSInteger hook_IGTabBarStyleForLauncherSet(NSInteger launcherSet) {
-    return SPKIsLiquidGlassEnabled() ? 1 : (orig_IGTabBarStyleForLauncherSet ? orig_IGTabBarStyleForLauncherSet(launcherSet) : launcherSet);
+    return SPKIsLiquidGlassDisabled() ? 0 : (orig_IGTabBarStyleForLauncherSet ? orig_IGTabBarStyleForLauncherSet(launcherSet) : launcherSet);
 }
 
 // MARK: - Tab bar scroll state
@@ -157,7 +158,7 @@ static void SPKApplyLiquidGlassTabBarHiddenState(UIView *bar, BOOL hidden) {
 
 static void (*orig_tabBar_setScaleProgress)(id self, SEL _cmd, double progress);
 static void hook_tabBar_setScaleProgress(id self, SEL _cmd, double progress) {
-    SPKLiquidGlassTabBarMode mode = SPKIsLiquidGlassEnabled() ? SPKCurrentLiquidGlassTabBarMode() : SPKLiquidGlassTabBarModeDefault;
+    SPKLiquidGlassTabBarMode mode = SPKIsLiquidGlassDisabled() ? SPKCurrentLiquidGlassTabBarMode() : SPKLiquidGlassTabBarModeDefault;
     if (mode == SPKLiquidGlassTabBarModeFixed) {
         SPKApplyLiquidGlassTabBarHiddenState((UIView *)self, NO);
         progress = 0.0;
@@ -173,7 +174,7 @@ static void hook_tabBar_setScaleProgress(id self, SEL _cmd, double progress) {
 
 static void (*orig_tabBar_scaleDownWithInteraction)(id self, SEL _cmd, id interaction);
 static void hook_tabBar_scaleDownWithInteraction(id self, SEL _cmd, id interaction) {
-    SPKLiquidGlassTabBarMode mode = SPKIsLiquidGlassEnabled() ? SPKCurrentLiquidGlassTabBarMode() : SPKLiquidGlassTabBarModeDefault;
+    SPKLiquidGlassTabBarMode mode = SPKIsLiquidGlassDisabled() ? SPKCurrentLiquidGlassTabBarMode() : SPKLiquidGlassTabBarModeDefault;
     if (mode != SPKLiquidGlassTabBarModeDefault)
         return;
     if (orig_tabBar_scaleDownWithInteraction)
@@ -207,7 +208,7 @@ static UIView *SPKDirectInboxHeaderSeparatorView(id headerView) {
 }
 
 static void SPKRemoveDirectInboxHeaderSeparator(id headerView) {
-    if (!SPKIsLiquidGlassEnabled())
+    if (!SPKIsLiquidGlassDisabled())
         return;
     UIView *separator = SPKDirectInboxHeaderSeparatorView(headerView);
     separator.alpha = 0.0;
@@ -232,7 +233,7 @@ static void hook_directInboxHeader_didMoveToWindow(id self, SEL _cmd) {
 static SPK_SET_CGFLOAT_MSG orig_directInboxHeader_setSeparatorAlpha;
 static void hook_directInboxHeader_setSeparatorAlpha(id self, SEL _cmd, CGFloat alpha) {
     if (orig_directInboxHeader_setSeparatorAlpha) {
-        orig_directInboxHeader_setSeparatorAlpha(self, _cmd, SPKIsLiquidGlassEnabled() ? 0.0 : alpha);
+        orig_directInboxHeader_setSeparatorAlpha(self, _cmd, SPKIsLiquidGlassDisabled() ? 0.0 : alpha);
     }
     SPKRemoveDirectInboxHeaderSeparator(self);
 }
