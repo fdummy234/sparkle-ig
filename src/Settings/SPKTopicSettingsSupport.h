@@ -64,7 +64,6 @@ UIMenu *SPKReelsTapControlMenu(void);
 UIMenu *SPKMainFeedModeMenu(void);
 UIMenu *SPKSeenButtonPositionMenu(void);
 UIMenu *SPKLastActiveFormatMenu(void);
-UIMenu *SPKNavigationIconOrderingMenu(void);
 UIMenu *SPKLaunchTabMenu(void);
 UIMenu *SPKSwipeBetweenTabsMenu(void);
 UIMenu *SPKLiquidGlassTabBarStateMenu(void);

@@ -279,20 +279,6 @@ UIMenu *SPKLastActiveFormatMenu(void) {
     ]];
 }
 
-UIMenu *SPKNavigationIconOrderingMenu(void) {
-    return [UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Default", nil, nil, @"interface_nav_order", @"default", YES),
-        [UIMenu menuWithTitle:@""
-                        image:nil
-                   identifier:nil
-                      options:UIMenuOptionsDisplayInline
-                     children:@[
-                         SPKMenuCommand(@"Classic", nil, nil, @"interface_nav_order", @"classic", YES),
-                         SPKMenuCommand(@"Standard", nil, nil, @"interface_nav_order", @"standard", YES),
-                         SPKMenuCommand(@"Alternate", nil, nil, @"interface_nav_order", @"alternate", YES)
-                     ]]
-    ]];
-}
 
 UIMenu *SPKLaunchTabMenu(void) {
     return [UIMenu menuWithChildren:@[

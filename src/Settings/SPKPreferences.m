@@ -1,7 +1,10 @@
 #import "SPKPreferences.h"
 #import <sys/sysctl.h>
 
-NSString *const kSPKPrefInterfaceLiquidGlass = @"interface_liquid_glass";
+// A new key rather than an inverted meaning for the old one: interface_liquid_glass
+// means "force the glass on", and flipping it would silently make everyone who
+// had it enabled start forcing the glass off instead.
+NSString *const kSPKPrefInterfaceDisableLiquidGlass = @"interface_disable_liquid_glass";
 NSString *const kSPKPrefInterfaceLiquidGlassTabBarMode = @"interface_liquid_glass_tabbar_mode";
 NSString *const kSPKPrefInterfaceProgressiveBlur = @"interface_progressive_blur";
 NSString *const kSPKPrefInstantsDisableCameraControl = @"instants_disable_camera_control";
