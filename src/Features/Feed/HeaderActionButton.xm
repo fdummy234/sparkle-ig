@@ -148,7 +148,7 @@ NSString *SPKHeaderButtonResolvedDefaultActionIdentifier(void) {
 NSString *SPKHeaderButtonDefaultActionTitle(void) {
     NSString *identifier = SPKHeaderButtonResolvedDefaultActionIdentifier();
     SPKHeaderDestination *destination = SPKHeaderDestinationForIdentifier(identifier);
-    return destination ? destination.title : @"Open Menu";
+    return destination ? destination.title : @"Open menu";
 }
 
 NSString *SPKHeaderButtonDefaultActionIconName(void) {
