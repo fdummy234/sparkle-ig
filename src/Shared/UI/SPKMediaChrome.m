@@ -163,6 +163,22 @@ UIBarButtonItem *SPKMediaChromeTopBarButtonItem(NSString *resourceName, id targe
                                                    nil);
 }
 
+// A top bar item at a size of the caller's choosing.
+//
+// The shared top icon size suits the media screens it was written for; the
+// settings close mark reads better a few points smaller, and changing the
+// constant would resize every top bar in the tweak.
+UIBarButtonItem *SPKMediaChromeTopBarButtonItemWithPointSize(NSString *resourceName, CGFloat pointSize, id target, SEL action) {
+    UIImage *icon = [SPKAssetUtils instagramIconNamed:resourceName
+                                            pointSize:pointSize];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:[icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]
+                                                             style:UIBarButtonItemStylePlain
+                                                            target:target
+                                                            action:action];
+    item.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+    return item;
+}
+
 UIBarButtonItem *SPKMediaChromeTopBarButtonItemWithTint(NSString *resourceName, id target, SEL action, UIColor *tintColor, NSString *accessibilityLabel) {
     return SPKMediaChromeTopBarButtonItemWithStyle(resourceName, target, action, UIBarButtonItemStylePlain, tintColor, accessibilityLabel);
 }

@@ -19,6 +19,7 @@ UIImage *SPKMediaChromeTopIcon(NSString *resourceName);
 UIImage *SPKMediaChromeBottomIcon(NSString *resourceName);
 UIImage *SPKMediaChromeTopBarIcon(NSString *resourceName);
 UIBarButtonItem *SPKMediaChromeTopBarButtonItem(NSString *resourceName, id target, SEL action);
+UIBarButtonItem *SPKMediaChromeTopBarButtonItemWithPointSize(NSString *resourceName, CGFloat pointSize, id target, SEL action);
 UIBarButtonItem *SPKMediaChromeTopBarButtonItemWithTint(NSString *resourceName, id target, SEL action,
                                                         UIColor *_Nullable tintColor,
                                                         NSString *_Nullable accessibilityLabel);
