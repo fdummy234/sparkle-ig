@@ -5,10 +5,9 @@
 
 // A page for the tab layout, in place of a menu of four words.
 //
-// Each layout is drawn as the bar it produces, in the order it produces, with a
-// header strip when the layout moves something up there. The names alone said
-// nothing: "Alternate" is only meaningful once the two swapped icons are in
-// front of you.
+// Each layout is drawn as the bar it produces, in the order it produces. The
+// names alone said nothing: "Alternate" is only meaningful once the two swapped
+// icons are in front of you, and Classic is recognisable by what left its bar.
 //
 // Instagram exposes three orderings as an integer, not a list of tabs, so this
 // is a choice between four cards and not a reorderable list. Anything more
@@ -19,8 +18,9 @@ static NSString *const kSPKTabOrderPrefKey = @"interface_nav_order";
 static CGFloat const kSPKTabOrderCardRadius = 14.0;
 static CGFloat const kSPKTabOrderCardInset = 16.0;
 static CGFloat const kSPKTabOrderCardGap = 12.0;
-static CGFloat const kSPKTabOrderPreviewHeight = 88.0;
-static CGFloat const kSPKTabOrderHeaderHeight = 26.0;
+// Just enough room above the bar to read as a screen, no more: the empty
+// area used to be taller than the bar it framed.
+static CGFloat const kSPKTabOrderPreviewHeight = 62.0;
 static CGFloat const kSPKTabOrderBarHeight = 34.0;
 static CGFloat const kSPKTabOrderGlyph = 19.0;
 
@@ -30,29 +30,26 @@ static CGFloat const kSPKTabOrderGlyph = 19.0;
 @property (nonatomic, copy) NSString *value;
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, copy) NSArray<NSString *> *icons;
-// Set when the layout moves a destination into the header instead of the bar.
-@property (nonatomic, copy) NSString *headerIcon;
 @end
 
 @implementation SPKTabLayout
 @end
 
 static NSArray<SPKTabLayout *> *SPKTabOrderLayouts(void) {
-    SPKTabLayout * (^layout)(NSString *, NSString *, NSArray *, NSString *) =
-        ^(NSString *value, NSString *title, NSArray *icons, NSString *headerIcon) {
+    SPKTabLayout * (^layout)(NSString *, NSString *, NSArray *) =
+        ^(NSString *value, NSString *title, NSArray *icons) {
             SPKTabLayout *entry = [SPKTabLayout new];
             entry.value = value;
             entry.title = title;
             entry.icons = icons;
-            entry.headerIcon = headerIcon;
             return entry;
         };
 
     return @[
-        layout(@"default", @"Default", @[ @"home", @"search", @"reels", @"messages", @"profile" ], nil),
-        layout(@"classic", @"Classic", @[ @"home", @"search", @"plus", @"reels", @"profile" ], @"messages"),
-        layout(@"standard", @"Standard", @[ @"home", @"reels", @"messages", @"search", @"profile" ], nil),
-        layout(@"alternate", @"Alternate", @[ @"reels", @"home", @"messages", @"search", @"profile" ], nil),
+        layout(@"default", @"Default", @[ @"home", @"search", @"reels", @"messages", @"user_circle" ]),
+        layout(@"classic", @"Classic", @[ @"home", @"search", @"plus", @"reels", @"user_circle" ]),
+        layout(@"standard", @"Standard", @[ @"home", @"reels", @"messages", @"search", @"user_circle" ]),
+        layout(@"alternate", @"Alternate", @[ @"reels", @"home", @"messages", @"search", @"user_circle" ]),
     ];
 }
 
@@ -108,26 +105,6 @@ static NSArray<SPKTabLayout *> *SPKTabOrderLayouts(void) {
     frame.clipsToBounds = YES;
     frame.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
 
-    if (self.layout.headerIcon.length > 0) {
-        UIView *header = [UIView new];
-        header.tag = 1;
-        [frame addSubview:header];
-
-        UILabel *wordmark = [UILabel new];
-        wordmark.tag = 2;
-        wordmark.text = @"Instagram";
-        wordmark.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightBold];
-        wordmark.textColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        [header addSubview:wordmark];
-
-        UIImageView *badge = [[UIImageView alloc] initWithImage:
-            [SPKAssetUtils instagramIconNamed:self.layout.headerIcon pointSize:15.0]];
-        badge.tag = 3;
-        badge.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
-        badge.contentMode = UIViewContentModeScaleAspectFit;
-        [header addSubview:badge];
-    }
-
     UIView *bar = [UIView new];
     bar.tag = 4;
     bar.backgroundColor = [SPKUtils SPKColor_InstagramBackground];
@@ -174,21 +151,8 @@ static NSArray<SPKTabLayout *> *SPKTabOrderLayouts(void) {
     CGFloat previewTop = CGRectGetMaxY(self.titleLabel.frame) + 11.0;
     self.preview.frame = CGRectMake(14.0, previewTop, inner, kSPKTabOrderPreviewHeight);
 
-    UIView *header = [self.preview viewWithTag:1];
     UIView *bar = [self.preview viewWithTag:4];
     CGFloat previewWidth = CGRectGetWidth(self.preview.bounds);
-
-    if (header) {
-        header.frame = CGRectMake(0.0, 0.0, previewWidth, kSPKTabOrderHeaderHeight);
-        UILabel *wordmark = (UILabel *)[header viewWithTag:2];
-        [wordmark sizeToFit];
-        wordmark.frame = CGRectMake(10.0,
-                                    (kSPKTabOrderHeaderHeight - CGRectGetHeight(wordmark.bounds)) / 2.0,
-                                    CGRectGetWidth(wordmark.bounds),
-                                    CGRectGetHeight(wordmark.bounds));
-        UIView *badge = [header viewWithTag:3];
-        badge.frame = CGRectMake(previewWidth - 10.0 - 15.0, (kSPKTabOrderHeaderHeight - 15.0) / 2.0, 15.0, 15.0);
-    }
 
     bar.frame = CGRectMake(0.0,
                            kSPKTabOrderPreviewHeight - kSPKTabOrderBarHeight,
