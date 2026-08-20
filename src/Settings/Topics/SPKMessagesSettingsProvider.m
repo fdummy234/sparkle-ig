@@ -150,7 +150,7 @@ manualSeenSwitch.reloadsTableOnSwitchChange = YES;
     // accessoryTextProvider, which would re-read the log JSON on every cell pass.
     NSString *ownerPK = SPKAccountManager.currentAccountPK;
     NSUInteger deletedLogCount = ownerPK.length > 0 ? [SPKDeletedMessagesStorage allMessagesForOwnerPK:ownerPK].count : 0;
-    SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"View deleted messages"
+    SPKSetting *viewDeletedLog = [SPKSetting navigationCellWithTitle:@"Saved messages"
                                                             subtitle:nil
                                                                 icon:SPKSettingsIcon(@"trash")
                                                       viewController:[SPKDeletedMessagesViewController new]];
@@ -236,7 +236,10 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
     return @[
         // Everything about the chat screen itself. Was split across "Messaging"
         // and a section literally called "Interface".
-        SPKTopicSection(@"Disappearing messages", @[
+        // One subject: what disappears, and what is kept of it. The master switch
+        // sits with the behaviours it follows from, and the two rows under it
+        // appear only while it is on, so their context is the row above them.
+        SPKTopicSection(@"Disappearing & deleted", @[
             ({
                 // One switch for both surfaces: view-once media and vanish mode
                 // keep their own keys, written together so they never diverge.
@@ -264,15 +267,9 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
                 sw.searchKeywords = @"gesture vanish mode";
                 sw;
             }),
-        ],
-                        nil),
-
-        // Keeping and reading removed messages is archiving, not a
-        // disappearing-message behaviour.
-        SPKTopicSection(@"Deleted messages", @[
             keepDeleted,
             ({
-                SPKSetting *g = SPKToggleMenuRowSetting(@"Save deleted messages", @"notes", @[
+                SPKSetting *g = SPKToggleMenuRowSetting(@"What to save", @"notes", @[
                     [SPKToggleMenuItem itemWithTitle:@"Log deleted messages"
                                             iconName:@"logs"
                                          defaultsKey:@"msgs_deleted_log"],
@@ -283,9 +280,8 @@ trimAudio.helpText = @"Adds a Trim & Send option so you can cut the file before 
                                             iconName:@"eye"
                                          defaultsKey:@"msgs_deleted_log_respect_seen_list"],
                 ]);
-                // Per-item help text for the menu items above.
-                g.helpText = @"Saves each message before it disappears, including view-once media, until you clear the log."
-                             @"Respect Seen Chat List: chats in your seen exclude/include list are left out of the log and its notifications.";
+                g.helpText = @"Saves each message before it disappears, including view-once media, until you clear the log. "
+                             @"Skip excluded chats leaves the chats on your seen list out of the log and its notifications.";
                 g.searchKeywords = @"log deleted removed reactions seen chat list respect seen chat list";
                 // R5: hidden while Keep Deleted Messages is off.
                 g.hiddenProvider = ^BOOL {
