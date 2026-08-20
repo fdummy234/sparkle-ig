@@ -16,7 +16,6 @@
 #import "../Profile/ProfileAnalyzer/SPKProfileAnalyzerViewController.h"
 #import "../../App/SPKPerfMeter.h"
 
-NSString *const kSPKHeaderButtonEnabledKey = @"feed_header_button";
 NSString *const kSPKHeaderButtonDefaultActionKey = @"feed_header_button_default";
 NSString *const kSPKHeaderButtonDefaultActionMenu = @"menu";
 

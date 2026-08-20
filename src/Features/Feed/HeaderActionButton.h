@@ -3,7 +3,6 @@
 NS_ASSUME_NONNULL_BEGIN
 
 // Master enable (surface-prefixed: this installs in the Feed surface group).
-FOUNDATION_EXPORT NSString *const kSPKHeaderButtonEnabledKey;        // feed_header_button
 // Default tap action id: "menu" or a destination identifier below.
 FOUNDATION_EXPORT NSString *const kSPKHeaderButtonDefaultActionKey;  // feed_header_button_default
 FOUNDATION_EXPORT NSString *const kSPKHeaderButtonDefaultActionMenu; // "menu"
@@ -13,7 +12,6 @@ FOUNDATION_EXPORT NSString *const kSPKHeaderButtonDefaultActionMenu; // "menu"
 @property (nonatomic, copy, readonly) NSString *identifier;
 @property (nonatomic, copy, readonly) NSString *title;    // full label (menus / toggles / picker)
 @property (nonatomic, copy, readonly) NSString *iconName; // IG-bundle icon name
-@property (nonatomic, copy, readonly) NSString *prefKey;     // feed_header_button_dest_<id>
 // Presents the destination. `window` is the header's window (may be nil).
 @property (nonatomic, copy, readonly) void (^present)(UIWindow *_Nullable window);
 @end
