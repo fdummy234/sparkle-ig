@@ -313,7 +313,6 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                         iconName:@"external_link"
                                      defaultsKey:@"general_confirm_open_link"],
                 ]);
-                confirmations.helpText = @"Asks before the action goes through. Opening a Link shows the full address first, which a shortened link hides.";
                 confirmations;
             })
         ],

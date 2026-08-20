@@ -97,15 +97,6 @@ static NSArray *SPKInstantsSettingsSections(void) {
         
                                       ]),
             SPKToggleMenuRowSetting(@"Confirmations", @"circle_check", @[
-                ({
-                    SPKToggleMenuItem *item = [SPKToggleMenuItem itemWithTitle:@"Capture"
-                                                                      iconName:@"instants_burst"
-                                                                   defaultsKey:@"instants_confirm_capture"];
-                    item.enabledProvider = ^BOOL {
-                        return NO;
-                    };
-                    item;
-                }),
                 [SPKToggleMenuItem itemWithTitle:@"Reaction"
                                         iconName:@"reactions"
                                      defaultsKey:@"instants_confirm_reaction"],
