@@ -9,11 +9,13 @@
 // treatment; nothing here runs per frame.
 
 static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKey;
+static const void *kSPKSettingsCloseItemAssocKey = &kSPKSettingsCloseItemAssocKey;
 
 @interface SPKNativeSettingsEntryTarget : NSObject
 @property (nonatomic, weak) UIViewController *owner;
 + (instancetype)sharedTarget;
 - (void)openSparkleSettings:(id)sender;
+- (void)closeSettings:(id)sender;
 @end
 
 @implementation SPKNativeSettingsEntryTarget
@@ -25,6 +27,13 @@ static const void *kSPKSettingsEntryItemAssocKey = &kSPKSettingsEntryItemAssocKe
         target = [SPKNativeSettingsEntryTarget new];
     });
     return target;
+}
+
+- (void)closeSettings:(id)sender {
+    // Instagram's own control is gone from the bar, so the dismissal is done
+    // here. This screen is presented, never pushed, so dismissing it is the
+    // whole of what its button did.
+    [self.owner dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)openSparkleSettings:(id)sender {
@@ -52,44 +61,37 @@ static BOOL SPKIsNativeSettingsController(UIViewController *controller) {
 
 // Puts the bar in the shape the screen has when Instagram opens it itself.
 //
-// Colour: tinting the item alone left Done blue, because on iOS 26 a bar button
-// takes the navigation bar's tint unless the item overrides it, and Instagram
-// sets neither. Both are set here.
+// Instagram's own button here is backed by a custom view: setting its title,
+// image or tint changed nothing on screen while the sides it was moved to did
+// change, which leaves no other explanation. So it is replaced rather than
+// restyled — a plain item, drawn black, that dismisses the screen.
 //
-// Shape and side: "Done" appears nowhere in Instagram's own navigation. It is
-// there because this screen was routed to as a modal rather than pushed from a
-// profile. The back chevron is what the screen carries when reached the usual
-// way — and a back control belongs on the leading edge, so it moves there and
-// the Sparkle entry takes the trailing edge. Only the look moves; the action is
-// left alone.
-//
-// A custom-view item ignores the image and the title, and that only shows at
-// runtime — hence the guard.
-static void SPKArrangeSettingsBar(UIViewController *controller,
-                                  UIBarButtonItem *entry,
-                                  NSArray<UIBarButtonItem *> *instagramItems) {
+// "Done" is not Instagram's wording either; it appears because this screen was
+// routed to as a modal instead of being pushed from a profile. A close mark
+// says what the control does without borrowing a label from nowhere, and a
+// close control belongs on the leading edge, so the Sparkle entry takes the
+// trailing one.
+static void SPKArrangeSettingsBar(UIViewController *controller, UIBarButtonItem *entry) {
     UIColor *ink = [SPKUtils SPKColor_InstagramPrimaryText];
     controller.navigationController.navigationBar.tintColor = ink;
     entry.tintColor = ink;
 
-    UIImage *chevron =
-        [UIImage systemImageNamed:@"chevron.backward"
-                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:17.0
-                                                                                  weight:UIImageSymbolWeightSemibold]];
-
-    for (UIBarButtonItem *instagramItem in instagramItems) {
-        instagramItem.tintColor = ink;
-        [instagramItem setTitleTextAttributes:@{ NSForegroundColorAttributeName : ink }
-                                     forState:UIControlStateNormal];
-
-        if (instagramItem.customView || !chevron)
-            continue;
-        instagramItem.title = nil;
-        instagramItem.image = chevron;
-        instagramItem.accessibilityLabel = @"Back";
+    UIBarButtonItem *close = objc_getAssociatedObject(controller, kSPKSettingsCloseItemAssocKey);
+    if (!close) {
+        UIImage *mark =
+            [UIImage systemImageNamed:@"xmark"
+                    withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:16.0
+                                                                                      weight:UIImageSymbolWeightSemibold]];
+        close = [[UIBarButtonItem alloc] initWithImage:mark
+                                                 style:UIBarButtonItemStylePlain
+                                                target:[SPKNativeSettingsEntryTarget sharedTarget]
+                                                action:@selector(closeSettings:)];
+        close.accessibilityLabel = @"Close";
+        objc_setAssociatedObject(controller, kSPKSettingsCloseItemAssocKey, close, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
+    close.tintColor = ink;
 
-    controller.navigationItem.leftBarButtonItems = instagramItems;
+    controller.navigationItem.leftBarButtonItems = @[ close ];
     controller.navigationItem.rightBarButtonItems = @[ entry ];
 }
 
@@ -101,16 +103,6 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     // because Instagram restyles this bar and would otherwise take its blue Done
     // back the moment the screen is revisited.
     UIBarButtonItem *entry = objc_getAssociatedObject(controller, kSPKSettingsEntryItemAssocKey);
-
-    NSMutableArray<UIBarButtonItem *> *instagramItems = [NSMutableArray array];
-    for (UIBarButtonItem *barItem in controller.navigationItem.rightBarButtonItems) {
-        if (barItem != entry)
-            [instagramItems addObject:barItem];
-    }
-    for (UIBarButtonItem *barItem in controller.navigationItem.leftBarButtonItems) {
-        if (barItem != entry && ![instagramItems containsObject:barItem])
-            [instagramItems addObject:barItem];
-    }
 
     if (!entry) {
         UIImage *icon =
@@ -126,7 +118,7 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     }
 
     [SPKNativeSettingsEntryTarget sharedTarget].owner = controller;
-    SPKArrangeSettingsBar(controller, entry, instagramItems);
+    SPKArrangeSettingsBar(controller, entry);
 }
 
 %group SPKNativeSettingsEntryHooks

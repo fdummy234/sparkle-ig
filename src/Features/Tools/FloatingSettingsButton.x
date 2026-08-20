@@ -98,7 +98,9 @@ static BOOL SPKFloatingButtonShouldShow(void) {
 // these proportions. Every window is searched, since the bar need not live in
 // the same one as the button.
 static CGFloat SPKFloatingButtonBottomChromeTop(UIView *view, CGFloat screenWidth, CGFloat screenBottom, NSInteger depth) {
-    if (!view || depth > 8)
+    // Instagram's hierarchy is deep; a shallow walk stopped short of the bar and
+    // reported nothing, which is how the button ended up sitting on it.
+    if (!view || depth > 16)
         return CGFLOAT_MAX;
 
     CGFloat top = CGFLOAT_MAX;
@@ -107,9 +109,9 @@ static CGFloat SPKFloatingButtonBottomChromeTop(UIView *view, CGFloat screenWidt
             continue;
 
         CGRect frame = [child convertRect:child.bounds toView:nil];
-        BOOL wide = CGRectGetWidth(frame) >= screenWidth * 0.55;
-        BOOL shallow = CGRectGetHeight(frame) >= 32.0 && CGRectGetHeight(frame) <= 120.0;
-        BOOL seated = CGRectGetMaxY(frame) >= screenBottom - 60.0 && CGRectGetMaxY(frame) <= screenBottom + 4.0;
+        BOOL wide = CGRectGetWidth(frame) >= screenWidth * 0.4;
+        BOOL shallow = CGRectGetHeight(frame) >= 28.0 && CGRectGetHeight(frame) <= 140.0;
+        BOOL seated = CGRectGetMaxY(frame) >= screenBottom - 90.0 && CGRectGetMaxY(frame) <= screenBottom + 4.0;
         if (wide && shallow && seated)
             top = MIN(top, CGRectGetMinY(frame));
 
@@ -118,18 +120,31 @@ static CGFloat SPKFloatingButtonBottomChromeTop(UIView *view, CGFloat screenWidt
     return top;
 }
 
-static CGFloat SPKFloatingButtonBottomChromeTopInAllWindows(CGFloat screenWidth, CGFloat screenBottom) {
-    CGFloat top = CGFLOAT_MAX;
-    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
-        if (![scene isKindOfClass:[UIWindowScene class]])
-            continue;
-        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
-            if (window.isHidden || window.alpha <= 0.01)
-                continue;
-            top = MIN(top, SPKFloatingButtonBottomChromeTop(window, screenWidth, screenBottom, 0));
-        }
+// What the visible screen reserves at the bottom.
+//
+// A tab bar controller adds its bar's height to the safe area of the controller
+// it is showing, so the child's inset carries the bar even when the search above
+// finds nothing. Two independent readings, and the higher floor of the two wins:
+// missing the bar has been the recurring failure here, never clearing too much.
+static CGFloat SPKFloatingButtonReservedBottomInset(UIWindow *window) {
+    UIViewController *controller = window.rootViewController;
+    CGFloat inset = 0.0;
+
+    while (controller) {
+        inset = MAX(inset, controller.view.safeAreaInsets.bottom);
+
+        UIViewController *next = controller.presentedViewController;
+        if (!next && [controller isKindOfClass:[UITabBarController class]])
+            next = ((UITabBarController *)controller).selectedViewController;
+        if (!next && [controller isKindOfClass:[UINavigationController class]])
+            next = ((UINavigationController *)controller).topViewController;
+        if (!next)
+            next = controller.childViewControllers.lastObject;
+        if (next == controller)
+            break;
+        controller = next;
     }
-    return top;
+    return inset;
 }
 
 // Bottom trailing corner, clear of whatever chrome is down there.
@@ -143,10 +158,15 @@ static CGPoint SPKFloatingButtonHomeCenter(UIView *host) {
 
     CGRect screen = [host convertRect:host.bounds toView:nil];
     CGFloat floor = CGRectGetHeight(host.bounds) - safe.bottom;
+
     CGFloat chromeTop = SPKFloatingButtonBottomChromeTopInAllWindows(CGRectGetWidth(screen),
                                                                     CGRectGetMaxY(screen));
     if (chromeTop < CGFLOAT_MAX)
         floor = MIN(floor, chromeTop - CGRectGetMinY(screen));
+
+    CGFloat reserved = SPKFloatingButtonReservedBottomInset((UIWindow *)host);
+    if (reserved > safe.bottom)
+        floor = MIN(floor, CGRectGetHeight(host.bounds) - reserved);
 
     return CGPointMake(CGRectGetWidth(host.bounds) - safe.right - kSPKFloatingButtonMargin - half,
                        floor - kSPKFloatingButtonMargin - half);
