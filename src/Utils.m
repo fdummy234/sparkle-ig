@@ -14,6 +14,7 @@
 #import "Shared/UI/SPKMediaChrome.h"
 #import "Networking/SPKInstagramAPI.h"
 #import "Shared/UI/SPKNotificationCenter.h"
+#import "Shared/UI/SPKDialog.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
 
@@ -2667,19 +2668,22 @@ static void SPKSetResolvedPKForUsername(NSString *username, NSString *pk) {
     return [self showConfirmation:okHandler cancelHandler:cancelHandler title:nil];
 }
 + (void)showRestartConfirmation {
-    [SPKIGAlertPresenter presentAlertFromViewController:topMostController()
-                                                  title:@"Restart Required"
-                                                message:@"You must restart the app to apply this change"
-                                                actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Later"
-                                                                                style:SPKIGAlertActionStyleCancel
-                                                                              handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Restart"
-                                                                                style:SPKIGAlertActionStyleDefault
-                                                                              handler:^{
-                                                                                  exit(0);
-                                                                              }],
-                                                ]];
+    // Sparkle's dialog rather than Instagram's: this question comes from the
+    // tweak, and the screen behind it is the tweak's own.
+    UIWindow *window = topMostController().view.window ?: UIApplication.sharedApplication.keyWindow;
+    [SPKDialog presentInWindow:window
+                         title:@"Restart to apply"
+                       message:@"This change takes effect the next time Instagram starts."
+                       actions:@[
+                           [SPKDialogAction actionWithTitle:@"Later"
+                                                      style:SPKDialogActionStyleCancel
+                                                    handler:nil],
+                           [SPKDialogAction actionWithTitle:@"Restart"
+                                                      style:SPKDialogActionStyleDefault
+                                                    handler:^{
+                                                        exit(0);
+                                                    }],
+                       ]];
 };
 
 // MARK: Math
