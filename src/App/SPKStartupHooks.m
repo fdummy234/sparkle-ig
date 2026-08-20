@@ -148,11 +148,10 @@ void SPKInstallLaunchCriticalHooks(void) {
             SPK_INSTALL(SPKInstallProgressiveBlurHooksIfEnabled);
         }
     }
-    // Liquid Glass surface hooks install on any iOS: the tab bar experiment
-    // gates reshape the bar into the floating pill even pre-26 (only the glass
-    // material is unavailable). The ObjC button hooks inside self-skip when
-    // their classes are absent, so this is safe on older systems.
-    if ([SPKUtils spk_isLiquidGlassEffectivelyEnabled]) {
+    // Installed only while the glass is being taken away. With Instagram now
+    // shipping it everywhere, there is nothing to add and the hooks would run
+    // for no reason.
+    if ([SPKUtils spk_isLiquidGlassDisabled]) {
         SPK_INSTALL(SPKInstallLiquidGlassHooksIfEnabled);
     }
     SPK_INSTALL(SPKInstallTweakLaunchCriticalHooks);

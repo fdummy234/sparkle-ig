@@ -12,7 +12,7 @@ static NSDictionary *SPKBootstrapDefaults(void) {
         @"tools_flex_app_launch" : @(NO),
         @"tools_flex_app_start" : @(NO),
         @"tools_flex_instagram" : @(NO),
-        @"interface_liquid_glass" : @(NO),
+        @"interface_disable_liquid_glass" : @(NO),
         @"interface_liquid_glass_tabbar_mode" : @"default",
         @"interface_progressive_blur" : @(YES),
         @"interface_nav_order" : @"default",

@@ -108,8 +108,12 @@ static void SPKScheduleStagedFeatureHooks(void) {
     SPKStabilityGuardBeginLaunch();
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
-    [defaults setBool:[SPKUtils spk_isLiquidGlassEffectivelyEnabled]
-               forKey:@"instagram.override.project.lucent.navigation"];
+    // Instagram's own override, answered for it: NO while the tweak is asked to
+    // take the glass away, untouched otherwise.
+    if ([SPKUtils spk_isLiquidGlassDisabled])
+        [defaults setBool:NO forKey:@"instagram.override.project.lucent.navigation"];
+    else
+        [defaults removeObjectForKey:@"instagram.override.project.lucent.navigation"];
     [defaults removeObjectForKey:@"liquid_glass_override_enabled"];
     [defaults removeObjectForKey:@"IGLiquidGlassOverrideEnabled"];
     SPKCoreInstallLaunchCriticalHooks();
