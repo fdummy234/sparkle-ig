@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKDownloadsHistoryViewController.h"
 
 #import "../../AssetUtils.h"
@@ -628,20 +629,23 @@ typedef NS_ENUM(NSUInteger, SPKDownloadsHistoryRowKind) {
 #pragma mark - More menu
 
 - (void)clearFinished {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear Finished Downloads"
-                                                message:@"Removes finished entries and their staged preview copies. Active and queued downloads are kept; media saved to Photos or the Gallery is not affected."
-                                                actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
-                                                                              handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear"
-                                                                                style:SPKIGAlertActionStyleDestructive
-                                                                              handler:^{
-                                                                                  [[SPKDownloadService shared] clearFinishedHistory];
-                                                                                  [self reload];
-                                                                              }],
-                                                ]];
+    // Sparkle's dialog: the question comes from the tweak and is asked on the
+    // tweak's own screen, so it wears the tweak's material.
+    __weak typeof(self) weakSelf = self;
+    [SPKDialog presentInWindow:self.view.window
+                         title:@"Clear finished downloads"
+                       message:@"Removes finished entries and their staged preview copies. Active and queued downloads are kept, and media saved to Photos or the Gallery is untouched."
+                       actions:@[
+                           [SPKDialogAction actionWithTitle:@"Cancel"
+                                                      style:SPKDialogActionStyleCancel
+                                                    handler:nil],
+                           [SPKDialogAction actionWithTitle:@"Clear"
+                                                      style:SPKDialogActionStyleDestructive
+                                                    handler:^{
+                                                        [[SPKDownloadService shared] clearFinishedHistory];
+                                                        [weakSelf reload];
+                                                    }],
+                       ]];
 }
 
 - (UIMenu *)moreMenu {
