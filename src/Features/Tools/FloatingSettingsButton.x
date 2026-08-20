@@ -120,6 +120,22 @@ static CGFloat SPKFloatingButtonBottomChromeTop(UIView *view, CGFloat screenWidt
     return top;
 }
 
+// The same search, run against every window: the floating bar of iOS 26 need
+// not live in the same window as the button.
+static CGFloat SPKFloatingButtonBottomChromeTopInAllWindows(CGFloat screenWidth, CGFloat screenBottom) {
+    CGFloat top = CGFLOAT_MAX;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]])
+            continue;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (window.isHidden || window.alpha <= 0.01)
+                continue;
+            top = MIN(top, SPKFloatingButtonBottomChromeTop(window, screenWidth, screenBottom, 0));
+        }
+    }
+    return top;
+}
+
 // What the visible screen reserves at the bottom.
 //
 // A tab bar controller adds its bar's height to the safe area of the controller
