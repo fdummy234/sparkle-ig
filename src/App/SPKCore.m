@@ -84,11 +84,6 @@ static NSDictionary *SPKFeatureDefaults(void) {
         @"profile_analyzer_track_visits" : @(NO),
         // Destinations the header button can open. Without these it has none,
         // and hides itself.
-        @"feed_header_button_dest_gallery" : @(YES),
-        @"feed_header_button_dest_analyzer" : @(YES),
-        @"feed_header_button_dest_deleted" : @(YES),
-        @"feed_header_button_dest_downloads" : @(YES),
-        @"feed_header_button_dest_settings" : @(YES),
         @"feed_action_btn" : @(YES),
         @"feed_action_btn_default_action" : @"none",
         @"general_action_btn_default_menu_icon" : @"action",
