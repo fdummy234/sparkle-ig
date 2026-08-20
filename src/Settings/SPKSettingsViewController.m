@@ -610,7 +610,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     BOOL isModalRoot = self.navigationController.presentingViewController &&
                        self.navigationController.viewControllers.firstObject == self;
     NSArray<UIBarButtonItem *> *leadingItems = isModalRoot
-                                                   ? @[ SPKMediaChromeTopBarButtonItem(@"xmark", self, @selector(closeTapped)) ]
+                                                   ? @[ SPKMediaChromeTopBarButtonItemWithPointSize(@"xmark", 16.0, self, @selector(closeTapped)) ]
                                                    : @[];
     SPKMediaChromeSetLeadingTopBarItems(self.navigationItem, leadingItems);
 
