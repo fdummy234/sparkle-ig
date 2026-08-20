@@ -22,10 +22,10 @@
 
 #pragma mark - Root accessory (Phase 1)
 
-// « N active » sur chaque destination : les clés des sous-pages, comptées au
-// viewWillAppear (accessoryTextProvider est relu à chaque reloadData). Même
-// principe que les compteurs Ads/Meta AI de General — une seule source, les
-// rangées elles-mêmes.
+// The "N on" accessory each destination carries: the keys of its sub-pages,
+// counted at viewWillAppear, since accessoryTextProvider is read again on
+// every reloadData. Same principle as the Ads and Meta AI counters in
+// General — one source of truth, the rows themselves.
 static void SPKCountRowsInSections(NSArray *sections, NSUInteger *on, NSUInteger *total);
 
 static void SPKCountRows(NSArray *rows, NSUInteger *on, NSUInteger *total) {
@@ -33,8 +33,8 @@ static void SPKCountRows(NSArray *rows, NSUInteger *on, NSUInteger *total) {
         if (![row isKindOfClass:[SPKSetting class]])
             continue;
         if (row.navSections.count > 0 || row.searchSectionsProvider != nil) {
-            // Non récursif : « N active » compte la page elle-même. En récursif,
-            // Interface additionnait ses sous-pages générées (138 à l'écran).
+            // Deliberately not recursive: the accessory counts the page itself.
+            // Recursing made Interface add up its generated sub-pages and show 138.
             continue;
         }
         if (row.defaultsKey.length == 0)
@@ -52,9 +52,9 @@ static void SPKCountRowsInSections(NSArray *sections, NSUInteger *on, NSUInteger
 }
 
 static SPKSetting *SPKRootRow(SPKSetting *topic) {
-    // Stories, Messages et Instants n'ont pas de navSections : leurs sections
-    // vivent derrière searchSectionsProvider (le même bloc qui nourrit la
-    // recherche). On boit à la même source, paresseusement, à chaque affichage.
+    // Stories, Messages and Instants carry no navSections: their sections live
+    // behind searchSectionsProvider, the same block that feeds search. The count
+    // reads from that source, lazily, on every display.
     NSArray *eagerSections = topic.navSections;
     NSArray * (^lazySections)(void) = topic.searchSectionsProvider;
     if (eagerSections.count == 0 && lazySections == nil)
