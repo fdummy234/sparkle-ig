@@ -1687,6 +1687,30 @@ static NSDate *SPKScanObjectForPostedDate(id target, NSInteger depth) {
     }
     [topMostController() presentViewController:acVC animated:true completion:nil];
 }
+// Presents Sparkle over a controller the caller already holds.
+//
+// A button living inside a presented screen cannot go through the window: that
+// window's root is already presenting, and a controller that is presenting
+// refuses to present again — the tap simply does nothing. The screen that owns
+// the button is the one that can show it.
++ (void)showSettingsFromController:(UIViewController *)controller {
+    UIViewController *presenter = controller;
+    while (presenter.presentedViewController)
+        presenter = presenter.presentedViewController;
+
+    if (!presenter) {
+        [self showSettingsVC:UIApplication.sharedApplication.keyWindow];
+        return;
+    }
+
+    SPKPresentSettingsAfterUnlock(presenter, ^{
+        SPKSettingsViewController *settingsViewController = [SPKSettingsViewController new];
+        UINavigationController *navigationController = [[SPKSettingsNavigationController alloc] initWithRootViewController:settingsViewController];
+        navigationController.modalPresentationStyle = UIModalPresentationFullScreen;
+        [presenter presentViewController:navigationController animated:YES completion:nil];
+    });
+}
+
 + (void)showSettingsVC:(UIWindow *)window {
     // Present from whatever is on top, not from the root. Instagram's own
     // Settings and activity is itself presented over the root, and a controller
