@@ -127,7 +127,7 @@ static UIMenu *SPKFollowIndicatorModeMenu(void) {
         // page name would say nothing — and without a header there is no ⓘ.
         SPKTopicSection(@"Profile screen", @[
             ({
-                SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-Resolution photo"
+                SPKSetting *fullRes = [SPKSetting switchCellWithTitle:@"Full-resolution photo"
                                                                  icon:SPKSettingsIcon(@"hd")
                                                           defaultsKey:@"profile_full_res_photo"
                                                       requiresRestart:YES];

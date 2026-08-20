@@ -81,7 +81,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
 }
 
 + (SPKSetting *)perAccountSetting {
-    SPKSetting *setting = [SPKSetting switchCellWithTitle:@"Per-Account settings"
+    SPKSetting *setting = [SPKSetting switchCellWithTitle:@"Per-account settings"
                                                      icon:SPKSettingsIcon(@"user_circle")
                                               defaultsKey:kSPKPrefPerAccountSettings];
     // Changes which key namespace every feature reads, and most enabled-state is
@@ -139,7 +139,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
     stripTracking.helpText = @"The copied link loses the IDs Instagram uses to track who shared it.";
     stripTracking.searchKeywords = @"igshid utm referrer identifiers url";
 
-    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Long-Press send to copy link"
+    SPKSetting *holdSendCopyLink = [SPKSetting switchCellWithTitle:@"Long-press send to copy link"
                                                               icon:SPKSettingsIcon(@"link")
                                                        defaultsKey:@"general_hold_send_copy_link"];
     holdSendCopyLink.helpText = @"Long-press the send or share button to get the post link.";

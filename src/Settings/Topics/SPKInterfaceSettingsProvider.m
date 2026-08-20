@@ -168,7 +168,7 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             // Pre-iOS 26 can't render the glass material, but the same tab bar
             // experiment gates still reshape the bar into the floating pill.
             // Expose that as a focused toggle sharing the Liquid Glass pref.
-            SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-Shaped tab bar"
+            SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-shaped tab bar"
                                                    icon:SPKSettingsIcon(@"circle")
                                                         defaultsKey:kSPKPrefInterfaceLiquidGlass
                                                     requiresRestart:YES];
