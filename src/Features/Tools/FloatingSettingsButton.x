@@ -52,13 +52,43 @@ static UIWindow *SPKFloatingButtonHostWindow(void) {
     return best;
 }
 
-// Bottom trailing corner: the tab bar's own footprint, now free, and the one
-// place a thumb reaches without covering content.
+// Where the tab bar's top edge sits, in host coordinates.
+//
+// Only the profile tab is hidden here, so the bar is still on screen and the
+// safe area alone would drop the button straight onto it. The bar is found by
+// walking the tree for a view whose class carries "TabBar" — asked of the live
+// hierarchy rather than assumed from a class name, since Instagram renames
+// these between versions. Returns CGFLOAT_MAX when there is no bar to clear.
+static CGFloat SPKFloatingButtonTabBarTop(UIView *host, NSInteger depth) {
+    if (!host || depth > 6)
+        return CGFLOAT_MAX;
+
+    CGFloat top = CGFLOAT_MAX;
+    for (UIView *view in host.subviews) {
+        if (view.isHidden || view.alpha <= 0.05)
+            continue;
+
+        const char *name = class_getName([view class]);
+        if (name && strstr(name, "TabBar") && CGRectGetHeight(view.bounds) > 1.0)
+            top = MIN(top, CGRectGetMinY([view convertRect:view.bounds toView:nil]));
+
+        top = MIN(top, SPKFloatingButtonTabBarTop(view, depth + 1));
+    }
+    return top;
+}
+
+// Bottom trailing corner, clear of whatever chrome is down there.
 static CGPoint SPKFloatingButtonHomeCenter(UIView *host) {
     UIEdgeInsets safe = host.safeAreaInsets;
     CGFloat half = kSPKFloatingButtonDiameter / 2.0;
+
+    CGFloat floor = CGRectGetHeight(host.bounds) - safe.bottom;
+    CGFloat tabBarTop = SPKFloatingButtonTabBarTop(host, 0);
+    if (tabBarTop < CGFLOAT_MAX)
+        floor = MIN(floor, tabBarTop);
+
     return CGPointMake(CGRectGetWidth(host.bounds) - safe.right - kSPKFloatingButtonMargin - half,
-                       CGRectGetHeight(host.bounds) - safe.bottom - kSPKFloatingButtonMargin - half);
+                       floor - kSPKFloatingButtonMargin - half);
 }
 
 static void SPKFloatingButtonSendHome(UIView *button, BOOL animated) {
@@ -219,16 +249,27 @@ static void SPKFloatingButtonInstallInWindow(UIWindow *window) {
     }
 
     button = [[SPKChromeButton alloc] initWithSymbol:@""
-                                           pointSize:22.0
+                                           pointSize:24.0
                                             diameter:kSPKFloatingButtonDiameter];
     // The same glyph the header button already draws for Sparkle, so the two
     // read as the same door rather than two unrelated buttons.
-    [button setIconResource:@"action" pointSize:22.0];
+    // Measured against the tab bar's own glyphs, which are 22 pt: at 20 pt this
+    // one read as the smaller of the two.
+    [button setIconResource:@"action" pointSize:24.0];
     button.iconTint = UIColor.labelColor;
-    // Without a bubble the glyph floats on whatever is underneath and vanishes
-    // on a light screen. The seen bubble in Messages solves this the same way.
+    // The same material the tab bar underneath is made of, so the button reads
+    // as part of the chrome rather than pasted over it. Glass on iOS 26, system
+    // material before — the fallback SPKActionMenu already uses.
     button.bubbleColor = UIColor.clearColor;
-    button.bubbleEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
+    Class glassEffectClass = NSClassFromString(@"UIGlassEffect");
+    UIVisualEffect *material = glassEffectClass
+        ? [[glassEffectClass alloc] init]
+        : [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
+    // Interactive glass deforms under a finger instead of sitting flat. Set by
+    // key so it is a no-op, not a crash, where the property does not exist.
+    if ([material respondsToSelector:NSSelectorFromString(@"setInteractive:")])
+        [material setValue:@YES forKey:@"interactive"];
+    button.bubbleEffect = material;
     button.layer.shadowColor = UIColor.blackColor.CGColor;
     button.layer.shadowOpacity = 0.16;
     button.layer.shadowRadius = 8.0;

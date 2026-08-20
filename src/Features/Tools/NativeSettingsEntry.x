@@ -51,7 +51,8 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
 
     UIBarButtonItem *existing = objc_getAssociatedObject(controller, kSPKSettingsEntryItemAssocKey);
     NSArray<UIBarButtonItem *> *right = controller.navigationItem.rightBarButtonItems;
-    if (existing && [right containsObject:existing])
+    if (existing && ([right containsObject:existing] ||
+                     [controller.navigationItem.leftBarButtonItems containsObject:existing]))
         return;
 
     UIImage *icon = [UIImage systemImageNamed:@"sparkles"
@@ -66,8 +67,22 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     objc_setAssociatedObject(controller, kSPKSettingsEntryItemAssocKey, item, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
     // Index 0 is the trailing edge: rightBarButtonItems is ordered right to left.
-    NSMutableArray<UIBarButtonItem *> *items = right ? [right mutableCopy] : [NSMutableArray array];
-    [items insertObject:item atIndex:0];
+    // When the screen is presented modally Instagram puts its own Done button on
+    // the right, and iOS 26 packs both into one glass pill where the two glyphs
+    // touch and the second stops taking taps. The left side is empty on that
+    // screen, so the entry goes there instead and keeps its own hit area.
+    if (right.count > 0) {
+        NSArray<UIBarButtonItem *> *left = controller.navigationItem.leftBarButtonItems;
+        if ([left containsObject:item])
+            return;
+        NSMutableArray<UIBarButtonItem *> *items = left ? [left mutableCopy] : [NSMutableArray array];
+        [items addObject:item];
+        controller.navigationItem.leftBarButtonItems = items;
+        return;
+    }
+
+    NSMutableArray<UIBarButtonItem *> *items = [NSMutableArray array];
+    [items addObject:item];
     controller.navigationItem.rightBarButtonItems = items;
 }
 
