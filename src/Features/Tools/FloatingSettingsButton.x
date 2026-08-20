@@ -196,6 +196,15 @@ static void SPKFloatingButtonInstallInWindow(UIWindow *window) {
     // read as the same door rather than two unrelated buttons.
     [button setIconResource:@"action" pointSize:22.0];
     button.iconTint = UIColor.labelColor;
+    // Without a bubble the glyph floats on whatever is underneath and vanishes
+    // on a light screen. The seen bubble in Messages solves this the same way.
+    button.bubbleColor = UIColor.clearColor;
+    button.bubbleEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
+    button.layer.shadowColor = UIColor.blackColor.CGColor;
+    button.layer.shadowOpacity = 0.16;
+    button.layer.shadowRadius = 8.0;
+    button.layer.shadowOffset = CGSizeMake(0.0, 2.0);
+    button.clipsToBounds = NO;
     button.translatesAutoresizingMaskIntoConstraints = YES;
     button.accessibilityLabel = @"Sparkle settings";
     [button addTarget:[SPKFloatingSettingsButtonTarget sharedTarget]
@@ -231,19 +240,19 @@ static void SPKRefreshFloatingSettingsButton(void) {
     SPKFloatingButtonInstallInWindow(self);
 }
 
-// The corner moves with rotation and with the safe area; a seated button that
-// never re-reads it would drift out of reach.
 - (void)layoutSubviews {
     %orig;
 
-    UIView *button = objc_getAssociatedObject(self, kSPKFloatingButtonAssocKey);
-    if (!button)
+    // This is the path that actually seats the button. becomeKeyWindow fires
+    // only when a window BECOMES key — a window that already was key when the
+    // tweak loaded never calls it again, and at install time there may be no
+    // window at all. Layout, on the other hand, always comes back.
+    if (self.isHidden || self.alpha <= 0.01)
         return;
-    if (!SPKFloatingButtonShouldShow()) {
-        SPKFloatingButtonRemove(self);
+    if (![self isKindOfClass:[UIWindow class]] || self.windowLevel > UIWindowLevelNormal)
         return;
-    }
-    [self bringSubviewToFront:button];
+
+    SPKFloatingButtonInstallInWindow(self);
 }
 
 %end
