@@ -454,30 +454,6 @@ UIMenu *SPKStoryAutoSaveFilterModeMenu(void) {
     return SPKAutoSaveFilterModeMenu(@"stories_auto_save_filter_mode", @"Users");
 }
 
-SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void) {
-    // A menu, like every other single-choice selector. The values are the ones
-    // SPKHeaderDestinationForIdentifier() reads; "menu" opens the full list.
-    SPKSetting *setting = [SPKSetting menuCellWithTitle:@"Tap action"
-                                                   icon:SPKSettingsIcon(@"action")
-                                                   menu:[UIMenu menuWithChildren:@[
-        SPKMenuCommand(@"Open menu", @"action", nil, kSPKHeaderButtonDefaultActionKey, @"menu", NO),
-        [UIMenu menuWithTitle:@""
-                        image:nil
-                   identifier:nil
-                      options:UIMenuOptionsDisplayInline
-                     children:@[
-                         SPKMenuCommand(@"Gallery", @"sparkle_gallery", nil, kSPKHeaderButtonDefaultActionKey, @"gallery", NO),
-                         SPKMenuCommand(@"Profile analyzer", @"profile_analyzer", nil, kSPKHeaderButtonDefaultActionKey, @"analyzer", NO),
-                         SPKMenuCommand(@"Deleted messages", @"channels", nil, kSPKHeaderButtonDefaultActionKey, @"deleted", NO),
-                         SPKMenuCommand(@"Downloads", @"download", nil, kSPKHeaderButtonDefaultActionKey, @"downloads", NO),
-                         SPKMenuCommand(@"Sparkle settings", @"settings", nil, kSPKHeaderButtonDefaultActionKey, @"settings", NO)
-                     ]]
-    ]]];
-    setting.helpText = @"What a single tap on the header button does. A long press always opens the menu of enabled destinations.";
-    setting.searchKeywords = @"default tap action header shortcut";
-    return setting;
-}
-
 UIMenu *SPKGalleryShortcutTargetMenu(void) {
     NSString *const kGalleryLongPressTabKey = @"gallery_quick_access_tab";
     NSString *const kGalleryQuickAccessDisabledValue = @"none";

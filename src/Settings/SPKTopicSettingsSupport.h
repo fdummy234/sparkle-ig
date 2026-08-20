@@ -81,6 +81,5 @@ UIMenu *SPKAutoSaveFilterModeMenu(NSString *filterModeKey, NSString *subjectPlur
 UIMenu *SPKStoryAutoSaveFilterModeMenu(void);
 UIMenu *SPKGalleryShortcutTargetMenu(void);
 UIMenu *SPKCommentSortModeMenu(void);
-SPKSetting *SPKFeedHeaderButtonDefaultActionNavigationSetting(void);
 
 NS_ASSUME_NONNULL_END
