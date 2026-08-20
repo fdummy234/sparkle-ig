@@ -39,7 +39,7 @@ static UICommand *SPKProfileActionDefaultCommand(NSString *title, NSString *reso
 
 static UIMenu *SPKProfileActionDefaultMenu(void) {
     return [UIMenu menuWithChildren:@[
-        SPKProfileActionDefaultCommand(@"Open Menu", @"action", kSPKProfileActionNone),
+        SPKProfileActionDefaultCommand(@"Open menu", @"action", kSPKProfileActionNone),
         SPKProfileActionDefaultCommand(@"Copy Info", @"copy", kSPKProfileActionCopyInfo),
         SPKProfileActionDefaultCommand(@"View Picture", @"photo", kSPKProfileActionViewPicture),
         SPKProfileActionDefaultCommand(@"Share Picture", @"share", kSPKProfileActionSharePicture),

@@ -250,6 +250,22 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             })
     ]];
 
+    // Sparkle's own menu style, on by default.
+    //
+    // It lived in the action button page of all six surfaces while driving a
+    // single preference, so changing it in Feed silently changed it everywhere.
+    // It belongs here instead: it decides how a menu is drawn, like the glass
+    // rows above it, not what any one button does.
+    [screenRows addObject:
+        ({
+            SPKSetting *sparkleMenu = [SPKSetting switchCellWithTitle:@"Sparkle menu"
+                                                                 icon:SPKSettingsIcon(@"list")
+                                                          defaultsKey:@"action_button_sparkle_menu"];
+            sparkleMenu.helpText = @"Draws action button menus the way Sparkle draws its own: a line between every row, tighter margins. Off keeps the iPhone's menu.";
+            sparkleMenu.searchKeywords = @"menu style action button rows separator native";
+            sparkleMenu;
+        })];
+
     // The Notifications sub-page closes the Screen section (scale level 4).
     [screenRows addObject:
         [SPKSetting navigationCellWithTitle:@"Notifications"
