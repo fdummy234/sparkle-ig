@@ -45,6 +45,7 @@ FOUNDATION_EXPORT void SPKInstallHideExploreGridHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallHideTrendingSearchesHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallNavigationHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallSettingsShortcutsHooksIfNeeded(void);
+FOUNDATION_EXPORT void SPKInstallFloatingSettingsButtonHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallNativeSettingsEntryHooksIfNeeded(void);
 FOUNDATION_EXPORT void SPKInstallDisableHapticsHooksIfEnabled(void);
 FOUNDATION_EXPORT void SPKInstallCopyDescriptionHooksIfEnabled(void);
@@ -160,6 +161,7 @@ void SPKInstallLaunchCriticalHooks(void) {
     SPK_INSTALL(SPKInstallStoryAdBlockingHooksIfEnabled);
     SPK_INSTALL(SPKInstallNavigationHooksIfNeeded);
     SPK_INSTALL(SPKInstallSettingsShortcutsHooksIfNeeded);
+    SPK_INSTALL(SPKInstallFloatingSettingsButtonHooksIfNeeded);
     // The one visible way into Sparkle: install it on the normal path too, not
     // only in the suppressed-hooks path above.
     SPK_INSTALL(SPKInstallNativeSettingsEntryHooksIfNeeded);
