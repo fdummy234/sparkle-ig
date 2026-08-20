@@ -201,22 +201,22 @@ static const void *kSPKFlexThreeFingerGestureKey = &kSPKFlexThreeFingerGestureKe
 
 %hook IGDSLauncherConfig
 - (_Bool)isLiquidGlassInAppNotificationEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 - (_Bool)isLiquidGlassContextMenuEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 - (_Bool)isLiquidGlassToastEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 - (_Bool)isLiquidGlassToastPeekEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 - (_Bool)isLiquidGlassAlertDialogEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 - (_Bool)isLiquidGlassIconBarButtonEnabled {
-    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_liquid_glass" orig:%orig];
+    return [SPKUtils spk_liquidGlassLauncherPrefKey:@"interface_disable_liquid_glass" orig:%orig];
 }
 %end
 

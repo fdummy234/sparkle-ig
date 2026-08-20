@@ -1031,7 +1031,7 @@ static BOOL SPKPrefIsGlobalKey(NSString *key) {
             @"app_first_run",
             @"app_safe_startup",
             @"app_startup_profiling",
-            @"interface_liquid_glass",
+            @"interface_disable_liquid_glass",
             @"interface_liquid_glass_tabbar_mode",
             @"interface_progressive_blur",
             @"downloads_adv_encoding",
@@ -1187,12 +1187,18 @@ static id SPKPrefValueWithMasterOverlay(NSString *key) {
     return [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
 };
 
+// Instagram's glass launcher flags, answered for it.
+//
+// These once forced the flags to YES, because the glass sat behind a server
+// gate that not every account had. Instagram now ships it everywhere, so
+// forcing YES changes nothing; forcing NO is what has a use, and gives back the
+// solid bar from before iOS 26.
 + (_Bool)spk_liquidGlassLauncherPrefKey:(NSString *)key orig:(_Bool)fallback {
-    return [SPKUtils spk_isLiquidGlassEffectivelyEnabled] ? YES : fallback;
+    return [SPKUtils spk_isLiquidGlassDisabled] ? NO : fallback;
 }
 
-+ (BOOL)spk_isLiquidGlassEffectivelyEnabled {
-    return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass] &&
++ (BOOL)spk_isLiquidGlassDisabled {
+    return [SPKUtils getBoolPref:kSPKPrefInterfaceDisableLiquidGlass] &&
            !SPKStabilityGuardIsSafeStartupMode();
 }
 

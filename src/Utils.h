@@ -96,7 +96,7 @@ FOUNDATION_EXPORT Class _Nullable SPKResolveIGClass(NSString *qualified, NSStrin
 + (_Bool)spk_liquidGlassLauncherPrefKey:(NSString *)key orig:(_Bool)fallback;
 
 /// True when Liquid Glass is enabled and runtime suppression is inactive.
-+ (BOOL)spk_isLiquidGlassEffectivelyEnabled;
++ (BOOL)spk_isLiquidGlassDisabled;
 
 + (void)cleanCache;
 + (unsigned long long)cleanCacheReturningFreedBytes;
