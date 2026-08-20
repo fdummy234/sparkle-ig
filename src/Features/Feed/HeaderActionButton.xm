@@ -31,9 +31,6 @@ static NSString *const kSPKHeaderDestDownloads = @"downloads";
 // Sparkle action button uses for its menu default).
 static NSString *const kSPKHeaderMenuIconName = @"action";
 
-static NSString *SPKHeaderDestPrefKey(NSString *identifier) {
-    return [NSString stringWithFormat:@"feed_header_button_dest_%@", identifier];
-}
 
 // Layout constants.
 static const CGFloat kSPKHeaderButtonSide = 44.0;    // button footprint
@@ -69,7 +66,6 @@ static const void *kSPKHeaderGlassViewKey = &kSPKHeaderGlassViewKey;
 @property (nonatomic, copy) NSString *identifier;
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, copy) NSString *iconName;   // IG-bundle icon name
-@property (nonatomic, copy) NSString *prefKey;
 @property (nonatomic, copy) void (^present)(UIWindow *_Nullable);
 @end
 
@@ -82,7 +78,6 @@ static const void *kSPKHeaderGlassViewKey = &kSPKHeaderGlassViewKey;
     destination.identifier = identifier;
     destination.title = title;
     destination.iconName = iconName;
-    destination.prefKey = SPKHeaderDestPrefKey(identifier);
     destination.present = present;
     return destination;
 }
@@ -128,13 +123,11 @@ NSArray<SPKHeaderDestination *> *SPKHeaderButtonAllDestinations(void) {
     return destinations;
 }
 
+// Every destination, always. The screen that let you pick them is gone, so
+// there is nothing left to read — and a button that hid itself because no
+// destination happened to be enabled would now be unrecoverable.
 NSArray<SPKHeaderDestination *> *SPKHeaderButtonEnabledDestinations(void) {
-    NSMutableArray<SPKHeaderDestination *> *enabled = [NSMutableArray array];
-    for (SPKHeaderDestination *destination in SPKHeaderButtonAllDestinations()) {
-        if ([SPKUtils getBoolPref:destination.prefKey])
-            [enabled addObject:destination];
-    }
-    return enabled;
+    return SPKHeaderButtonAllDestinations();
 }
 
 static SPKHeaderDestination *SPKHeaderDestinationForIdentifier(NSString *identifier) {
@@ -148,7 +141,7 @@ static SPKHeaderDestination *SPKHeaderDestinationForIdentifier(NSString *identif
 NSString *SPKHeaderButtonResolvedDefaultActionIdentifier(void) {
     NSString *saved = [SPKUtils getStringPref:kSPKHeaderButtonDefaultActionKey];
     SPKHeaderDestination *destination = SPKHeaderDestinationForIdentifier(saved);
-    if (destination && [SPKUtils getBoolPref:destination.prefKey])
+    if (destination)
         return destination.identifier;
     return kSPKHeaderButtonDefaultActionMenu;
 }
@@ -177,7 +170,7 @@ NSString *SPKHeaderButtonDefaultActionIconName(void) {
 - (void)spk_primaryTapped {
     NSString *defaultAction = [SPKUtils getStringPref:kSPKHeaderButtonDefaultActionKey];
     SPKHeaderDestination *destination = SPKHeaderDestinationForIdentifier(defaultAction);
-    if (!destination || ![SPKUtils getBoolPref:destination.prefKey]) {
+    if (!destination) {
         SPKLog(@"HeaderButton", @"[Sparkle] Primary tap fired with no valid destination (default=%@)", defaultAction);
         return;
     }
@@ -188,8 +181,7 @@ NSString *SPKHeaderButtonDefaultActionIconName(void) {
 @end
 
 static void SPKHeaderFireShortcutHaptic(void) {
-    if (![SPKUtils getBoolPref:@"tools_shortcut_haptics"])
-        return;
+    // The toggle that gated this is gone; the feedback is part of the button.
     UISelectionFeedbackGenerator *feedback = [UISelectionFeedbackGenerator new];
     [feedback selectionChanged];
 }
@@ -323,14 +315,6 @@ static NSString *SPKHeaderButtonConfigSignature(NSArray<SPKHeaderDestination *> 
     SPKFeedHeaderActionButton *button = [self spk_headerActionButton];
     if (!button)
         return;
-
-    // Respect the per-account master toggle at layout time (not just at install):
-    // after a live account switch the hooks stay installed, so re-read the toggle
-    // for the current account and hide the button on accounts that disabled it.
-    if (![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey]) {
-        button.hidden = YES;
-        return;
-    }
 
     // Reconfigure the menu/glyph ONLY when the config signature actually changes —
     // a cheap value compare, not a rebuild. This is what keeps the expensive menu
