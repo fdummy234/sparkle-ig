@@ -1,3 +1,4 @@
+#import "../SPKTabOrderViewController.h"
 #import "SPKInterfaceSettingsProvider.h"
 #import "../../Shared/UI/SPKChrome.h"
 #import "../../Utils.h"
@@ -53,10 +54,12 @@ static BOOL SPKIsMessagesOnlyMode(void) {
     // The order glossary used to live in the section footer; it moves onto the
     // two rows it explains.
 
-    SPKSetting *tabIconOrder = [SPKSetting menuCellWithTitle:@"Tab order"
-                                                        icon:SPKSettingsIcon(@"sort")
-                                                        menu:SPKNavigationIconOrderingMenu()];
-    tabIconOrder.helpText = @"Standard: Home, Reels, Messages, Explore, Profile. Classic puts Messages top-right; Alternate swaps Home and Reels.";
+    // A page rather than a menu: each layout is shown as the bar it produces,
+    // which four words could not do.
+    SPKSetting *tabIconOrder = [SPKSetting navigationCellWithTitle:@"Tab order"
+                                                          subtitle:nil
+                                                              icon:SPKSettingsIcon(@"sort")
+                                                    viewController:[SPKTabOrderViewController new]];
     tabIconOrder.searchKeywords = @"standard classic alternate layout order tab icon order";
 
     SPKSetting *swipeBetweenTabs = [SPKSetting menuCellWithTitle:@"Swipe between tabs"
@@ -133,58 +136,28 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                                                               menu:SPKLiquidGlassTabBarStateMenu()];
     tabBarBehavior.searchKeywords = @"tab bar behavior";
         tabBarBehavior.defaultsKey = kSPKPrefInterfaceLiquidGlassTabBarMode;
-        tabBarBehavior.enabledProvider = ^BOOL {
-            return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
-        };
         return tabBarBehavior;
     };
 
-    {
 
-        if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"26.0")) {
-            // Full Liquid Glass: real glass material, progressive blur, tab bar.
-            SPKSetting *liquidGlass = [SPKSetting switchCellWithTitle:@"Liquid Glass"
-                                                     icon:SPKSettingsIcon(@"aura")
-                                                          defaultsKey:kSPKPrefInterfaceLiquidGlass
+        // One switch on every iOS: taking the glass away is the useful direction
+        // now that Instagram ships it to everyone. The pre-26 row that reshaped
+        // the bar into the pill went with it, since a switch that removes the
+        // glass has nothing to offer a device that never had it.
+        SPKSetting *disableGlass = [SPKSetting switchCellWithTitle:@"Disable Liquid Glass"
+                                                              icon:SPKSettingsIcon(@"aura")
+                                                       defaultsKey:kSPKPrefInterfaceDisableLiquidGlass
+                                                   requiresRestart:YES];
+        disableGlass.helpText = @"Brings back the solid tab bar and navigation from before iOS 26.";
+        disableGlass.searchKeywords = @"liquid glass revert old solid tab bar pill";
+
+        SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive blur"
+                                                                 icon:SPKSettingsIcon(@"blend")
+                                                          defaultsKey:kSPKPrefInterfaceProgressiveBlur
                                                       requiresRestart:YES];
-            liquidGlass.switchValueProvider = ^BOOL {
-                return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
-            };
-            liquidGlass.switchChangeHandler = ^(BOOL isOn) {
-                [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:kSPKPrefInterfaceLiquidGlass];
-                [SPKUtils showRestartConfirmation];
-            };
-            liquidGlass.helpText = @"Turns on Instagram's native Liquid Glass interface even where it hasn't rolled out yet.";
+        progressiveBlur.helpText = @"Restores the navigation bar's gradual blur as you scroll.";
 
-            SPKSetting *progressiveBlur = [SPKSetting switchCellWithTitle:@"Progressive blur"
-                                                        icon:SPKSettingsIcon(@"blend")
-                                                             defaultsKey:kSPKPrefInterfaceProgressiveBlur
-                                                          requiresRestart:YES];
-            progressiveBlur.helpText = @"Restores the navigation bar's gradual blur as you scroll.";
-
-            [screenRows addObjectsFromArray:@[ liquidGlass, progressiveBlur ]];
-            // The bar's scroll behavior belongs to the tab bar on every iOS.
-                } else {
-            // Pre-iOS 26 can't render the glass material, but the same tab bar
-            // experiment gates still reshape the bar into the floating pill.
-            // Expose that as a focused toggle sharing the Liquid Glass pref.
-            SPKSetting *pillTabBar = [SPKSetting switchCellWithTitle:@"Pill-shaped tab bar"
-                                                   icon:SPKSettingsIcon(@"circle")
-                                                        defaultsKey:kSPKPrefInterfaceLiquidGlass
-                                                    requiresRestart:YES];
-            pillTabBar.switchValueProvider = ^BOOL {
-                return [SPKUtils getBoolPref:kSPKPrefInterfaceLiquidGlass];
-            };
-            pillTabBar.switchChangeHandler = ^(BOOL isOn) {
-                [[NSUserDefaults standardUserDefaults] setBool:isOn forKey:kSPKPrefInterfaceLiquidGlass];
-                [SPKUtils showRestartConfirmation];
-            };
-            pillTabBar.helpText = @"Reshapes the bar into the iOS 26 floating pill. The glass material itself needs iOS 26, so only the shape applies on this device.";
-            pillTabBar.searchKeywords = @"liquid glass floating";
-
-            [tabBarRows addObject:pillTabBar];
-                }
-    }
+        [screenRows addObjectsFromArray:@[ disableGlass, progressiveBlur ]];
 
     // The gate and the Messages-Only rows join the bar they shape.
     [tabBarRows addObjectsFromArray:@[
@@ -274,14 +247,15 @@ static BOOL SPKIsMessagesOnlyMode(void) {
                                 navSections:[SPKNotificationSettingsProvider sections]]];
     [sections addObject:SPKTopicSection(@"Screen", screenRows, nil)];
 
-    // R2: every value picker follows the switches and the gate assembled above —
-    // "Swipe Between Tabs" and "Hide on Scroll" are pickers too, not switches.
+    // Read as a sequence: what the bar shows, where it opens, how it behaves,
+    // then how it is arranged. Hiding rows stay first and together, since the
+    // second only unlocks once the first has been pushed to its end.
     [tabBarRows addObjectsFromArray:@[
-        swipeBetweenTabs,
-        tabBarBehaviorCell(),
         [SPKSetting menuCellWithTitle:@"Launch tab"
                                  icon:SPKSettingsIcon(@"home")
                                  menu:SPKLaunchTabMenu()],
+        swipeBetweenTabs,
+        tabBarBehaviorCell(),
         tabIconOrder,
     ]];
     [sections insertObject:SPKTopicSection(@"Tab bar", tabBarRows, nil) atIndex:0];
