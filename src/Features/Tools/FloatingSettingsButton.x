@@ -1,21 +1,19 @@
 #import "../../Utils.h"
 #import "../../Shared/UI/SPKChrome.h"
+#import <objc/message.h>
 #import <objc/runtime.h>
 
-// A floating way into Sparkle for the one configuration that has no other.
+// A floating way back to Instagram's settings once the profile tab is hidden.
 //
-// Hiding the tab bar takes the tab bar's long-press with it, and the profile
-// tab that leads to Instagram's own settings screen — where the sparkle button
-// lives — is hidden too by then. The row that hides the bar promises "Sparkle
-// then opens from the sparkle button in the Messages header", but that header
-// button installs only under conditions of its own, so the promise can go
-// unkept. This button keeps it.
+// That screen is reached from your own profile, and the sparkle button that
+// opens Sparkle lives inside it — so hiding the profile tab closes both doors
+// at once. From that toggle on, this button rides every tab and reopens them.
 //
-// It exists only while the bar is hidden. Nothing to switch on, nothing to
-// discover: the door appears exactly when the other doors close.
+// Nothing to switch on and nothing to find: it appears exactly when the other
+// route disappears, and goes away again when the tab comes back.
 //
 // The drag behaviour mirrors the seen bubble in Messages — move it out of the
-// way, it stays where you put it, and it returns on its own after a while.
+// way, it stays where you put it, and it returns to its corner on its own.
 
 static const void *kSPKFloatingButtonAssocKey = &kSPKFloatingButtonAssocKey;
 
@@ -27,25 +25,12 @@ static const NSTimeInterval kSPKFloatingButtonReturnDelay = 4.0;
 
 #pragma mark - Condition
 
-// Mirrors SPKIsMessagesOnlyMode() in AppBootstrap.xm, which is static there.
-static BOOL SPKFloatingButtonMessagesOnlyMode(void) {
-    BOOL messagesVisible = ![SPKUtils getBoolPref:@"interface_hide_msgs_tab"];
-    BOOL feedHidden = [SPKUtils getBoolPref:@"interface_hide_feed_tab"];
-    BOOL exploreHidden = [SPKUtils getBoolPref:@"interface_hide_explore_tab"];
-    BOOL reelsHidden = [SPKUtils getBoolPref:@"interface_hide_reels_tab"];
-    BOOL profileHidden = [SPKUtils getBoolPref:@"interface_hide_profile_tab"];
-
-    BOOL usesClassic = [[SPKUtils getStringPref:@"interface_nav_order"] isEqualToString:@"classic"];
-    BOOL createHidden = !usesClassic || [SPKUtils getBoolPref:@"interface_hide_create_tab"];
-
-    return messagesVisible && feedHidden && exploreHidden && reelsHidden && profileHidden && createHidden;
-}
-
-// The single preference that actually removes the bar. The six per-tab keys
-// hide tabs one by one; the bar itself stays.
+// Hiding the profile tab is what cuts the route to Instagram's own settings
+// screen: that screen is reached from your profile, and the sparkle button
+// that opens Sparkle lives inside it. From that toggle on, this button is the
+// way back — on every tab, not only in Messages.
 static BOOL SPKFloatingButtonShouldShow(void) {
-    return [SPKUtils getBoolPref:@"interface_hide_tab_bar_in_messages_only"] &&
-           SPKFloatingButtonMessagesOnlyMode();
+    return [SPKUtils getBoolPref:@"interface_hide_profile_tab"];
 }
 
 #pragma mark - Placement
@@ -112,7 +97,51 @@ static void SPKFloatingButtonSendHome(UIView *button, BOOL animated) {
     return target;
 }
 
+// Instagram's own "Settings and activity" screen, which is what the hidden
+// profile tab took away. Its controller cannot be built from here — the tweak
+// only ever recognises it by class name at runtime — so the app is asked to
+// route to it the way it routes any internal link, which is the same engine
+// SPKUtils already uses to open a profile.
+//
+// instagram://settings is a link the app itself carries; it is read out of the
+// binary, not invented. If the route is refused, Sparkle's own settings open
+// instead, so the button always leads somewhere.
+static BOOL SPKFloatingButtonOpenInstagramSettings(void) {
+    Class urlHandlerClass = objc_getClass("IGURLHandler");
+    NSURL *settingsURL = [NSURL URLWithString:@"instagram://settings"];
+    if (!urlHandlerClass || !settingsURL)
+        return NO;
+
+    id session = [SPKUtils activeUserSession];
+    if (!session)
+        return NO;
+
+    UIViewController *presenter = SPKFloatingButtonHostWindow().rootViewController;
+    while (presenter.presentedViewController)
+        presenter = presenter.presentedViewController;
+
+    SEL internalRoute = @selector(openInternalURL:presentationConfig:controller:animated:userSession:annotation:);
+    if ([urlHandlerClass respondsToSelector:internalRoute]) {
+        typedef BOOL (*OpenInternalFunc)(Class, SEL, id, id, id, BOOL, id, id);
+        OpenInternalFunc route = (OpenInternalFunc)objc_msgSend;
+        if (route(urlHandlerClass, internalRoute, settingsURL, nil, presenter, YES, session, nil))
+            return YES;
+    }
+
+    SEL plainRoute = @selector(openURL:userSession:completionHandler:);
+    if ([urlHandlerClass respondsToSelector:plainRoute]) {
+        typedef void (*OpenURLFunc)(Class, SEL, id, id, id);
+        OpenURLFunc route = (OpenURLFunc)objc_msgSend;
+        route(urlHandlerClass, plainRoute, settingsURL, session, nil);
+        return YES;
+    }
+    return NO;
+}
+
 - (void)tapped:(id)sender {
+    if (SPKFloatingButtonOpenInstagramSettings())
+        return;
+
     UIView *button = [sender isKindOfClass:[UIView class]] ? (UIView *)sender : nil;
     UIWindow *window = (UIWindow *)button.window ?: SPKFloatingButtonHostWindow();
     if (window)
