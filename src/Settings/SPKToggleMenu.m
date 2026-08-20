@@ -53,6 +53,22 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
     return [visible copy];
 }
 
+#pragma mark - Deferred restart
+
+// Raised by any item that needs a restart, lowered once the question is asked.
+static BOOL gSPKToggleMenuRestartNeeded = NO;
+
+static void SPKToggleMenuNoteRestartNeeded(void) {
+    gSPKToggleMenuRestartNeeded = YES;
+}
+
+static void SPKToggleMenuAskForRestartIfNeeded(void) {
+    if (!gSPKToggleMenuRestartNeeded)
+        return;
+    gSPKToggleMenuRestartNeeded = NO;
+    [SPKUtils showRestartConfirmation];
+}
+
 #pragma mark - Item control (manual frame layout — fully deterministic)
 
 @interface SPKToggleMenuItemControl : UIControl
@@ -183,8 +199,13 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
             [(SPKToggleMenuItemControl *)sibling refreshAnimated:(sibling == self)];
     }
 
+    // Asked for once, when the menu closes.
+    //
+    // Prompting on every tap turned a run of four toggles into four dialogs,
+    // each interrupting the next choice. The menu is one decision; the restart
+    // it needs is one question at the end of it.
     if (self.item.requiresRestart)
-        [SPKUtils showRestartConfirmation];
+        SPKToggleMenuNoteRestartNeeded();
 }
 
 - (void)setHighlighted:(BOOL)highlighted {
@@ -225,6 +246,7 @@ static NSArray<SPKToggleMenuItem *> *SPKToggleMenuVisibleItems(NSArray<SPKToggle
             [self removeFromSuperview];
             if (self.onDismiss)
                 self.onDismiss();
+            SPKToggleMenuAskForRestartIfNeeded();
         }];
 }
 

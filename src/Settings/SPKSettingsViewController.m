@@ -16,7 +16,7 @@
 #import "SPKWhatsNewViewController.h"
 #import "SPKSettingsHelpSheetViewController.h"
 
-#pragma mark - Convention UI — métriques mesurées (une ligne = un réglage)
+#pragma mark - Layout metrics (measured; one line per setting)
 // Measured from Instagram's native settings via screenshot comparison.
 // TOUTE retouche de mise en page se fait ICI, nulle part ailleurs.
 static CGFloat const SPKUI_RowHeight          = 44.0;  // standard row pitch
@@ -446,6 +446,25 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     return image;
 }
 
+// The close mark, built from Apple's symbol rather than Instagram's asset.
+//
+// Measured side by side: the Instagram icon renders 13.3 pt wide with a 1.67 pt
+// stroke, the symbol 16.3 pt with a 3.0 pt stroke. The heavier one is the one
+// that reads as a control rather than a hairline.
+static UIBarButtonItem *SPKSettingsCloseBarButtonItem(id target, SEL action) {
+    UIImage *mark =
+        [UIImage systemImageNamed:@"xmark"
+                withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:16.0
+                                                                                  weight:UIImageSymbolWeightSemibold]];
+    UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithImage:mark
+                                                             style:UIBarButtonItemStylePlain
+                                                            target:target
+                                                            action:action];
+    item.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+    item.accessibilityLabel = @"Close";
+    return item;
+}
+
 @implementation SPKSettingsViewController
 
 - (UIView *)selectionBackgroundView {
@@ -610,7 +629,7 @@ static UIImage *SPKSettingsBreadcrumbChevronImage(void) {
     BOOL isModalRoot = self.navigationController.presentingViewController &&
                        self.navigationController.viewControllers.firstObject == self;
     NSArray<UIBarButtonItem *> *leadingItems = isModalRoot
-                                                   ? @[ SPKMediaChromeTopBarButtonItemWithPointSize(@"xmark", 16.0, self, @selector(closeTapped)) ]
+                                                   ? @[ SPKSettingsCloseBarButtonItem(self, @selector(closeTapped)) ]
                                                    : @[];
     SPKMediaChromeSetLeadingTopBarItems(self.navigationItem, leadingItems);
 
