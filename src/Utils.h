@@ -128,6 +128,7 @@ FOUNDATION_EXPORT Class _Nullable SPKResolveIGClass(NSString *qualified, NSStrin
 // Display View Controllers
 + (void)showShareVC:(id)item;
 + (void)showSettingsVC:(UIWindow *)window;
++ (void)showSettingsFromController:(UIViewController *)controller;
 + (void)showSettingsForTopicTitle:(NSString *)title;
 + (void)presentViewControllerInSheet:(UIViewController *)vc;
 
