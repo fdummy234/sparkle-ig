@@ -125,6 +125,15 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
 
 %hook UIViewController
 
+// Arranged before the first paint, not after it. Seating the bar only once the
+// screen had appeared let Instagram's blue button show for a frame.
+- (void)viewWillAppear:(BOOL)animated {
+    %orig;
+    SPKSeatSettingsEntryItem(self);
+}
+
+// Kept as well: the bar is restyled after appearance on some transitions, and
+// the arranging is cheap enough to run twice.
 - (void)viewDidAppear:(BOOL)animated {
     %orig;
     SPKSeatSettingsEntryItem(self);
