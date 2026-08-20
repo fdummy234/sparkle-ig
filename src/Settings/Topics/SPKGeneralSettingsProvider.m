@@ -179,65 +179,7 @@ static NSString *SPKGeneralHiddenCountAccessory(NSArray<NSDictionary<NSString *,
                                                      defaultsKey:@"general_disable_haptics"];
     disableHaptics.searchKeywords = @"app vibration vibrations taptic feedback";
 
-    SPKSetting *headerButton = [SPKSetting switchCellWithTitle:@"Show header button"
-                                                          icon:SPKSettingsIcon(@"action")
-                                                   defaultsKey:kSPKHeaderButtonEnabledKey];
-    headerButton.reloadsTableOnSwitchChange = YES;
-    headerButton.searchKeywords = @"feed header button";
-    headerButton.helpText = @"Adds a Sparkle button to the feed header. Tap opens your default destination; long-press lists every enabled one.";
-    headerButton.searchKeywords = @"feed header button shortcut";
-
-    // Five switches. The menu order itself is fixed in
-    // SPKHeaderButtonAllDestinations() and is not editable here., so even
-    // reconnected it would have opened blank. These are the five destinations
-    // SPKHeaderDestPrefKey() still reads at runtime.
-    SPKSetting *configureDestinations = [SPKSetting navigationCellWithTitle:@"Configure destinations"
-                                                                   subtitle:nil
-                                                                       icon:SPKSettingsIcon(@"slider")
-                                                                navSections:@[
-                                                                    SPKTopicSection(@"Destinations", @[
-                                                                        [SPKSetting switchCellWithTitle:@"Gallery"
-                                                                                                   icon:SPKSettingsIcon(@"sparkle_gallery")
-                                                                                            defaultsKey:@"feed_header_button_dest_gallery"],
-                                                                        [SPKSetting switchCellWithTitle:@"Profile analyzer"
-                                                                                                   icon:SPKSettingsIcon(@"profile_analyzer")
-                                                                                            defaultsKey:@"feed_header_button_dest_analyzer"],
-                                                                        [SPKSetting switchCellWithTitle:@"Deleted messages"
-                                                                                                   icon:SPKSettingsIcon(@"channels")
-                                                                                            defaultsKey:@"feed_header_button_dest_deleted"],
-                                                                        [SPKSetting switchCellWithTitle:@"Downloads"
-                                                                                                   icon:SPKSettingsIcon(@"download")
-                                                                                            defaultsKey:@"feed_header_button_dest_downloads"],
-                                                                        [SPKSetting switchCellWithTitle:@"Sparkle settings"
-                                                                                                   icon:SPKSettingsIcon(@"settings")
-                                                                                            defaultsKey:@"feed_header_button_dest_settings"],
-                                                                    ], nil)
-                                                                ]];
-    configureDestinations.hiddenProvider = ^BOOL {
-        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-    };
-    configureDestinations.searchKeywords = @"configure";
-    configureDestinations.helpText = @"Enable one destination for a direct tap, or several to pick from the long-press menu.";
-
-    // Fires when this button's menu opens, so it follows the same visibility
-    // rule as the row above.
-    SPKSetting *shortcutHaptics = [SPKSetting switchCellWithTitle:@"Haptics on shortcuts"
-                                                             icon:SPKSettingsIcon(@"haptics")
-                                                      defaultsKey:@"tools_shortcut_haptics"];
-    shortcutHaptics.hiddenProvider = ^BOOL {
-        return ![SPKUtils getBoolPref:kSPKHeaderButtonEnabledKey];
-    };
-    shortcutHaptics.searchKeywords = @"haptic vibration feedback";
-    shortcutHaptics.helpText = @"A short tap of feedback when the header button's menu opens.";
-
     SPKSetting *root = SPKTopicNavigationSetting(@"General", @"settings", 24.0, @[
-        // The button opens Sparkle's own screens from the header on any tab.
-        SPKTopicSection(@"Header shortcut", @[
-            headerButton,
-            SPKFeedHeaderButtonDefaultActionNavigationSetting(),
-            shortcutHaptics,
-            configureDestinations
-        ], nil),
 
         // Behavior + Sharing merged: four rows, one subject — copying and
         // sharing. (No Recent Searches moved to Interface › Explore & Search;
