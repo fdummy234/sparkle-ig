@@ -30,9 +30,20 @@ static const void *kSPKSettingsCloseItemAssocKey = &kSPKSettingsCloseItemAssocKe
 }
 
 - (void)closeSettings:(id)sender {
-    // Instagram's own control is gone from the bar, so the dismissal is done
-    // here. This screen is presented, never pushed, so dismissing it is the
-    // whole of what its button did.
+    // Dismissal reads the hierarchy rather than a remembered controller.
+    //
+    // The owner was held on this shared target, so any later screen matching the
+    // predicate overwrote it and the button stopped closing anything. Whatever
+    // is topmost is asked to go away instead, which needs no memory at all.
+    UIViewController *root = UIApplication.sharedApplication.keyWindow.rootViewController;
+    UIViewController *top = root;
+    while (top.presentedViewController)
+        top = top.presentedViewController;
+
+    if (top != root && top.presentingViewController) {
+        [top.presentingViewController dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
     [self.owner dismissViewControllerAnimated:YES completion:nil];
 }
 
