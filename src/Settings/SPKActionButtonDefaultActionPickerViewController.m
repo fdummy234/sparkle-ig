@@ -45,7 +45,7 @@ NSString *SPKActionButtonDefaultActionIdentifierForSource(SPKActionButtonSource 
 NSString *SPKActionButtonDefaultActionTitleForSource(SPKActionButtonSource source) {
     NSString *identifier = SPKActionButtonDefaultActionIdentifierForSource(source);
     if ([identifier isEqualToString:kSPKActionNone])
-        return @"Open Menu";
+        return @"Open menu";
     return SPKActionDescriptorDisplayTitle(identifier, SPKActionButtonTopicTitleForSource(source));
 }
 
@@ -203,7 +203,7 @@ static NSArray<NSDictionary *> *SPKActionButtonDefaultActionSections(SPKActionBu
     config.directionalLayoutMargins = NSDirectionalEdgeInsetsMake(9.0, 15.0, 9.0, 16.0);
     config.imageToTextPadding = 14.0;
     config.imageProperties.maximumSize = CGSizeMake(26.0, 26.0);
-    config.text = isNone ? @"Open Menu" : SPKActionDescriptorDisplayTitle(identifier, SPKActionButtonTopicTitleForSource(self.source));
+    config.text = isNone ? @"Open menu" : SPKActionDescriptorDisplayTitle(identifier, SPKActionButtonTopicTitleForSource(self.source));
     config.textProperties.color = [SPKUtils SPKColor_InstagramPrimaryText];
     config.image = SPKSettingsIcon(isNone ? @"action" : SPKActionDescriptorIconName(identifier));
     config.imageProperties.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];

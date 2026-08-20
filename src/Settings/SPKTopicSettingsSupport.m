@@ -153,7 +153,7 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
             // through footer text (SPKSettingsViewController.m:1219). Per row it
             // also reads better than one line trying to cover both.
             if ([entry.title isEqualToString:@"Tap action"])
-                entry.helpText = @"What a single tap on the action button does. Open Menu opens the whole menu instead of running an action.";
+                entry.helpText = @"What a single tap on the action button does. Open menu opens the whole menu instead of running an action.";
             else
                 entry.helpText = @"Everything the action button opens. Swipe an action left to take it out of the menu, right to put it back, and hold to drag it \u2014 between the first level, a submenu, or a new one.";
             [menuRows addObject:entry];
@@ -164,21 +164,13 @@ SPKSetting *SPKActionButtonRowSetting(NSString *enabledKey, NSString *_Nullable 
             [buttonRows addObject:entry];
     }
 
-    // Sparkle's own menu, off by default: the native menu stays until he turns
-    // this on, so a fault here is one switch away from being undone.
-    SPKSetting *sparkleMenuRow = [SPKSetting switchCellWithTitle:@"Sparkle menu"
-                                                            icon:SPKSettingsIcon(@"sparkle")
-                                                     defaultsKey:@"action_button_sparkle_menu"];
-    sparkleMenuRow.helpText = @"Draws the action button's menu the way Sparkle draws its own: a line between every row, tighter margins. Off keeps the iPhone's menu.";
-    [menuRows addObject:sparkleMenuRow];
-
     NSMutableArray *navSections = [NSMutableArray array];
     [navSections addObject:SPKTopicSection(@"The button", buttonRows, nil)];
     if (menuRows.count > 0)
         // Not rendered: section footers only feed the search index. This one
         // makes the section findable on "swipe", "reorder" and "submenu".
         [navSections addObject:SPKTopicSection(@"Its menu", menuRows,
-            @"On Tap is what a single tap does. Configure Menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
+            @"Tap action is what a single tap does. Configure menu is everything the action button opens \u2014 swipe to remove or add an action, drag to reorder.")];
     if (finalRows.count > 0)
         [navSections addObject:SPKTopicSection(@"", finalRows, footer)];
 
