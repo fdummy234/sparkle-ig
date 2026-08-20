@@ -25,16 +25,6 @@ static const NSTimeInterval kSPKFloatingButtonReturnDelay = 4.0;
 
 #pragma mark - Condition
 
-// Hiding the profile tab is what cuts the route to Instagram's own settings
-// screen: that screen is reached from your profile, and the sparkle button
-// that opens Sparkle lives inside it. From that toggle on, this button is the
-// way back — on every tab, not only in Messages.
-static BOOL SPKFloatingButtonShouldShow(void) {
-    return [SPKUtils getBoolPref:@"interface_hide_profile_tab"];
-}
-
-#pragma mark - Placement
-
 static UIWindow *SPKFloatingButtonHostWindow(void) {
     UIWindow *best = nil;
     for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
@@ -52,40 +42,108 @@ static UIWindow *SPKFloatingButtonHostWindow(void) {
     return best;
 }
 
-// Where the tab bar's top edge sits, in host coordinates.
+// True while a settings screen — Instagram's or Sparkle's — is on top.
 //
-// Only the profile tab is hidden here, so the bar is still on screen and the
-// safe area alone would drop the button straight onto it. The bar is found by
-// walking the tree for a view whose class carries "TabBar" — asked of the live
-// hierarchy rather than assumed from a class name, since Instagram renames
-// these between versions. Returns CGFLOAT_MAX when there is no bar to clear.
-static CGFloat SPKFloatingButtonTabBarTop(UIView *host, NSInteger depth) {
-    if (!host || depth > 6)
+// Matched the way NativeSettingsEntry matches it: the Swift class name is a
+// generic specialisation, so it varies, and the title is the steadier signal.
+static BOOL SPKFloatingButtonSettingsAreOpen(void) {
+    UIWindow *window = SPKFloatingButtonHostWindow();
+    UIViewController *top = window.rootViewController;
+    while (top.presentedViewController)
+        top = top.presentedViewController;
+
+    for (UIViewController *controller in @[ top, top.childViewControllers.firstObject ?: top ]) {
+        const char *name = class_getName([controller class]);
+        if (name && (strstr(name, "IGSettingsHostingController") || strstr(name, "SPKSettings")))
+            return YES;
+        if ([controller.title isEqualToString:@"Settings and activity"])
+            return YES;
+        UIViewController *visible = [controller isKindOfClass:[UINavigationController class]]
+            ? ((UINavigationController *)controller).topViewController
+            : nil;
+        if ([visible.title isEqualToString:@"Settings and activity"])
+            return YES;
+        const char *visibleName = visible ? class_getName([visible class]) : NULL;
+        if (visibleName && (strstr(visibleName, "IGSettingsHostingController") || strstr(visibleName, "SPKSettings")))
+            return YES;
+    }
+    return NO;
+}
+
+// One preference decides whether the button belongs on screen at all: with the
+// profile tab hidden there is no route left to Settings and activity. It then
+// steps aside while those settings are actually open, and comes back when they
+// close — the layout pass that follows the dismissal puts it back.
+static BOOL SPKFloatingButtonShouldShow(void) {
+    if (![SPKUtils getBoolPref:@"interface_hide_profile_tab"])
+        return NO;
+    return !SPKFloatingButtonSettingsAreOpen();
+}
+
+#pragma mark - Placement
+
+
+// Where the bottom chrome starts, in screen coordinates.
+//
+// Only the profile tab is hidden here, so the tab bar is still on screen and
+// the safe area alone drops the button straight onto it — measured at 33 pt of
+// overlap on a real screen.
+//
+// The bar is found by shape rather than by name: a wide, shallow view sitting
+// against the bottom of the screen. Names change between Instagram versions and
+// a name-based search already missed it once; a floating tab bar always has
+// these proportions. Every window is searched, since the bar need not live in
+// the same one as the button.
+static CGFloat SPKFloatingButtonBottomChromeTop(UIView *view, CGFloat screenWidth, CGFloat screenBottom, NSInteger depth) {
+    if (!view || depth > 8)
         return CGFLOAT_MAX;
 
     CGFloat top = CGFLOAT_MAX;
-    for (UIView *view in host.subviews) {
-        if (view.isHidden || view.alpha <= 0.05)
+    for (UIView *child in view.subviews) {
+        if (child.isHidden || child.alpha <= 0.05)
             continue;
 
-        const char *name = class_getName([view class]);
-        if (name && strstr(name, "TabBar") && CGRectGetHeight(view.bounds) > 1.0)
-            top = MIN(top, CGRectGetMinY([view convertRect:view.bounds toView:nil]));
+        CGRect frame = [child convertRect:child.bounds toView:nil];
+        BOOL wide = CGRectGetWidth(frame) >= screenWidth * 0.55;
+        BOOL shallow = CGRectGetHeight(frame) >= 32.0 && CGRectGetHeight(frame) <= 120.0;
+        BOOL seated = CGRectGetMaxY(frame) >= screenBottom - 60.0 && CGRectGetMaxY(frame) <= screenBottom + 4.0;
+        if (wide && shallow && seated)
+            top = MIN(top, CGRectGetMinY(frame));
 
-        top = MIN(top, SPKFloatingButtonTabBarTop(view, depth + 1));
+        top = MIN(top, SPKFloatingButtonBottomChromeTop(child, screenWidth, screenBottom, depth + 1));
+    }
+    return top;
+}
+
+static CGFloat SPKFloatingButtonBottomChromeTopInAllWindows(CGFloat screenWidth, CGFloat screenBottom) {
+    CGFloat top = CGFLOAT_MAX;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:[UIWindowScene class]])
+            continue;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (window.isHidden || window.alpha <= 0.01)
+                continue;
+            top = MIN(top, SPKFloatingButtonBottomChromeTop(window, screenWidth, screenBottom, 0));
+        }
     }
     return top;
 }
 
 // Bottom trailing corner, clear of whatever chrome is down there.
+//
+// The reel action rail runs down the trailing side, so this corner is not free
+// on every surface — but it is the one a thumb reaches, and the button can be
+// dragged out of the way when it gets in one.
 static CGPoint SPKFloatingButtonHomeCenter(UIView *host) {
     UIEdgeInsets safe = host.safeAreaInsets;
     CGFloat half = kSPKFloatingButtonDiameter / 2.0;
 
+    CGRect screen = [host convertRect:host.bounds toView:nil];
     CGFloat floor = CGRectGetHeight(host.bounds) - safe.bottom;
-    CGFloat tabBarTop = SPKFloatingButtonTabBarTop(host, 0);
-    if (tabBarTop < CGFLOAT_MAX)
-        floor = MIN(floor, tabBarTop);
+    CGFloat chromeTop = SPKFloatingButtonBottomChromeTopInAllWindows(CGRectGetWidth(screen),
+                                                                    CGRectGetMaxY(screen));
+    if (chromeTop < CGFLOAT_MAX)
+        floor = MIN(floor, chromeTop - CGRectGetMinY(screen));
 
     return CGPointMake(CGRectGetWidth(host.bounds) - safe.right - kSPKFloatingButtonMargin - half,
                        floor - kSPKFloatingButtonMargin - half);
@@ -115,6 +173,8 @@ static void SPKFloatingButtonSendHome(UIView *button, BOOL animated) {
 @interface SPKFloatingSettingsButtonTarget : NSObject
 + (instancetype)sharedTarget;
 - (void)tapped:(id)sender;
+- (void)pressedDown:(UIView *)button;
+- (void)pressedUp:(UIView *)button;
 - (void)panned:(UIPanGestureRecognizer *)pan;
 @end
 
@@ -166,6 +226,24 @@ static BOOL SPKFloatingButtonOpenInstagramSettings(void) {
         return YES;
     }
     return NO;
+}
+
+- (void)pressedDown:(UIView *)button {
+    [UIView animateWithDuration:0.12
+                          delay:0.0
+                        options:UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{ button.transform = CGAffineTransformMakeScale(0.90, 0.90); }
+                     completion:nil];
+}
+
+- (void)pressedUp:(UIView *)button {
+    [UIView animateWithDuration:0.26
+                          delay:0.0
+         usingSpringWithDamping:0.7
+          initialSpringVelocity:0.0
+                        options:UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{ button.transform = CGAffineTransformIdentity; }
+                     completion:nil];
 }
 
 - (void)tapped:(id)sender {
@@ -251,11 +329,13 @@ static void SPKFloatingButtonInstallInWindow(UIWindow *window) {
     button = [[SPKChromeButton alloc] initWithSymbol:@""
                                            pointSize:24.0
                                             diameter:kSPKFloatingButtonDiameter];
-    // The same glyph the header button already draws for Sparkle, so the two
-    // read as the same door rather than two unrelated buttons.
-    // Measured against the tab bar's own glyphs, which are 22 pt: at 20 pt this
-    // one read as the smaller of the two.
-    [button setIconResource:@"action" pointSize:24.0];
+    // The same glyph the profile tab carries top right — the one that opens
+    // Settings and activity, and the one hiding that tab took away. Sparkle's
+    // own star stays on the entry inside that screen, where it belongs.
+    //
+    // Sized against the tab bar's glyphs, measured at 22 pt: 24 pt puts this one
+    // a shade above them rather than under.
+    [button setIconResource:@"settings_menu" pointSize:24.0];
     button.iconTint = UIColor.labelColor;
     // The same material the tab bar underneath is made of, so the button reads
     // as part of the chrome rather than pasted over it. Glass on iOS 26, system
@@ -280,6 +360,16 @@ static void SPKFloatingButtonInstallInWindow(UIWindow *window) {
     [button addTarget:[SPKFloatingSettingsButtonTarget sharedTarget]
                action:@selector(tapped:)
      forControlEvents:UIControlEventTouchUpInside];
+    // Nothing acknowledged a press before: the glass sat flat and the settings
+    // took a moment to arrive, so a tap felt ignored. Same press scale the
+    // action menu uses on its own container.
+    [button addTarget:[SPKFloatingSettingsButtonTarget sharedTarget]
+               action:@selector(pressedDown:)
+     forControlEvents:UIControlEventTouchDown];
+    [button addTarget:[SPKFloatingSettingsButtonTarget sharedTarget]
+               action:@selector(pressedUp:)
+     forControlEvents:(UIControlEventTouchUpInside | UIControlEventTouchUpOutside |
+                       UIControlEventTouchCancel | UIControlEventTouchDragExit)];
 
     // A quick tap still opens the settings: the pan only takes over once the
     // finger actually travels.

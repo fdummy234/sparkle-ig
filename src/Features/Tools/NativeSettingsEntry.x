@@ -72,6 +72,12 @@ static void SPKSeatSettingsEntryItem(UIViewController *controller) {
     // touch and the second stops taking taps. The left side is empty on that
     // screen, so the entry goes there instead and keeps its own hit area.
     if (right.count > 0) {
+        // Instagram's Done is tinted its link blue, which reads as the only
+        // actionable thing up there. Black puts it level with the rest of the
+        // bar, and with the entry now sitting opposite it.
+        for (UIBarButtonItem *existingItem in right)
+            existingItem.tintColor = [SPKUtils SPKColor_InstagramPrimaryText];
+
         NSArray<UIBarButtonItem *> *left = controller.navigationItem.leftBarButtonItems;
         if ([left containsObject:item])
             return;
