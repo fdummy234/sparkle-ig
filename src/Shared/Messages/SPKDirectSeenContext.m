@@ -1032,8 +1032,8 @@ NSString *SPKDirectCurrentThreadRuleConfirmationMessage(SPKDirectThreadContext *
         return nil;
     BOOL applies = SPKDirectManualSeenAppliesToSource(context);
     return applies
-               ? [NSString stringWithFormat:@"Do you want to start marking %@ as seen?", threadName]
-               : [NSString stringWithFormat:@"Do you want to stop marking %@ as seen?", threadName];
+               ? [NSString stringWithFormat:@"Messages from %@ are marked as seen from now on.", threadName]
+               : [NSString stringWithFormat:@"Messages from %@ stop being marked as seen.", threadName];
 }
 
 BOOL SPKDirectToggleCurrentThreadRule(SPKDirectThreadContext *context, NSString **notificationTitle, NSString **notificationSubtitle) {
@@ -1275,7 +1275,7 @@ BOOL SPKDirectToggleCurrentThreadRule(SPKDirectThreadContext *context, NSString 
                                                             ? [NSString stringWithFormat:@"@%@ (%@)", resolvedUsername, fullName]
                                                             : [@"@" stringByAppendingString:resolvedUsername];
                                     [SPKIGAlertPresenter presentAlertFromViewController:innerSelf
-                                                                                  title:@"Add to List?"
+                                                                                  title:@"Add to list"
                                                                                 message:message
                                                                                 actions:@[
                                                                                     [SPKIGAlertAction actionWithTitle:@"Cancel"

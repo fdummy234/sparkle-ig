@@ -170,8 +170,8 @@ NSString *SPKDirectAutoSaveCurrentThreadConfirmationMessage(SPKDirectThreadConte
         return nil;
     NSString *name = SPKDirectAutoSaveThreadDisplayName(context);
     return SPKDirectAutoSaveAppliesToThread(threadId)
-               ? [NSString stringWithFormat:@"Do you want to stop auto-saving view-once media from %@?", name]
-               : [NSString stringWithFormat:@"Do you want to auto-save every view-once photo and video from %@?", name];
+               ? [NSString stringWithFormat:@"View-once media from %@ stops being saved automatically.", name]
+               : [NSString stringWithFormat:@"Every view-once photo and video from %@ is saved automatically.", name];
 }
 
 BOOL SPKDirectToggleAutoSaveCurrentThread(SPKDirectThreadContext *context,
@@ -381,7 +381,7 @@ void SPKDirectPresentAutoSaveThreadRuleToggle(SPKDirectThreadContext *context) {
                                     NSString *message = fullName.length > 0 ? [NSString stringWithFormat:@"@%@ (%@)", username, fullName]
                                                                             : [@"@" stringByAppendingString:username];
                                     [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
-                                                                                  title:@"Auto-Save This Chat?"
+                                                                                  title:@"Auto-save this chat"
                                                                                 message:message
                                                                                 actions:@[
                                                                                     [SPKIGAlertAction actionWithTitle:@"Cancel"
