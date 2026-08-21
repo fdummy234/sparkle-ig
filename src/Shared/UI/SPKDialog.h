@@ -30,6 +30,22 @@ typedef NS_ENUM(NSInteger, SPKDialogActionStyle) {
                       message:(nullable NSString *)message
                       actions:(NSArray<SPKDialogAction *> *)actions;
 
+typedef void (^SPKDialogTextHandler)(NSString *text);
+
+// A dialog carrying a single text field, for the handful of prompts that ask
+// for a name rather than a yes or no.
++ (void)presentTextInputFromController:(UIViewController *)controller
+                                 title:(NSString *)title
+                               message:(nullable NSString *)message
+                           placeholder:(nullable NSString *)placeholder
+                           initialText:(nullable NSString *)initialText
+                       autocapitalized:(BOOL)autocapitalized
+                          confirmTitle:(NSString *)confirmTitle
+                           cancelTitle:(NSString *)cancelTitle
+                          confirmStyle:(SPKDialogActionStyle)confirmStyle
+                          confirmBlock:(SPKDialogTextHandler)confirmBlock
+                           cancelBlock:(nullable dispatch_block_t)cancelBlock;
+
 + (void)presentInWindow:(UIWindow *)window
                   title:(NSString *)title
                 message:(nullable NSString *)message

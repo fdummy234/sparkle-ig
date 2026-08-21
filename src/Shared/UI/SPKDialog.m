@@ -20,7 +20,7 @@
 // one of these: same width, same corner, same row height, same margin, same
 // shadow. A dialog that differed on seven of eight read as a stranger among
 // them.
-static CGFloat const kSPKDialogWidth = 262.0;
+static CGFloat const kSPKDialogWidth = 250.0;
 static CGFloat const kSPKDialogCornerRadius = 13.0;
 static CGFloat const kSPKDialogPadding = 14.0;
 static CGFloat const kSPKDialogButtonHeight = 44.0;
@@ -135,6 +135,42 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
 //
 // Every migrated call site held a controller, not a window, so this saves each
 // of them from looking one up.
+// The text prompts keep Instagram's alert whichever way the switch is set.
+//
+// A field inside the card would have to carry the keyboard, its own return key
+// and the disabled state of an empty confirm button — none of which this dialog
+// knows how to draw yet. Routing them here keeps one code path for callers and
+// leaves the shape honest.
++ (void)presentTextInputFromController:(UIViewController *)controller
+                                 title:(NSString *)title
+                               message:(NSString *)message
+                           placeholder:(NSString *)placeholder
+                           initialText:(NSString *)initialText
+                       autocapitalized:(BOOL)autocapitalized
+                          confirmTitle:(NSString *)confirmTitle
+                           cancelTitle:(NSString *)cancelTitle
+                          confirmStyle:(SPKDialogActionStyle)confirmStyle
+                          confirmBlock:(SPKDialogTextHandler)confirmBlock
+                           cancelBlock:(dispatch_block_t)cancelBlock {
+    SPKIGAlertActionStyle style = SPKIGAlertActionStyleDefault;
+    if (confirmStyle == SPKDialogActionStyleCancel)
+        style = SPKIGAlertActionStyleCancel;
+    else if (confirmStyle == SPKDialogActionStyleDestructive)
+        style = SPKIGAlertActionStyleDestructive;
+
+    [SPKIGAlertPresenter presentTextInputAlertFromViewController:controller
+                                                          title:title
+                                                        message:message
+                                                    placeholder:placeholder
+                                                    initialText:initialText
+                                                autocapitalized:autocapitalized
+                                                   confirmTitle:confirmTitle
+                                                    cancelTitle:cancelTitle
+                                                   confirmStyle:style
+                                                   confirmBlock:confirmBlock
+                                                    cancelBlock:cancelBlock];
+}
+
 + (void)presentFromController:(UIViewController *)controller
                         title:(NSString *)title
                       message:(NSString *)message
@@ -143,7 +179,7 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
     // system one decides this too, so the tweak wears one style or the other and
     // never both at once.
     if (![SPKUtils getBoolPref:kSPKPrefSparkleAppearance]) {
-        NSMutableArray *native = [NSMutableArray array];
+        NSMutableArray<SPKIGAlertAction *> *native = [NSMutableArray array];
         for (SPKDialogAction *action in actions) {
             SPKIGAlertActionStyle style = SPKIGAlertActionStyleDefault;
             if (action.style == SPKDialogActionStyleCancel)

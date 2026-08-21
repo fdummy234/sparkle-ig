@@ -1,3 +1,4 @@
+#import "SPKDialog.h"
 #import "SPKUserListViewController.h"
 #import "../../AssetUtils.h"
 #import "../../Utils.h"
@@ -234,10 +235,10 @@ typedef NS_ENUM(NSInteger, SPKUserListSortMode) {
 - (void)spk_showInfo {
     if (!self.infoText.length)
         return;
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"How It Works"
                                                 message:self.infoText
-                                                actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
+                                                actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleCancel handler:nil] ]];
 }
 
 - (void)spk_addTapped {

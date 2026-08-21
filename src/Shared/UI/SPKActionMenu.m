@@ -3,6 +3,11 @@
 // Convention v1.2 metrics, the same numbers SPKToggleMenu draws with — kept
 // here rather than imported so this menu never depends on the settings tree.
 static CGFloat const kSPKActionMenuMinWidth = 262.0;
+// A ceiling as well as a floor. Without one the widest row set the width for
+// every other: a single long line such as a follower count pushed the card to
+// 343 pt on a 440 pt screen, far past what a system menu occupies. Rows longer
+// than this truncate, which is what the system does too.
+static CGFloat const kSPKActionMenuMaxWidth = 250.0;
 static CGFloat const kSPKActionMenuRowHeight = 44.0;
 static CGFloat const kSPKActionMenuCornerRadius = 13.0;
 static CGFloat const kSPKActionMenuIconSize = 22.0;
@@ -204,7 +209,8 @@ typedef NS_ENUM(NSInteger, SPKActionMenuRowKind) {
         if (node.children.count > 0)
             widest = MAX(widest, [self widthForNodes:node.children available:available]);
     }
-    return MIN(MAX(ceil(widest), kSPKActionMenuMinWidth), available);
+    CGFloat capped = MIN(ceil(widest), kSPKActionMenuMaxWidth);
+    return MIN(MAX(capped, MIN(kSPKActionMenuMinWidth, kSPKActionMenuMaxWidth)), available);
 }
 
 + (void)presentNodes:(NSArray<SPKActionMenuNode *> *)nodes
