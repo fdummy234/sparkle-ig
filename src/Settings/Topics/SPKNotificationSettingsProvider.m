@@ -2,32 +2,49 @@
 #import "../../Shared/UI/SPKNotificationCenter.h"
 #import "../../Utils.h"
 #import "../SPKPreferenceAvailability.h"
+#import "../SPKPreferences.h"
 #import "../SPKTopicSettingsSupport.h"
 
 @implementation SPKNotificationSettingsProvider
 
-+ (NSArray<NSDictionary *> *)spk_featureSectionsForHaptics:(BOOL)haptics {
-    NSMutableArray<NSDictionary *> *sections = [NSMutableArray array];
+// One switch per section.
+//
+// The screen used to build sixty-five switches from this table, then build them
+// a second time for haptics on a twin screen. A section covers every banner of
+// its kind, and the haptic master in Appearance covers all of them at once.
++ (NSArray<SPKSetting *> *)spk_sectionRows {
+    NSDictionary<NSString *, NSString *> *icons = @{
+        @"Action Buttons" : @"action",
+        @"Auto-Save" : @"download",
+        @"Stories" : @"story",
+        @"Messages" : @"messages",
+        @"Instants" : @"instants_burst",
+        @"Profile" : @"user_circle",
+        @"Comments" : @"comment",
+        @"Media" : @"photo_gallery",
+        @"Gallery" : @"sparkle_gallery",
+        @"Settings & Tools" : @"settings",
+    };
 
-    for (NSDictionary *sectionInfo in SPKNotificationPreferenceSections()) {
-        NSMutableArray<SPKSetting *> *rows = [NSMutableArray array];
-        for (NSDictionary *item in sectionInfo[@"items"] ?: @[]) {
-            NSString *identifier = item[@"identifier"];
-            NSString *title = item[@"title"] ?: @"Feature";
-            NSString *iconName = item[@"iconName"] ?: @"info";
-            SPKSetting *setting = [SPKSetting switchCellWithTitle:title
-                                                         subtitle:@""
-                                                             icon:SPKSettingsIcon(iconName)
-                                                      defaultsKey:haptics ? SPKNotificationHapticDefaultsKey(identifier) : SPKNotificationDefaultsKey(identifier)];
-            setting.userInfo = @{@"defaultValue" : @YES};
-            [rows addObject:setting];
-        }
+    NSMutableArray<SPKSetting *> *rows = [NSMutableArray array];
+    for (NSDictionary *section in SPKNotificationPreferenceSections()) {
+        NSString *title = section[@"title"] ?: @"";
+        if (title.length == 0)
+            continue;
 
-        NSString *sectionTitle = sectionInfo[@"title"] ?: @"";
-        [sections addObject:SPKTopicSection(sectionTitle, [rows copy], nil)];
+        NSString *sentenceCased = title.length > 1
+            ? [[[title substringToIndex:1] uppercaseString]
+                  stringByAppendingString:[[title substringFromIndex:1] lowercaseString]]
+            : title;
+
+        SPKSetting *row = [SPKSetting switchCellWithTitle:sentenceCased
+                                                 subtitle:@""
+                                                     icon:SPKSettingsIcon(icons[title] ?: @"notification")
+                                              defaultsKey:SPKPrefNotificationSectionKey(SPKNotificationSectionIdentifier(title))];
+        row.userInfo = @{@"defaultValue" : @YES};
+        [rows addObject:row];
     }
-
-    return [sections copy];
+    return [rows copy];
 }
 
 + (void)spk_showNextNotificationPreview {
@@ -69,18 +86,21 @@
         SPKTopicSection(@"Appearance", @[
             ({
                 SPKSetting *row = [SPKSetting switchCellWithTitle:@"Glow effect"
-                                   subtitle:@"Show glow effect around notifications"
+                                   subtitle:@""
                            icon:SPKSettingsIcon(@"aura")
                                 defaultsKey:kSPKNotificationPillGlowEnabledKey];
-                row.helpText = @"Adds a soft halo around the banner so it reads against a busy screen.";
                 row;
             }),
             [SPKSetting switchCellWithTitle:@"Liquid Glass"
-                                   subtitle:(SPKPrefIsAvailable(kSPKNotificationPillLiquidGlassEnabledKey)
-                                                 ? @"Render notifications with iOS 26 Liquid Glass"
-                                                 : @"Requires iOS 26 or later")
-                              icon:SPKSettingsIcon(@"mirror")
-                                   defaultsKey:kSPKNotificationPillLiquidGlassEnabledKey],
+                                   subtitle:@""
+                                       icon:SPKSettingsIcon(@"mirror")
+                                defaultsKey:kSPKNotificationPillLiquidGlassEnabledKey],
+            // Banner haptics only, beside the other rows that describe the banner.
+            // Disable haptics in General sits above it and silences everything.
+            [SPKSetting switchCellWithTitle:@"Haptics with banners"
+                                   subtitle:@""
+                                       icon:SPKSettingsIcon(@"haptics")
+                                defaultsKey:kSPKNotificationHapticsEnabledKey],
             [SPKSetting menuCellWithTitle:@"Download progress"
                                  subtitle:nil
                                 icon:SPKSettingsIcon(@"download")
@@ -99,7 +119,14 @@
                                        label:@" seconds"
                                singularLabel:@" second"]
         ],
-                        nil),
+                        @"Glow effect draws a soft halo so a banner reads against a busy screen. "
+                        @"Liquid Glass renders it in the iOS 26 material and needs iOS 26. "
+                        @"Haptics with banners covers the banners only \u2014 Disable haptics in "
+                        @"General silences every haptic the tweak produces."),
+        SPKTopicSection(@"Notifications",
+                        [self spk_sectionRows],
+                        @"Each switch covers every banner of its kind. Action buttons are the ones a "
+                        @"download or a copy raises; Auto-save covers the toasts a running save puts up."),
         SPKTopicSection(@"", @[
             [SPKSetting buttonCellWithTitle:@"Test notification"
                                    subtitle:nil
@@ -107,14 +134,10 @@
                                      action:^{
                                          [self spk_showNextNotificationPreview];
                                      }],
-            [SPKSetting navigationCellWithTitle:@"Haptics with banners"
-                                       subtitle:nil
-                                           icon:SPKSettingsIcon(@"haptics")
-                                    navSections:[self spk_featureSectionsForHaptics:YES]]],
+        ],
                         nil)
     ]];
 
-    [sections addObjectsFromArray:[self spk_featureSectionsForHaptics:NO]];
     return [sections copy];
 }
 
