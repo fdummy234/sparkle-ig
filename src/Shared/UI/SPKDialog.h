@@ -25,7 +25,7 @@ typedef NS_ENUM(NSInteger, SPKDialogActionStyle) {
 // question and one of its buttons has to answer.
 @interface SPKDialog : NSObject
 
-+ (void)presentFromController:(UIViewController *)controller
++ (void)presentFromController:(nullable UIViewController *)controller
                         title:(NSString *)title
                       message:(nullable NSString *)message
                       actions:(NSArray<SPKDialogAction *> *)actions;
@@ -34,7 +34,7 @@ typedef void (^SPKDialogTextHandler)(NSString *text);
 
 // A dialog carrying a single text field, for the handful of prompts that ask
 // for a name rather than a yes or no.
-+ (void)presentTextInputFromController:(UIViewController *)controller
++ (void)presentTextInputFromController:(nullable UIViewController *)controller
                                  title:(NSString *)title
                                message:(nullable NSString *)message
                            placeholder:(nullable NSString *)placeholder

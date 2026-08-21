@@ -198,6 +198,8 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
         return;
     }
 
+    // A nil controller is allowed, as it was on the presenter this replaced: the
+    // startup guard raises its alert before any screen exists.
     UIWindow *window = controller.view.window ?: UIApplication.sharedApplication.keyWindow;
     [self presentInWindow:window title:title message:message actions:actions];
 }
