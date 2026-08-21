@@ -881,12 +881,12 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
         @"13,000 total connections (followers, following) can't be analyzed.\n\n"
         @"Analysis runs in the background; you'll get a notification when it finishes.\n\n"
         @"All data stays on your device and is never uploaded.";
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"About Profile Analyzer"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"OK"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"OK"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
                                                 ]];
 }
