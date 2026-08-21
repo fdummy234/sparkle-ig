@@ -25,7 +25,9 @@ typedef NS_ENUM(NSInteger, SPKDialogActionStyle) {
 // question and one of its buttons has to answer.
 @interface SPKDialog : NSObject
 
-+ (void)presentFromController:(nullable UIViewController *)controller
+// Returns whether the dialog was put on screen: callers that have a fallback
+// path need to know when it was not.
++ (BOOL)presentFromController:(nullable UIViewController *)controller
                         title:(NSString *)title
                       message:(nullable NSString *)message
                       actions:(NSArray<SPKDialogAction *> *)actions;
@@ -34,7 +36,7 @@ typedef void (^SPKDialogTextHandler)(NSString *text);
 
 // A dialog carrying a single text field, for the handful of prompts that ask
 // for a name rather than a yes or no.
-+ (void)presentTextInputFromController:(nullable UIViewController *)controller
++ (BOOL)presentTextInputFromController:(nullable UIViewController *)controller
                                  title:(NSString *)title
                                message:(nullable NSString *)message
                            placeholder:(nullable NSString *)placeholder
@@ -46,7 +48,7 @@ typedef void (^SPKDialogTextHandler)(NSString *text);
                           confirmBlock:(SPKDialogTextHandler)confirmBlock
                            cancelBlock:(nullable dispatch_block_t)cancelBlock;
 
-+ (void)presentInWindow:(UIWindow *)window
++ (BOOL)presentInWindow:(UIWindow *)window
                   title:(NSString *)title
                 message:(nullable NSString *)message
                 actions:(NSArray<SPKDialogAction *> *)actions;

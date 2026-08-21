@@ -141,7 +141,7 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
 // and the disabled state of an empty confirm button — none of which this dialog
 // knows how to draw yet. Routing them here keeps one code path for callers and
 // leaves the shape honest.
-+ (void)presentTextInputFromController:(UIViewController *)controller
++ (BOOL)presentTextInputFromController:(UIViewController *)controller
                                  title:(NSString *)title
                                message:(NSString *)message
                            placeholder:(NSString *)placeholder
@@ -158,7 +158,7 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
     else if (confirmStyle == SPKDialogActionStyleDestructive)
         style = SPKIGAlertActionStyleDestructive;
 
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:controller
+    return [SPKIGAlertPresenter presentTextInputAlertFromViewController:controller
                                                           title:title
                                                         message:message
                                                     placeholder:placeholder
@@ -171,7 +171,7 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
                                                     cancelBlock:cancelBlock];
 }
 
-+ (void)presentFromController:(UIViewController *)controller
++ (BOOL)presentFromController:(UIViewController *)controller
                         title:(NSString *)title
                       message:(NSString *)message
                       actions:(NSArray<SPKDialogAction *> *)actions {
@@ -191,25 +191,24 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
                                                           style:style
                                                         handler:action.handler]];
         }
-        [SPKIGAlertPresenter presentAlertFromViewController:controller
-                                                      title:title
-                                                    message:message
-                                                    actions:native];
-        return;
+        return [SPKIGAlertPresenter presentAlertFromViewController:controller
+                                                             title:title
+                                                           message:message
+                                                           actions:native];
     }
 
     // A nil controller is allowed, as it was on the presenter this replaced: the
     // startup guard raises its alert before any screen exists.
     UIWindow *window = controller.view.window ?: UIApplication.sharedApplication.keyWindow;
-    [self presentInWindow:window title:title message:message actions:actions];
+    return [self presentInWindow:window title:title message:message actions:actions];
 }
 
-+ (void)presentInWindow:(UIWindow *)window
++ (BOOL)presentInWindow:(UIWindow *)window
                   title:(NSString *)title
                 message:(NSString *)message
                 actions:(NSArray<SPKDialogAction *> *)actions {
     if (!window || actions.count == 0)
-        return;
+        return NO;
 
     SPKDialogOverlay *overlay = [[SPKDialogOverlay alloc] initWithFrame:window.bounds];
     overlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
@@ -343,6 +342,7 @@ static CGFloat const kSPKDialogMessageGap = 16.0;
                          card.transform = CGAffineTransformIdentity;
                      }
                      completion:nil];
+    return YES;
 }
 
 @end
