@@ -713,8 +713,8 @@ BOOL showSearchSectionLabelForTag(NSInteger tag) {
             cancelHandler:^{
                 SPKConsumePendingRepostFeedback(SPKActionButtonSourceFeed);
             }
-            title:@"Confirm Repost"
-            message:@"Are you sure you want to repost this post?"];
+            title:@"Repost"
+            message:@"The post goes out to your followers."];
     } else {
         %orig;
         SPKShowPendingRepostFeedbackIfNeeded(SPKActionButtonSourceFeed);
@@ -757,7 +757,7 @@ BOOL showSearchSectionLabelForTag(NSInteger tag) {
                 SPKConsumePendingRepostFeedback(SPKActionButtonSourceReels);
             }
             title:@"Confirm Reel Repost"
-            message:@"Are you sure you want to repost this reel?"];
+            message:@"The reel goes out to your followers."];
     } else {
         %orig;
         SPKShowPendingRepostFeedbackIfNeeded(SPKActionButtonSourceReels);
@@ -778,7 +778,7 @@ BOOL showSearchSectionLabelForTag(NSInteger tag) {
                 SPKConsumePendingRepostFeedback(SPKActionButtonSourceReels);
             }
             title:@"Confirm Reel Repost"
-            message:@"Are you sure you want to repost this reel?"];
+            message:@"The reel goes out to your followers."];
     } else {
         %orig;
         SPKShowPendingRepostFeedbackIfNeeded(SPKActionButtonSourceReels);
@@ -799,7 +799,7 @@ BOOL showSearchSectionLabelForTag(NSInteger tag) {
                 SPKConsumePendingRepostFeedback(SPKActionButtonSourceReels);
             }
             title:@"Confirm Reel Repost"
-            message:@"Are you sure you want to repost this reel?"];
+            message:@"The reel goes out to your followers."];
     } else {
         %orig;
         SPKShowPendingRepostFeedbackIfNeeded(SPKActionButtonSourceReels);

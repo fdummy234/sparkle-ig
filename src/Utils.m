@@ -2650,7 +2650,7 @@ static void SPKSetResolvedPKForUsername(NSString *username, NSString *pk) {
 + (BOOL)showConfirmation:(void (^)(void))okHandler cancelHandler:(void (^)(void))cancelHandler title:(NSString *)title message:(NSString *)message {
     [SPKIGAlertPresenter presentAlertFromViewController:topMostController()
                                                   title:title ?: @"Confirm Action"
-                                                message:message ?: @"Are you sure you want to continue?"
+                                                message:message ?: @"This cannot be undone."
                                                 actions:@[
                                                     [SPKIGAlertAction actionWithTitle:@"Cancel"
                                                                                 style:SPKIGAlertActionStyleCancel
