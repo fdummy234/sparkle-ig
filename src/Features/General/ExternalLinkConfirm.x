@@ -62,7 +62,7 @@ static BOOL SPKLinkNeedsConfirmation(NSURL *url) {
         [%c(IGURLHandler) openURL:capturedURL userSession:capturedSession completionHandler:capturedHandler];
         SPKOpenLinkConfirmed = NO;
     }
-                         title:@"Open this link?"
+                         title:@"Open this link"
                        message:resolved.absoluteString];
 }
 

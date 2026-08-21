@@ -11,8 +11,8 @@
             showConfirmation:^(void) {                                          \
                 orig;                                                           \
             }                                                                   \
-                       title:@"Confirm Follow"                                  \
-                     message:@"Are you sure you want to follow this account?"]; \
+                       title:@"Follow account"                                  \
+                     message:@"You start following this account."]; \
     } else {                                                                    \
         return orig;                                                            \
     }
@@ -42,8 +42,8 @@
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Unfollow"
-                     message:@"Are you sure you want to unfollow this account?"];
+                       title:@"Unfollow account"
+                     message:@"You stop following this account."];
     } else {
         %orig;
     }
@@ -103,8 +103,8 @@ static void hooked_listSectionController(id self, SEL _cmd, id arg1, id arg2) {
             showConfirmation:^{
                 orig_listSectionController(self, _cmd, arg1, arg2);
             }
-                       title:@"Confirm Follow All"
-                     message:@"Are you sure you want to follow everyone in this list?"];
+                       title:@"Follow everyone"
+                     message:@"You start following every account in the list."];
 
         return;
     }
