@@ -12,7 +12,7 @@
                 %orig;
             }
                        title:@"Confirm Sticker Interaction"
-                     message:@"Are you sure you want to interact with this story sticker?"];
+                     message:@"The author sees that you interacted."];
     } else {
         return %orig;
     }

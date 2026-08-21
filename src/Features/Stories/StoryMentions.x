@@ -545,12 +545,12 @@ static NSArray<NSDictionary *> *SPKStoryMentionsEnriched(UIView *overlayView) {
     };
     if (!currentlyFollowing && [SPKUtils getBoolPref:@"profile_confirm_follow"]) {
         [SPKUtils showConfirmation:doIt
-                             title:@"Confirm Follow"
-                           message:@"Are you sure you want to follow this account?"];
+                             title:@"Follow account"
+                           message:@"You start following this account."];
     } else if (currentlyFollowing && [SPKUtils getBoolPref:@"profile_confirm_unfollow"]) {
         [SPKUtils showConfirmation:doIt
-                             title:@"Confirm Unfollow"
-                           message:@"Are you sure you want to unfollow this account?"];
+                             title:@"Unfollow account"
+                           message:@"You stop following this account."];
     } else {
         doIt();
     }
