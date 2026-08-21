@@ -29,7 +29,7 @@ void SPKMarkDirectThreadSeenAfterReaction(id source);
             SPKMarkDirectThreadSeenAfterReaction(self);
         }
                    title:@"Confirm Message Double Tap"
-                 message:@"Are you sure you want to double tap this message?"];
+                 message:@"A double tap sends a heart to the sender."];
 }
 
 %end
@@ -62,7 +62,7 @@ void SPKMarkDirectThreadSeenAfterReaction(id source);
             SPKMarkDirectThreadSeenAfterReaction(self);
         }
                    title:@"Confirm Message Reaction"
-                 message:@"Are you sure you want to react to this message?"];
+                 message:@"The reaction is sent as soon as you confirm."];
 }
 
 %end

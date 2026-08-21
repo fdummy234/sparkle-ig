@@ -51,8 +51,8 @@ static inline BOOL SPKHideVanishScreenshotEnabled(void) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Vanish Mode"
-                     message:@"Are you sure you want to change disappearing messages for this chat?"];
+                       title:@"Change disappearing messages"
+                     message:@"Both sides see the change, and it applies to what is sent from now on."];
     } else {
         return %orig;
     }
@@ -73,8 +73,8 @@ static inline BOOL SPKHideVanishScreenshotEnabled(void) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Vanish Mode"
-                     message:@"Are you sure you want to change disappearing messages for this chat?"];
+                       title:@"Change disappearing messages"
+                     message:@"Both sides see the change, and it applies to what is sent from now on."];
     } else {
         return %orig;
     }
@@ -97,8 +97,8 @@ static inline BOOL SPKHideVanishScreenshotEnabled(void) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Vanish Mode"
-                     message:@"Are you sure you want to change disappearing messages for this chat?"];
+                       title:@"Change disappearing messages"
+                     message:@"Both sides see the change, and it applies to what is sent from now on."];
     } else {
         return %orig;
     }
@@ -112,8 +112,8 @@ static inline BOOL SPKHideVanishScreenshotEnabled(void) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Vanish Mode"
-                     message:@"Are you sure you want to change disappearing messages for this chat?"];
+                       title:@"Change disappearing messages"
+                     message:@"Both sides see the change, and it applies to what is sent from now on."];
     } else {
         return %orig;
     }
@@ -138,8 +138,8 @@ static inline BOOL SPKHideVanishScreenshotEnabled(void) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Vanish Mode"
-                     message:@"Are you sure you want to change disappearing messages for this chat?"];
+                       title:@"Change disappearing messages"
+                     message:@"Both sides see the change, and it applies to what is sent from now on."];
     } else {
         return %orig;
     }

@@ -50,7 +50,7 @@ void SPKDMConfirmVoiceMessageIfNeeded(void (^confirmBlock)(void), void (^cancelB
                 cancelBlock();
         }
         title:@"Confirm Sending Voice Message"
-        message:@"Are you sure you want to send this voice message?"];
+        message:@"The recording is sent as soon as you confirm."];
 }
 
 static void SPKDMConfirmVoiceMessage(void (^confirmBlock)(void)) {

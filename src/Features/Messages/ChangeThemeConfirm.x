@@ -13,7 +13,7 @@
                 %orig;
             }
                        title:@"Confirm Change Chat Theme"
-                     message:@"Are you sure you want to apply this theme to the chat?"];
+                     message:@"Everyone in the chat sees the new theme."];
     } else {
         return %orig;
     }
@@ -27,7 +27,7 @@
                 %orig;
             }
                        title:@"Confirm Change Chat Theme"
-                     message:@"Are you sure you want to apply this theme to the chat?"];
+                     message:@"Everyone in the chat sees the new theme."];
     } else {
         return %orig;
     }
@@ -44,7 +44,7 @@
                 %orig;
             }
                        title:@"Confirm Change Chat Theme"
-                     message:@"Are you sure you want to apply this theme to the chat?"];
+                     message:@"Everyone in the chat sees the new theme."];
     } else {
         return %orig;
     }

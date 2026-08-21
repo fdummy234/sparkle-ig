@@ -19,8 +19,8 @@ static BOOL SPKShouldConfirmCall(NSString *key) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Audio Call"
-                     message:@"Are you sure you want to start an audio call?"];
+                       title:@"Start audio call"
+                     message:@"The call starts as soon as you confirm."];
     } else {
         return %orig;
     }
@@ -34,8 +34,8 @@ static BOOL SPKShouldConfirmCall(NSString *key) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Audio Call"
-                     message:@"Are you sure you want to start an audio call?"];
+                       title:@"Start audio call"
+                     message:@"The call starts as soon as you confirm."];
     } else {
         return %orig;
     }
@@ -50,8 +50,8 @@ static BOOL SPKShouldConfirmCall(NSString *key) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Video Call"
-                     message:@"Are you sure you want to start a video call?"];
+                       title:@"Start video call"
+                     message:@"The call starts as soon as you confirm."];
     } else {
         return %orig;
     }
@@ -65,8 +65,8 @@ static BOOL SPKShouldConfirmCall(NSString *key) {
             showConfirmation:^(void) {
                 %orig;
             }
-                       title:@"Confirm Video Call"
-                     message:@"Are you sure you want to start a video call?"];
+                       title:@"Start video call"
+                     message:@"The call starts as soon as you confirm."];
     } else {
         return %orig;
     }

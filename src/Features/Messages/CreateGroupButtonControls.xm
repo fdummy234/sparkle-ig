@@ -212,7 +212,7 @@ static void SPKApplyBottomButtonsCollapse(UIView *view) {
             objc_setAssociatedObject(strongSelf, kSPKGroupButtonPendingTargetAssocKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         }
         title:@"Confirm Group Creation"
-        message:@"Are you sure you want to create or send to a group with the selected recipients?"];
+        message:@"The message goes to everyone you selected, in one group."];
 }
 
 %end

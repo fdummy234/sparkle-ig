@@ -12,7 +12,7 @@
                 %orig;
             }
                        title:@"Confirm Accept Request"
-                     message:@"Are you sure you want to accept this follow request?"];
+                     message:@"They start following you."];
     } else {
         return %orig;
     }
@@ -26,7 +26,7 @@
                 %orig;
             }
                        title:@"Confirm Decline Request"
-                     message:@"Are you sure you want to decline this follow request?"];
+                     message:@"The request is removed."];
     } else {
         return %orig;
     }

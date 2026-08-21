@@ -164,8 +164,8 @@ static void SPKQuickSnapHandleCaptureDelegate(id self, SEL _cmd, SPKQuickSnapVoi
                 sSPKQuickSnapSendConfirmVisible = NO;
                 [SPKInstantsFrameInjector clearFrozen];
             }
-            title:@"Send Instant?"
-            message:@"Capture and send this Instant?"];
+            title:@"Send Instant"
+            message:@"Capture and send this Instant"];
         return;
     }
 
