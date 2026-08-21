@@ -1,8 +1,8 @@
+#import "../../../Shared/UI/SPKDialog.h"
 #import "SPKDeletedMessagesViewController.h"
 
 #import "../../../AssetUtils.h"
 #import "../../../Shared/Avatars/SPKAvatarCache.h"
-#import "../../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../../Shared/UI/SPKMediaChrome.h"
 #import "../../../Utils.h"
 #import "SPKDeletedMessagesChipBar.h"
@@ -481,15 +481,15 @@ static SPKDeletedMessageKind SPKDMChipKindForIndex(NSInteger index) {
 }
 
 - (void)confirmClearAll {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear deleted messages?"
-                                                message:@"This removes the log and captured media for the current account."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear deleted messages"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [SPKDeletedMessagesStorage resetForOwnerPK:self.ownerPK];
                                                                               }],
@@ -502,15 +502,15 @@ static SPKDeletedMessageKind SPKDMChipKindForIndex(NSInteger index) {
         return;
     NSString *who = isGroup ? group.displayName
                             : (group.senderUsername.length ? [@"@" stringByAppendingString:group.senderUsername] : @"this sender");
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:isGroup ? @"Delete group log?" : @"Delete sender log?"
+    [SPKDialog presentFromController:self
+                                                  title:isGroup ? @"Delete this group's log" : @"Delete this sender's log"
                                                 message:[NSString stringWithFormat:@"This removes all logged messages from %@.", who]
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   if (isGroup)
                                                                                       [SPKDeletedMessagesStorage deleteMessagesForThreadId:group.threadId ownerPK:self.ownerPK];

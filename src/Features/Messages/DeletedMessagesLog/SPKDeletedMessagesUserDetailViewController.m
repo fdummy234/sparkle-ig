@@ -1,9 +1,9 @@
+#import "../../../Shared/UI/SPKDialog.h"
 #import "SPKDeletedMessagesUserDetailViewController.h"
 
 #import "../../../AssetUtils.h"
 #import "../../../Shared/Avatars/SPKAvatarCache.h"
 #import "../../../Shared/MediaPreview/SPKFullScreenMediaPlayer.h"
-#import "../../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../../Shared/UI/SPKMediaChrome.h"
 #import "../../../Utils.h"
 #import "SPKDeletedMessageBubbleCell.h"
@@ -412,15 +412,15 @@ static SPKDeletedMessageKind SPKDMDetailChipKindForIndex(NSInteger index) {
                                                handler:^(__unused UIAction *a) {
                                                    NSString *who = isGroup ? weakSelf.group.displayName
                                                                            : (weakSelf.group.senderUsername.length ? [@"@" stringByAppendingString:weakSelf.group.senderUsername] : @"this sender");
-                                                   [SPKIGAlertPresenter presentAlertFromViewController:weakSelf
-                                                                                                 title:isGroup ? @"Delete group log?" : @"Delete sender log?"
+                                                   [SPKDialog presentFromController:weakSelf
+                                                                                                 title:isGroup ? @"Delete this group's log" : @"Delete this sender's log"
                                                                                                message:[NSString stringWithFormat:@"This removes all logged messages from %@.", who]
                                                                                                actions:@[
-                                                                                                   [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                               style:SPKIGAlertActionStyleCancel
+                                                                                                   [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                               style:SPKDialogActionStyleCancel
                                                                                                                              handler:nil],
-                                                                                                   [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                                                               style:SPKIGAlertActionStyleDestructive
+                                                                                                   [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                                                               style:SPKDialogActionStyleDestructive
                                                                                                                              handler:^{
                                                                                                                                  if (weakSelf.group.isGroup)
                                                                                                                                      [SPKDeletedMessagesStorage deleteMessagesForThreadId:weakSelf.group.threadId ownerPK:weakSelf.ownerPK];

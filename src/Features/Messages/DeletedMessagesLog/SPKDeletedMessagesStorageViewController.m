@@ -1,7 +1,7 @@
+#import "../../../Shared/UI/SPKDialog.h"
 #import "SPKDeletedMessagesStorageViewController.h"
 
 #import "../../../Settings/SPKTopicSettingsSupport.h"
-#import "../../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../../Utils.h"
 #import "SPKDeletedMessagesModels.h"
 #import "SPKDeletedMessagesStorage.h"
@@ -190,15 +190,15 @@ static NSString *SPKDMStorageOwnerPK(void) {
 #pragma mark - Actions
 
 - (void)confirmClearMedia {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear captured media?"
-                                                message:@"This removes all captured media (photos, videos, voice notes) but keeps the message log."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear captured media"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear Media"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear Media"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   for (SPKDeletedMessage *message in [SPKDeletedMessagesStorage allMessagesForOwnerPK:self.ownerPK]) {
                                                                                       NSString *media = [SPKDeletedMessagesStorage absolutePathForRelativePath:message.mediaPath ownerPK:self.ownerPK];
@@ -217,15 +217,15 @@ static NSString *SPKDMStorageOwnerPK(void) {
 }
 
 - (void)confirmClearLog {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear entire log?"
-                                                message:@"This removes every logged deleted message and captured media for this account."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear the whole log"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [SPKDeletedMessagesStorage resetForOwnerPK:self.ownerPK];
                                                                                   [self reloadStatsAndRebuild];
@@ -234,15 +234,15 @@ static NSString *SPKDMStorageOwnerPK(void) {
 }
 
 - (void)confirmClearStagedMedia {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear media recovery cache?"
-                                                message:@"This removes pre-cached view-once, view-twice, GIF, and sticker media. Lightweight metadata remains so Sparkle can still attempt a best-effort download after a future unsend."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear the recovery cache"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear Media"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear Media"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [SPKDeletedMessagesStorage clearStagedMediaForOwnerPK:self.ownerPK];
                                                                                   [self reloadStatsAndRebuild];
