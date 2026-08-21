@@ -7,7 +7,6 @@
 #import "../Features/Profile/FollowIndicator.h"
 #import "../Shared/ActionButton/ActionButtonCore.h"
 #import "../Shared/Avatars/SPKAvatarCache.h"
-#import "../Shared/UI/SPKIGAlertPresenter.h"
 #import "../Shared/UI/SPKMediaChrome.h"
 #import "../Shared/UI/SPKSwitch.h"
 #import "../App/SPKCore.h"

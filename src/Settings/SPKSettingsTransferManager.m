@@ -1,3 +1,4 @@
+#import "../Shared/UI/SPKDialog.h"
 #import "SPKSettingsTransferManager.h"
 
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
@@ -949,7 +950,7 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                  : @"Per-account settings are on. Back up every account's settings, or only the active account's.";
     __weak typeof(self) weakSelf = self;
     [SPKIGAlertPresenter presentActionSheetFromViewController:controller
-                                                        title:@"Which accounts?"
+                                                        title:@"Which accounts"
                                                       message:scopeMessage
                                                       actions:@[
                                                           [SPKIGAlertAction actionWithTitle:@"All accounts"
@@ -1405,7 +1406,7 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
     NSString *thisTitle = username.length ? [NSString stringWithFormat:@"This Account Only (%@)", username] : @"This Account Only";
     __weak typeof(self) weakSelf = self;
     [SPKIGAlertPresenter presentActionSheetFromViewController:controller
-                                                        title:@"Which Accounts?"
+                                                        title:@"Which accounts"
                                                       message:@"Per-account settings are on. Reset every account's settings, or only the active account's."
                                                       actions:@[
                                                           [SPKIGAlertAction actionWithTitle:@"All accounts"
@@ -1431,15 +1432,15 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                             ? [NSString stringWithFormat:@"This restores every Sparkle preference for %@ to its default value. Other accounts and Gallery media are left untouched. This cannot be undone.", username.length ? username : @"the active account"]
                             : @"This restores every Sparkle preference to its default value. Gallery media is left untouched. This cannot be undone.";
     NSString *currentPK = [SPKAccountManager currentAccountPK];
-    [SPKIGAlertPresenter presentAlertFromViewController:controller
-                                                  title:@"Reset All Settings"
+    [SPKDialog presentFromController:controller
+                                                  title:@"Reset every setting"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Reset"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Reset"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                                                                                   if (currentScope) {
@@ -1472,15 +1473,15 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                   confirmTitle:(NSString *)confirmTitle
                                          keys:(NSArray<NSString *> *)keys
                                       onReset:(void (^)(void))onReset {
-    [SPKIGAlertPresenter presentAlertFromViewController:controller
+    [SPKDialog presentFromController:controller
                                                   title:title
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:(confirmTitle.length ? confirmTitle : @"Reset")
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:(confirmTitle.length ? confirmTitle : @"Reset")
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
                                                                                   // Remove both the base key and the active account's namespaced

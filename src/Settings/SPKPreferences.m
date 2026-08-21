@@ -5,6 +5,11 @@
 // means "force the glass on", and flipping it would silently make everyone who
 // had it enabled start forcing the glass off instead.
 NSString *const kSPKPrefInterfaceDisableLiquidGlass = @"interface_disable_liquid_glass";
+
+// Sparkle's own look, everywhere it can be drawn: the action button menu and
+// every confirmation the tweak raises. Off falls back to what Instagram and
+// iOS draw, so the app wears one style or the other and never a mix.
+NSString *const kSPKPrefSparkleAppearance = @"action_button_sparkle_menu";
 NSString *const kSPKPrefInterfaceLiquidGlassTabBarMode = @"interface_liquid_glass_tabbar_mode";
 NSString *const kSPKPrefInterfaceProgressiveBlur = @"interface_progressive_blur";
 NSString *const kSPKPrefInstantsDisableCameraControl = @"instants_disable_camera_control";

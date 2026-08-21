@@ -1,8 +1,8 @@
+#import "../Shared/UI/SPKDialog.h"
 #import "SPKStorageUsageViewController.h"
 
 #import "../Shared/Avatars/SPKAvatarCache.h"
 #import "../Shared/SPKStoragePaths.h"
-#import "../Shared/UI/SPKIGAlertPresenter.h"
 #import "../Utils.h"
 #import "SPKTopicSettingsSupport.h"
 
@@ -97,15 +97,15 @@
 }
 
 - (void)confirmClearAvatars {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear cached profile pictures?"
-                                                message:@"This removes all on-device profile pictures. They will re-download when next shown."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear stored profile pictures"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [[SPKAvatarCache shared] purge];
                                                                                   [self reloadStatsAndRebuild];

@@ -1,3 +1,4 @@
+#import "../Shared/UI/SPKDialog.h"
 #import "SPKActionSectionEditViewController.h"
 #import "SPKActionSectionIconPickerViewController.h"
 #import "SPKInstagramIconCatalog.h"
@@ -268,34 +269,37 @@ static char kSPKSectionEditFieldAssocKey;
 - (void)confirmDeleteSubmenu {
     SPKActionMenuSection *section = [self currentSection];
     NSString *message = section.actions.count > 0
-        ? [NSString stringWithFormat:@"Its %lu action%@ will move to \"Not in the Menu\".",
+        ? [NSString stringWithFormat:@"Its %lu action%@ move back to \"Not in the menu\".",
            (unsigned long)section.actions.count, section.actions.count == 1 ? @"" : @"s"]
-        : @"This group is empty.";
+        : @"This group has nothing in it.";
 
-    UIAlertController *alert =
-        [UIAlertController alertControllerWithTitle:[NSString stringWithFormat:@"Delete \"%@\"?", section.title]
-                                            message:message
-                                     preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-
+    // The only alert in the tweak that was built by hand, so it wore iOS's
+    // colours while every other confirmation wore Sparkle's.
     __weak typeof(self) weakSelf = self;
-    [alert addAction:[UIAlertAction actionWithTitle:@"Delete"
-                                              style:UIAlertActionStyleDestructive
-                                            handler:^(UIAlertAction *action) {
-        typeof(self) strongSelf = weakSelf;
-        if (!strongSelf)
-            return;
-        SPKActionMenuSection *doomed = [strongSelf currentSection];
-        for (NSString *identifier in [doomed.actions copy])
-            [strongSelf.configuration setAction:identifier assignedToSectionIdentifier:nil];
-        [strongSelf.configuration.sections removeObject:doomed];
-        [strongSelf.configuration normalize];
-        [strongSelf.configuration save];
-        if (strongSelf.onChange)
-            strongSelf.onChange();
-        [strongSelf.navigationController popViewControllerAnimated:YES];
-    }]];
-    [self presentViewController:alert animated:YES completion:nil];
+    [SPKDialog presentFromController:self
+                               title:[NSString stringWithFormat:@"Delete \"%@\"", section.title]
+                             message:message
+                             actions:@[
+                                 [SPKDialogAction actionWithTitle:@"Cancel"
+                                                            style:SPKDialogActionStyleCancel
+                                                          handler:nil],
+                                 [SPKDialogAction actionWithTitle:@"Delete"
+                                                            style:SPKDialogActionStyleDestructive
+                                                          handler:^{
+                                     typeof(self) strongSelf = weakSelf;
+                                     if (!strongSelf)
+                                         return;
+                                     SPKActionMenuSection *doomed = [strongSelf currentSection];
+                                     for (NSString *identifier in [doomed.actions copy])
+                                         [strongSelf.configuration setAction:identifier assignedToSectionIdentifier:nil];
+                                     [strongSelf.configuration.sections removeObject:doomed];
+                                     [strongSelf.configuration normalize];
+                                     [strongSelf.configuration save];
+                                     if (strongSelf.onChange)
+                                         strongSelf.onChange();
+                                     [strongSelf.navigationController popViewControllerAnimated:YES];
+                                 }],
+                             ]];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {

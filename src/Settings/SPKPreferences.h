@@ -3,6 +3,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSString *const kSPKPrefInterfaceDisableLiquidGlass;
+FOUNDATION_EXPORT NSString *const kSPKPrefSparkleAppearance;
 FOUNDATION_EXPORT NSString *const kSPKPrefInterfaceLiquidGlassTabBarMode;
 FOUNDATION_EXPORT NSString *const kSPKPrefInterfaceProgressiveBlur;
 FOUNDATION_EXPORT NSString *const kSPKPrefInstantsDisableCameraControl;
