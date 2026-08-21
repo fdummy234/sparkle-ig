@@ -8,6 +8,7 @@
 // (only Settings access remains) and Liquid Glass is disabled, so a hook that
 // crashes Instagram on launch can't lock the user out permanently. The user can
 // clear this from Tools > "Reset Safe Startup Mode" (SPKStabilityGuardReset).
+#import "../Shared/UI/SPKDialog.h"
 #import "SPKStabilityGuard.h"
 
 #import "../Shared/UI/SPKIGAlertPresenter.h"
@@ -78,24 +79,24 @@ void SPKStabilityGuardPresentSafeModeAlertIfNeeded(void) {
     NSString *reason = [[NSUserDefaults standardUserDefaults] stringForKey:kSPKSafeStartupReasonKey] ?: @"unknown";
     SPKLog(@"Stability", @"Presenting safe startup alert (reason: %@)", reason);
 
-    [SPKIGAlertPresenter presentAlertFromViewController:nil
+    [SPKDialog presentFromController:nil
                                                  title:@"Sparkle Safe Mode"
                                                message:@"Instagram closed before finishing launch several times in a row, so Sparkle turned its features off to get you back into the app.\n\n"
                                                         "Every Sparkle feature is disabled right now. Only Sparkle Settings is reachable. Turn Safe Mode off to enable them again."
                                                actions:@[
-                                                   [SPKIGAlertAction actionWithTitle:@"Turn Off Safe Mode"
-                                                                               style:SPKIGAlertActionStyleDefault
+                                                   [SPKDialogAction actionWithTitle:@"Turn Off Safe Mode"
+                                                                               style:SPKDialogActionStyleDefault
                                                                              handler:^{
                                                                                  SPKStabilityGuardReset();
                                                                                  [SPKUtils showRestartConfirmation];
                                                                              }],
-                                                   [SPKIGAlertAction actionWithTitle:@"Open Sparkle Settings"
-                                                                               style:SPKIGAlertActionStyleDefault
+                                                   [SPKDialogAction actionWithTitle:@"Open Sparkle Settings"
+                                                                               style:SPKDialogActionStyleDefault
                                                                              handler:^{
                                                                                  [SPKUtils showSettingsForTopicTitle:@"Tools"];
                                                                              }],
-                                                   [SPKIGAlertAction actionWithTitle:@"Not Now"
-                                                                               style:SPKIGAlertActionStyleCancel
+                                                   [SPKDialogAction actionWithTitle:@"Not Now"
+                                                                               style:SPKDialogActionStyleCancel
                                                                              handler:nil],
                                                ]];
 }
