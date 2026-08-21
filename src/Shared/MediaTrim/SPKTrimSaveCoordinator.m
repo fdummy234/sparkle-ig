@@ -102,8 +102,8 @@
 
     NSString *title = (result.mode == SPKTrimResultModeFrameOnly) ? @"Save Photo" : (result.mode == SPKTrimResultModeTrimmedAudio) ? @"Save Audio"
                                                                                                                                    : @"Save Trimmed Clip";
-    SPKIGAlertAction *copy = [SPKDialogAction actionWithTitle:@"Save as Copy"
-                                                         style:SPKDialogActionStyleDefault
+    SPKIGAlertAction *copy = [SPKIGAlertAction actionWithTitle:@"Save as Copy"
+                                                         style:SPKIGAlertActionStyleDefault
                                                        handler:^{
                                                            [self renderResult:result
                                                                 progressTitle:nil
@@ -114,8 +114,8 @@
                                                                  }
                                                                    completion:completion];
                                                        }];
-    SPKIGAlertAction *replace = [SPKDialogAction actionWithTitle:@"Replace Original"
-                                                            style:SPKDialogActionStyleDestructive
+    SPKIGAlertAction *replace = [SPKIGAlertAction actionWithTitle:@"Replace Original"
+                                                            style:SPKIGAlertActionStyleDestructive
                                                           handler:^{
                                                               [self renderResult:result
                                                                    progressTitle:nil
@@ -126,8 +126,8 @@
                                                                     }
                                                                       completion:completion];
                                                           }];
-    SPKIGAlertAction *cancel = [SPKDialogAction actionWithTitle:@"Cancel"
-                                                           style:SPKDialogActionStyleCancel
+    SPKIGAlertAction *cancel = [SPKIGAlertAction actionWithTitle:@"Cancel"
+                                                           style:SPKIGAlertActionStyleCancel
                                                          handler:^{
                                                              if (completion)
                                                                  completion(NO);
@@ -563,10 +563,10 @@
             onConfirm();
         return;
     }
-    SPKIGAlertAction *keep = [SPKDialogAction actionWithTitle:@"Continue"
+    SPKDialogAction *keep = [SPKDialogAction actionWithTitle:@"Continue"
                                                          style:SPKDialogActionStyleCancel
                                                        handler:nil];
-    SPKIGAlertAction *stop = [SPKDialogAction actionWithTitle:@"Stop"
+    SPKDialogAction *stop = [SPKDialogAction actionWithTitle:@"Stop"
                                                          style:SPKDialogActionStyleDestructive
                                                        handler:^{
                                                            if (onConfirm)
