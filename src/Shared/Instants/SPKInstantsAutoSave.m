@@ -237,7 +237,7 @@ void SPKInstantsAutoSaveConsiderSnap(id snap, NSString *username, NSString *snap
                                           entry[@"profilePicUrl"] = profilePicUrl;
 
                                       [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
-                                                                                    title:@"Auto-Save Instants?"
+                                                                                    title:@"Auto-save Instants"
                                                                                   message:message
                                                                                   actions:@[
                                                                                       [SPKIGAlertAction actionWithTitle:@"Cancel"
