@@ -79,6 +79,7 @@ FOUNDATION_EXPORT NSString *const kSPKNotificationMediaEncodingLogs;
 FOUNDATION_EXPORT NSString *const kSPKNotificationFlexUnavailable;
 FOUNDATION_EXPORT NSString *const kSPKNotificationPillDurationKey;
 FOUNDATION_EXPORT NSString *const kSPKNotificationPillGlowEnabledKey;
+FOUNDATION_EXPORT NSString *const kSPKNotificationHapticsEnabledKey;
 FOUNDATION_EXPORT NSString *const kSPKNotificationPillLiquidGlassEnabledKey;
 FOUNDATION_EXPORT NSString *const kSPKNotificationProgressSubtitleStyleKey;
 FOUNDATION_EXPORT NSString *const kSPKNotificationPillPositionKey;
@@ -89,6 +90,8 @@ extern "C" {
 
 NSString *SPKNotificationDefaultsKey(NSString *identifier);
 NSString *SPKNotificationHapticDefaultsKey(NSString *identifier);
+// The settings identifier a section title keys its preference under.
+NSString *SPKNotificationSectionIdentifier(NSString *title);
 NSArray<NSDictionary *> *SPKNotificationPreferenceSections(void);
 NSDictionary<NSString *, id> *SPKNotificationDefaultPreferences(void);
 BOOL SPKNotificationIsEnabled(NSString *identifier);

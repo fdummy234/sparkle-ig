@@ -103,6 +103,9 @@ SPK_NOTIF_CONST(kSPKNotificationFlexUnavailable, "flex_unavailable");
 
 NSString *const kSPKNotificationPillDurationKey = @"notifs_pill_duration";
 NSString *const kSPKNotificationPillGlowEnabledKey = @"notifs_pill_glow";
+// Banner haptics only. general_disable_haptics sits above it and silences the
+// whole tweak, this one just the banners.
+NSString *const kSPKNotificationHapticsEnabledKey = @"notifs_haptics";
 NSString *const kSPKNotificationPillLiquidGlassEnabledKey = @"notifs_pill_liquid_glass";
 NSString *const kSPKNotificationProgressSubtitleStyleKey = @"notifs_progress_subtitle_style";
 NSString *const kSPKNotificationPillPositionKey = @"notifs_pill_position";
@@ -301,8 +304,13 @@ NSDictionary<NSString *, id> *SPKNotificationDefaultPreferences(void) {
         kSPKNotificationPillDurationKey : @(kSPKNotificationDefaultPillDuration),
         kSPKNotificationProgressSubtitleStyleKey : @"both",
         kSPKNotificationPillPositionKey : @"top",
+        kSPKNotificationHapticsEnabledKey : @YES,
     } mutableCopy];
+
+    // Sections start on. The per-notification keys are still seeded so the
+    // finer switches could return without their state having been lost.
     for (NSDictionary *section in SPKNotificationPreferenceSections()) {
+        defaults[SPKPrefNotificationSectionKey(SPKNotificationSectionIdentifier(section[@"title"] ?: @""))] = @YES;
         for (NSDictionary *item in section[@"items"] ?: @[]) {
             defaults[SPKNotificationDefaultsKey(item[@"identifier"])] = @YES;
             defaults[SPKNotificationHapticDefaultsKey(item[@"identifier"])] = @YES;
@@ -311,11 +319,58 @@ NSDictionary<NSString *, id> *SPKNotificationDefaultPreferences(void) {
     return defaults;
 }
 
+// A settings identifier for a section title, stable enough to key a preference.
+NSString *SPKNotificationSectionIdentifier(NSString *title) {
+    NSMutableString *slug = [NSMutableString string];
+    for (NSUInteger i = 0; i < title.length; i++) {
+        unichar c = [title characterAtIndex:i];
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
+            [slug appendFormat:@"%C", c];
+        else if (c >= 'A' && c <= 'Z')
+            [slug appendFormat:@"%C", (unichar)(c + 32)];
+        else if (slug.length > 0 && ![slug hasSuffix:@"_"])
+            [slug appendString:@"_"];
+    }
+    while ([slug hasSuffix:@"_"])
+        [slug deleteCharactersInRange:NSMakeRange(slug.length - 1, 1)];
+    return [slug copy];
+}
+
+// Which section a notification belongs to, built once from the same table the
+// settings screen reads.
+static NSString *SPKNotificationSectionForIdentifier(NSString *identifier) {
+    static NSDictionary<NSString *, NSString *> *map;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableDictionary<NSString *, NSString *> *building = [NSMutableDictionary dictionary];
+        for (NSDictionary *section in SPKNotificationPreferenceSections()) {
+            NSString *sectionIdentifier = SPKNotificationSectionIdentifier(section[@"title"] ?: @"");
+            for (NSDictionary *item in section[@"items"] ?: @[]) {
+                NSString *itemIdentifier = item[@"identifier"];
+                if (itemIdentifier.length > 0)
+                    building[itemIdentifier] = sectionIdentifier;
+            }
+        }
+        map = [building copy];
+    });
+    return map[identifier ?: @""];
+}
+
+// One switch per section, not per notification.
+//
+// Sixty-five switches asked sixty-five questions where ten were enough, and each
+// one had a twin on a second screen for its haptic. The per-notification keys are
+// still written and are simply no longer read.
 BOOL SPKNotificationIsEnabled(NSString *identifier) {
     if (!SPKNotificationIdentifierIsRegistered(identifier))
         return NO;
+
+    NSString *section = SPKNotificationSectionForIdentifier(identifier);
+    if (section.length == 0)
+        return YES;
+
     // Via SPKUtils so per-account toggles resolve (see SPKNotificationPillDuration).
-    return [SPKUtils getBoolPref:SPKNotificationDefaultsKey(identifier)];
+    return [SPKUtils getBoolPref:SPKPrefNotificationSectionKey(section)];
 }
 
 NSTimeInterval SPKNotificationPillDuration(void) {
@@ -331,9 +386,13 @@ NSTimeInterval SPKNotificationPillDuration(void) {
 void SPKNotificationTriggerHaptic(NSString *identifier, SPKNotificationTone tone) {
     if (!SPKNotificationIdentifierIsRegistered(identifier))
         return;
+    // Two gates, from the widest in: Disable haptics in General silences every
+    // haptic the tweak produces, this one just the banners.
     if ([SPKUtils getBoolPref:@"general_disable_haptics"])
         return;
-    if (![SPKUtils getBoolPref:SPKNotificationHapticDefaultsKey(identifier)])
+    if (![SPKUtils getBoolPref:kSPKNotificationHapticsEnabledKey])
+        return;
+    if (!SPKNotificationIsEnabled(identifier))
         return;
 
     dispatch_block_t trigger = ^{
