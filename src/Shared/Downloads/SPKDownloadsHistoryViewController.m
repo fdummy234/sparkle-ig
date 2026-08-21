@@ -1056,15 +1056,15 @@ static void SPKApplyStatusBadge(SPKDownloadHistoryCell *cell, SPKDownloadState s
         NSString *jobID = row.job.jobID;
         NSString *itemID = item.itemID;
         BOOL isChild = (row.kind == SPKDownloadsHistoryRowKindChild);
-        [SPKIGAlertPresenter presentAlertFromViewController:self
+        [SPKDialog presentFromController:self
                                                       title:title
                                                     message:message
                                                     actions:@[
-                                                        [SPKIGAlertAction actionWithTitle:@"Dismiss"
-                                                                                    style:SPKIGAlertActionStyleCancel
+                                                        [SPKDialogAction actionWithTitle:@"Dismiss"
+                                                                                    style:SPKDialogActionStyleCancel
                                                                                   handler:nil],
-                                                        [SPKIGAlertAction actionWithTitle:@"Retry"
-                                                                                    style:SPKIGAlertActionStyleDefault
+                                                        [SPKDialogAction actionWithTitle:@"Retry"
+                                                                                    style:SPKDialogActionStyleDefault
                                                                                   handler:^{
                                                                                       if (isChild)
                                                                                           [[SPKDownloadService shared] retryItemID:itemID inJobID:jobID];

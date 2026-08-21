@@ -209,22 +209,22 @@ static BOOL SPKPresentBulkDuplicateAlert(NSUInteger duplicateCount,
         return NO;
     NSString *message = [NSString stringWithFormat:@"%lu of %lu items were already downloaded.",
                                                    (unsigned long)duplicateCount, (unsigned long)totalCount];
-    [SPKIGAlertPresenter presentAlertFromViewController:presenter ?: topMostController()
+    [SPKDialog presentFromController:presenter ?: topMostController()
                                                   title:@"Duplicate Downloads"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Skip Existing"
-                                                                                style:SPKIGAlertActionStyleDefault
+                                                    [SPKDialogAction actionWithTitle:@"Skip Existing"
+                                                                                style:SPKDialogActionStyleDefault
                                                                               handler:^{
                                                                                   continuation(SPKDownloadBulkDuplicateDecisionSkipExisting);
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Download All Anyway"
-                                                                                style:SPKIGAlertActionStyleDefault
+                                                    [SPKDialogAction actionWithTitle:@"Download All Anyway"
+                                                                                style:SPKDialogActionStyleDefault
                                                                               handler:^{
                                                                                   continuation(SPKDownloadBulkDuplicateDecisionDownloadAllAnyway);
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:^{
                                                                                   continuation(SPKDownloadBulkDuplicateDecisionCancel);
                                                                               }],
