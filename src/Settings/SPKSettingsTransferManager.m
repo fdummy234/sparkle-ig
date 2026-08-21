@@ -949,22 +949,22 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
                                  ? @"Per-account settings are on. Back up every account's settings and Gallery, or only the active account's."
                                  : @"Per-account settings are on. Back up every account's settings, or only the active account's.";
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentActionSheetFromViewController:controller
+    [SPKDialog presentFromController:controller
                                                         title:@"Which accounts"
                                                       message:scopeMessage
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"All accounts"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"All accounts"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf exportFromController:controller includeSettings:includeSettings includeGallery:includeGallery includeDeletedMessages:includeDeletedMessages includeProfileAnalyzer:includeProfileAnalyzer settingsScope:SPKTransferAccountScopeAllAccounts];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:thisTitle
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:thisTitle
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf exportFromController:controller includeSettings:includeSettings includeGallery:includeGallery includeDeletedMessages:includeDeletedMessages includeProfileAnalyzer:includeProfileAnalyzer settingsScope:SPKTransferAccountScopeCurrentAccount];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                      style:SPKIGAlertActionStyleCancel
+                                                          [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                      style:SPKDialogActionStyleCancel
                                                                                     handler:nil],
                                                       ]];
 }
@@ -1366,22 +1366,22 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
         NSString *message = [NSString stringWithFormat:@"%ld imported file%@ already exist%@ on this device under a different account. What should happen to %@?",
                                                        (long)conflicts, conflicts == 1 ? @"" : @"s", conflicts == 1 ? @"s" : @"", conflicts == 1 ? @"it" : @"them"];
         dispatch_async(dispatch_get_main_queue(), ^{
-            [SPKIGAlertPresenter presentAlertFromViewController:topMostController()
+            [SPKDialog presentFromController:topMostController()
                                                           title:@"Files from Another Account"
                                                         message:message
                                                         actions:@[
-                                                            [SPKIGAlertAction actionWithTitle:@"Claim for this account"
-                                                                                        style:SPKIGAlertActionStyleDefault
+                                                            [SPKDialogAction actionWithTitle:@"Claim for this account"
+                                                                                        style:SPKDialogActionStyleDefault
                                                                                       handler:^{
                                                                                           mergeGalleryThenFinish(SPKGalleryImportConflictStrategyClaim);
                                                                                       }],
-                                                            [SPKIGAlertAction actionWithTitle:@"Keep a separate copy"
-                                                                                        style:SPKIGAlertActionStyleDefault
+                                                            [SPKDialogAction actionWithTitle:@"Keep a separate copy"
+                                                                                        style:SPKDialogActionStyleDefault
                                                                                       handler:^{
                                                                                           mergeGalleryThenFinish(SPKGalleryImportConflictStrategyDuplicate);
                                                                                       }],
-                                                            [SPKIGAlertAction actionWithTitle:[NSString stringWithFormat:@"Skip %@", conflicts == 1 ? @"It" : @"Them"]
-                                                                                        style:SPKIGAlertActionStyleCancel
+                                                            [SPKDialogAction actionWithTitle:[NSString stringWithFormat:@"Skip %@", conflicts == 1 ? @"It" : @"Them"]
+                                                                                        style:SPKDialogActionStyleCancel
                                                                                       handler:^{
                                                                                           mergeGalleryThenFinish(SPKGalleryImportConflictStrategySkip);
                                                                                       }],
@@ -1405,22 +1405,22 @@ static NSString *SPKTransferArchiveFilename(BOOL includeSettings, BOOL includeGa
     NSString *username = [SPKAccountManager currentAccountUsername];
     NSString *thisTitle = username.length ? [NSString stringWithFormat:@"This Account Only (%@)", username] : @"This Account Only";
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentActionSheetFromViewController:controller
+    [SPKDialog presentFromController:controller
                                                         title:@"Which accounts"
                                                       message:@"Per-account settings are on. Reset every account's settings, or only the active account's."
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"All accounts"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"All accounts"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf confirmResetFromController:controller scope:SPKTransferAccountScopeAllAccounts];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:thisTitle
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:thisTitle
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf confirmResetFromController:controller scope:SPKTransferAccountScopeCurrentAccount];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                      style:SPKIGAlertActionStyleCancel
+                                                          [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                      style:SPKDialogActionStyleCancel
                                                                                     handler:nil],
                                                       ]];
 }

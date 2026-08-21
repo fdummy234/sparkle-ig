@@ -1,3 +1,4 @@
+#import "../Shared/UI/SPKDialog.h"
 #import "SPKAppIconPickerViewController.h"
 
 #import <errno.h>
@@ -92,10 +93,10 @@
 
     if (!supportsAlternate) {
         SPKLog(@"AppIcon", @"[Sparkle] abort: supportsAlternateIcons == NO");
-        [SPKIGAlertPresenter presentAlertFromViewController:self
+        [SPKDialog presentFromController:self
                                                       title:@"App Icons Unavailable"
                                                     message:@"This device or app build does not allow alternate app icons."
-                                                    actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleDefault handler:nil] ]];
+                                                    actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleDefault handler:nil] ]];
         return;
     }
 
@@ -110,10 +111,10 @@
                                 return;
 
                             if (error) {
-                                [SPKIGAlertPresenter presentAlertFromViewController:self
+                                [SPKDialog presentFromController:self
                                                                               title:@"Changing App Icon Failed"
                                                                             message:error.localizedDescription ?: @"Unable to change the app icon."
-                                                                            actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleDefault handler:nil] ]];
+                                                                            actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleDefault handler:nil] ]];
                                 return;
                             }
 
