@@ -1,3 +1,4 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKToolsSettingsProvider.h"
 #include <UIKit/UIKit.h>
 
@@ -6,7 +7,6 @@
 #import "../../AssetUtils.h"
 #import "../../Shared/Gallery/SPKGalleryLockViewController.h"
 #import "../../Shared/Settings/SPKSettingsLockManager.h"
-#import "../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../Utils.h"
 #import "../SPKOnboardingViewController.h"
 #import "../SPKWhatsNewViewController.h"
@@ -62,17 +62,17 @@ static NSDictionary *SPKSettingsLockSection(void) {
             return;
         }
         if (!enabled && currentManager.isLockEnabled) {
-            [SPKIGAlertPresenter presentAlertFromViewController:presenter
-                                                          title:@"Disable Settings Passcode"
-                                                        message:@"Sparkle Settings will no longer require authentication to open."
+            [SPKDialog presentFromController:presenter
+                                                          title:@"Turn off the settings passcode"
+                                                        message:@"The log and the captured files for this account are removed."
                                                         actions:@[
-                                                            [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                        style:SPKIGAlertActionStyleCancel
+                                                            [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                        style:SPKDialogActionStyleCancel
                                                                                       handler:^{
                                                                                           SPKSettingsLockReloadPresenter(presenter);
                                                                                       }],
-                                                            [SPKIGAlertAction actionWithTitle:@"Disable"
-                                                                                        style:SPKIGAlertActionStyleDestructive
+                                                            [SPKDialogAction actionWithTitle:@"Disable"
+                                                                                        style:SPKDialogActionStyleDestructive
                                                                                       handler:^{
                                                                                           [currentManager removePasscode];
                                                                                           SPKSettingsLockReloadPresenter(presenter);

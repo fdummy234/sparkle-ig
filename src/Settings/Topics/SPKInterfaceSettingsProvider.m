@@ -223,20 +223,21 @@ static BOOL SPKIsMessagesOnlyMode(void) {
             })
     ]];
 
-    // Sparkle's own menu style, on by default.
+    // Sparkle's own look, on by default.
     //
     // It lived in the action button page of all six surfaces while driving a
     // single preference, so changing it in Feed silently changed it everywhere.
-    // It belongs here instead: it decides how a menu is drawn, like the glass
-    // rows above it, not what any one button does.
+    // It belongs here instead, beside the glass rows: it decides how things are
+    // drawn, not what any one button does. It now covers the confirmations too,
+    // hence the wider name.
     [screenRows addObject:
         ({
-            SPKSetting *sparkleMenu = [SPKSetting switchCellWithTitle:@"Sparkle menu"
+            SPKSetting *sparkleLook = [SPKSetting switchCellWithTitle:@"Sparkle style"
                                                                  icon:SPKSettingsIcon(@"list")
-                                                          defaultsKey:@"action_button_sparkle_menu"];
-            sparkleMenu.helpText = @"Draws action button menus the way Sparkle draws its own: a line between every row, tighter margins. Off keeps the iPhone's menu.";
-            sparkleMenu.searchKeywords = @"menu style action button rows separator native";
-            sparkleMenu;
+                                                          defaultsKey:kSPKPrefSparkleAppearance];
+            sparkleLook.helpText = @"Draws Sparkle's menus and confirmations in its own material, with a line between every row. Off leaves them to Instagram and iOS.";
+            sparkleLook.searchKeywords = @"menu style action button confirmation dialog alert native";
+            sparkleLook;
         })];
 
     // The Notifications sub-page closes the Screen section (scale level 4).
