@@ -25,6 +25,11 @@ typedef NS_ENUM(NSInteger, SPKDialogActionStyle) {
 // question and one of its buttons has to answer.
 @interface SPKDialog : NSObject
 
++ (void)presentFromController:(UIViewController *)controller
+                        title:(NSString *)title
+                      message:(nullable NSString *)message
+                      actions:(NSArray<SPKDialogAction *> *)actions;
+
 + (void)presentInWindow:(UIWindow *)window
                   title:(NSString *)title
                 message:(nullable NSString *)message

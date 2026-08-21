@@ -1,5 +1,7 @@
 #import "SPKDialog.h"
 #import "../../Utils.h"
+#import "../../Settings/SPKPreferences.h"
+#import "SPKIGAlertPresenter.h"
 
 // Sparkle's own dialog.
 //
@@ -14,12 +16,16 @@
 // Layout is by frame rather than constraints: the card sizes itself to its text
 // and the whole view lives for a few seconds, so a layout pass buys nothing.
 
-static CGFloat const kSPKDialogWidth = 270.0;
-static CGFloat const kSPKDialogCornerRadius = 22.0;
-static CGFloat const kSPKDialogPadding = 22.0;
-static CGFloat const kSPKDialogButtonHeight = 50.0;
-static CGFloat const kSPKDialogTitleGap = 8.0;
-static CGFloat const kSPKDialogMessageGap = 20.0;
+// Measured against the action menu and the toggle menu, which agree on every
+// one of these: same width, same corner, same row height, same margin, same
+// shadow. A dialog that differed on seven of eight read as a stranger among
+// them.
+static CGFloat const kSPKDialogWidth = 262.0;
+static CGFloat const kSPKDialogCornerRadius = 13.0;
+static CGFloat const kSPKDialogPadding = 14.0;
+static CGFloat const kSPKDialogButtonHeight = 44.0;
+static CGFloat const kSPKDialogTitleGap = 6.0;
+static CGFloat const kSPKDialogMessageGap = 16.0;
 
 #pragma mark - Action
 
@@ -125,6 +131,41 @@ static CGFloat const kSPKDialogMessageGap = 20.0;
 
 @implementation SPKDialog
 
+// Presents over whatever window the caller's screen lives in.
+//
+// Every migrated call site held a controller, not a window, so this saves each
+// of them from looking one up.
++ (void)presentFromController:(UIViewController *)controller
+                        title:(NSString *)title
+                      message:(NSString *)message
+                      actions:(NSArray<SPKDialogAction *> *)actions {
+    // The same switch that decides whether a button opens Sparkle's menu or the
+    // system one decides this too, so the tweak wears one style or the other and
+    // never both at once.
+    if (![SPKUtils getBoolPref:kSPKPrefSparkleAppearance]) {
+        NSMutableArray *native = [NSMutableArray array];
+        for (SPKDialogAction *action in actions) {
+            SPKIGAlertActionStyle style = SPKIGAlertActionStyleDefault;
+            if (action.style == SPKDialogActionStyleCancel)
+                style = SPKIGAlertActionStyleCancel;
+            else if (action.style == SPKDialogActionStyleDestructive)
+                style = SPKIGAlertActionStyleDestructive;
+
+            [native addObject:[SPKIGAlertAction actionWithTitle:action.title
+                                                          style:style
+                                                        handler:action.handler]];
+        }
+        [SPKIGAlertPresenter presentAlertFromViewController:controller
+                                                      title:title
+                                                    message:message
+                                                    actions:native];
+        return;
+    }
+
+    UIWindow *window = controller.view.window ?: UIApplication.sharedApplication.keyWindow;
+    [self presentInWindow:window title:title message:message actions:actions];
+}
+
 + (void)presentInWindow:(UIWindow *)window
                   title:(NSString *)title
                 message:(NSString *)message
@@ -147,9 +188,9 @@ static CGFloat const kSPKDialogMessageGap = 20.0;
     card.layer.cornerRadius = kSPKDialogCornerRadius;
     card.layer.cornerCurve = kCACornerCurveContinuous;
     card.layer.shadowColor = UIColor.blackColor.CGColor;
-    card.layer.shadowOpacity = 0.24;
-    card.layer.shadowRadius = 26.0;
-    card.layer.shadowOffset = CGSizeMake(0.0, 12.0);
+    card.layer.shadowOpacity = 0.22;
+    card.layer.shadowRadius = 24.0;
+    card.layer.shadowOffset = CGSizeMake(0.0, 10.0);
     overlay.card = card;
 
     Class glassEffectClass = NSClassFromString(@"UIGlassEffect");
@@ -168,7 +209,7 @@ static CGFloat const kSPKDialogMessageGap = 20.0;
     titleLabel.text = title;
     titleLabel.textAlignment = NSTextAlignmentCenter;
     titleLabel.numberOfLines = 0;
-    titleLabel.font = [UIFont systemFontOfSize:17.0 weight:UIFontWeightSemibold];
+    titleLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
     titleLabel.textColor = [SPKUtils SPKColor_InstagramPrimaryText];
     CGSize titleSize = [titleLabel sizeThatFits:CGSizeMake(textWidth, CGFLOAT_MAX)];
     [glass.contentView addSubview:titleLabel];
@@ -177,7 +218,7 @@ static CGFloat const kSPKDialogMessageGap = 20.0;
     messageLabel.text = message;
     messageLabel.textAlignment = NSTextAlignmentCenter;
     messageLabel.numberOfLines = 0;
-    messageLabel.font = [UIFont systemFontOfSize:14.0 weight:UIFontWeightRegular];
+    messageLabel.font = [UIFont systemFontOfSize:13.0 weight:UIFontWeightRegular];
     messageLabel.textColor = [SPKUtils SPKColor_InstagramSecondaryText];
     CGSize messageSize = message.length > 0
         ? [messageLabel sizeThatFits:CGSizeMake(textWidth, CGFLOAT_MAX)]
