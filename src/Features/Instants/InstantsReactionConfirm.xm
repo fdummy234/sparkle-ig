@@ -62,7 +62,7 @@ static BOOL SPKInstantsLooksLikeEmojiText(NSString *text) {
             %orig;
         }
                    title:@"Confirm Instant Reaction"
-                 message:@"Are you sure you want to react to this Instant?"];
+                 message:@"The reaction is sent as soon as you confirm."];
 }
 %end
 

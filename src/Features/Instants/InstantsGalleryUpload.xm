@@ -20,7 +20,6 @@
 #import "../../Shared/MediaTrim/SPKTrimSaveCoordinator.h"
 #import "../../Shared/PhotoEdit/SPKPhotoEditorViewController.h"
 #import "../../Shared/UI/SPKChrome.h"
-#import "../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../Shared/UI/SPKNotificationCenter.h"
 #import "../../Utils.h"
 
