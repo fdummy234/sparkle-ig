@@ -133,7 +133,7 @@
                                                                  completion(NO);
                                                          }];
 
-    [SPKDialog presentFromController:presenter
+    BOOL presented = [SPKDialog presentFromController:presenter
                                                                          title:title
                                                                        message:@"Replacing overwrites the file you started from."
                                                                        actions:@[ replace, copy, cancel ]];
