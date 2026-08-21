@@ -1,3 +1,4 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKGalleryViewController.h"
 #import "SPKGallerySettingsViewController.h"
 #import "../../AssetUtils.h"
@@ -399,7 +400,7 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                    who];
 
     [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Claim Existing Files?"
+                                                  title:@"Claim existing files"
                                                 message:message
                                                 actions:@[
                                                     [SPKIGAlertAction actionWithTitle:@"Not Now"
@@ -436,17 +437,17 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
         return;
     }
 
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Disable Passcode"
-                                                message:@"The gallery will no longer require authentication to open."
+    [SPKDialog presentFromController:self
+                                                  title:@"Turn off the gallery passcode"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:^{
                                                                                   [self rebuildSections];
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Disable"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Disable"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [mgr removePasscode];
                                                                                   [self rebuildSections];

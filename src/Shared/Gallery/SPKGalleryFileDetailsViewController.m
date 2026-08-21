@@ -237,7 +237,7 @@ typedef NS_ENUM(NSInteger, SPKDetailsEditRow) {
 
     [SPKIGAlertPresenter presentActionSheetFromViewController:self
                                                         title:@"Change File Owner"
-                                                      message:@"Which account does this file belong to?"
+                                                      message:@"Pick the account this file came from."
                                                       actions:actions];
 }
 

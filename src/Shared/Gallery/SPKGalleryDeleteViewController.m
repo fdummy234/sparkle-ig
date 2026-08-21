@@ -1,7 +1,7 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKGalleryDeleteViewController.h"
 #import "../../AssetUtils.h"
 #import "../../Utils.h"
-#import "../UI/SPKIGAlertPresenter.h"
 #import "SPKGalleryCoreDataStack.h"
 #import "SPKGalleryFile.h"
 
@@ -308,15 +308,15 @@ typedef NS_ENUM(NSInteger, SPKGalleryDeleteSection) {
     }
 
     NSString *message = [NSString stringWithFormat:@"This will permanently remove %ld file%@.", (long)files.count, files.count == 1 ? @"" : @"s"];
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:title
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   NSFileManager *fm = [NSFileManager defaultManager];
                                                                                   for (SPKGalleryFile *file in files) {

@@ -1123,7 +1123,7 @@ static UIColor *SPKImportAmberColor(void) {
         return;
     }
     NSUInteger count = self.queuedFiles.count;
-    NSString *title = [NSString stringWithFormat:@"Remove all %lu file%@?", (unsigned long)count, count == 1 ? @"" : @"s"];
+    NSString *title = [NSString stringWithFormat:@"Remove all %lu file%@", (unsigned long)count, count == 1 ? @"" : @"s"];
     __weak typeof(self) weakSelf = self;
     [SPKUtils showConfirmation:^{
         __strong typeof(weakSelf) self = weakSelf;

@@ -1,3 +1,4 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKGalleryViewController.h"
 #import "../../AssetUtils.h"
 #import "../../InstagramHeaders.h"
@@ -1600,15 +1601,15 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
     }
 
     NSString *message = [NSString stringWithFormat:@"This will permanently remove %ld file%@ from the gallery.", (long)files.count, files.count == 1 ? @"" : @"s"];
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Delete Selected Files?"
+    [SPKDialog presentFromController:self
+                                                  title:@"Delete the selected files"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   NSError *firstError = nil;
                                                                                   for (SPKGalleryFile *file in files) {
@@ -1737,15 +1738,15 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                                                  image:deleteImg
                                             identifier:nil
                                                handler:^(UIAction *a) {
-                                                   [SPKIGAlertPresenter presentAlertFromViewController:weakSelf
-                                                                                                 title:@"Delete from Gallery"
-                                                                                               message:@"This will permanently remove this file from the gallery."
+                                                   [SPKDialog presentFromController:weakSelf
+                                                                                                 title:@"Delete this file"
+                                                                                               message:@"The log and the captured files for this account are removed."
                                                                                                actions:@[
-                                                                                                   [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                               style:SPKIGAlertActionStyleCancel
+                                                                                                   [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                               style:SPKDialogActionStyleCancel
                                                                                                                              handler:nil],
-                                                                                                   [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                                                               style:SPKIGAlertActionStyleDestructive
+                                                                                                   [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                                                               style:SPKDialogActionStyleDestructive
                                                                                                                              handler:^{
                                                                                                                                  NSError *err;
                                                                                                                                  [file removeWithError:&err];
@@ -1980,15 +1981,15 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                         ? @"This folder is empty."
                         : [NSString stringWithFormat:@"This folder contains %ld file(s). They will be moved to the parent folder.", (long)count];
 
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Delete Folder?"
+    [SPKDialog presentFromController:self
+                                                  title:@"Delete this folder"
                                                 message:msg
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Delete"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Delete"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [self performDeleteFolder:folderPath];
                                                                               }],
