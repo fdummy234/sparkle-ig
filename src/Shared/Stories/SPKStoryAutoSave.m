@@ -193,8 +193,8 @@ NSString *SPKStoryAutoSaveCurrentUserConfirmationMessage(SPKStoryContext *contex
     if (!SPKStoryAutoSaveResolveCurrentUser(context, &username, &pk))
         return nil;
     return SPKStoryAutoSaveAppliesToUser(pk)
-               ? [NSString stringWithFormat:@"Do you want to stop auto-saving stories from @%@?", username]
-               : [NSString stringWithFormat:@"Do you want to auto-save every story from @%@?", username];
+               ? [NSString stringWithFormat:@"Stories from @%@ stop being saved automatically.", username]
+               : [NSString stringWithFormat:@"Every story @%@ posts is saved automatically.", username];
 }
 
 BOOL SPKStoryToggleAutoSaveCurrentUser(SPKStoryContext *context, NSString **notificationTitle, NSString **notificationSubtitle) {
@@ -334,7 +334,7 @@ BOOL SPKStoryToggleAutoSaveCurrentUser(SPKStoryContext *context, NSString **noti
                                                               : [@"@" stringByAppendingString:resolvedUsername];
 
                                       [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
-                                                                                    title:@"Auto-Save Stories?"
+                                                                                    title:@"Auto-save stories"
                                                                                   message:message
                                                                                   actions:@[
                                                                                       [SPKIGAlertAction actionWithTitle:@"Cancel"

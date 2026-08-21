@@ -795,7 +795,7 @@ static NSString *SPKStoryManualSeenListHelpText(BOOL manualSeenEnabled) {
                                                               : [@"@" stringByAppendingString:resolvedUsername];
 
                                       [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
-                                                                                    title:@"Add to List?"
+                                                                                    title:@"Add to list"
                                                                                   message:message
                                                                                   actions:@[
                                                                                       [SPKIGAlertAction actionWithTitle:@"Cancel"
@@ -885,8 +885,8 @@ NSString *SPKStoryCurrentUserRuleConfirmationMessage(SPKStoryContext *context) {
         return nil;
     BOOL applies = SPKStoryManualSeenAppliesToContext(context);
     return applies
-               ? [NSString stringWithFormat:@"Do you want to start marking stories from @%@ as seen?", username]
-               : [NSString stringWithFormat:@"Do you want to stop marking stories from @%@ as seen?", username];
+               ? [NSString stringWithFormat:@"Stories from @%@ are marked as seen from now on.", username]
+               : [NSString stringWithFormat:@"Stories from @%@ stop being marked as seen.", username];
 }
 
 void SPKStoryToggleUserRuleForPK(NSString *pk, NSString *username, NSString *fullName, NSString *profilePicUrl) {
