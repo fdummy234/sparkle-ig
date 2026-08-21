@@ -2648,18 +2648,18 @@ static void SPKSetResolvedPKForUsername(NSString *username, NSString *pk) {
     return [self showConfirmation:okHandler cancelHandler:cancelHandler title:title message:nil];
 };
 + (BOOL)showConfirmation:(void (^)(void))okHandler cancelHandler:(void (^)(void))cancelHandler title:(NSString *)title message:(NSString *)message {
-    [SPKIGAlertPresenter presentAlertFromViewController:topMostController()
+    [SPKDialog presentFromController:topMostController()
                                                   title:title ?: @"Confirm Action"
                                                 message:message ?: @"This cannot be undone."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:^{
                                                                                   if (cancelHandler)
                                                                                       cancelHandler();
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Confirm"
-                                                                                style:SPKIGAlertActionStyleDefault
+                                                    [SPKDialogAction actionWithTitle:@"Confirm"
+                                                                                style:SPKDialogActionStyleDefault
                                                                               handler:^{
                                                                                   if (okHandler)
                                                                                       okHandler();
