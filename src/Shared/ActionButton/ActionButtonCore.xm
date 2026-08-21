@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import <AVFoundation/AVFoundation.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -2606,24 +2607,24 @@ static void SPKPerformBatchDownloadWithQualityPrompt(NSArray<SPKResolvedMediaEnt
     NSString *photoQuality = [SPKUtils getStringPref:@"downloads_photo_quality"] ?: @"high";
     if ([photoQuality isEqualToString:@"always_ask"] && presenter) {
         BOOL can4K = [SPKUtils getBoolPref:@"downloads_fetch_4k_images"];
-        NSMutableArray<SPKIGAlertAction *> *actions = [NSMutableArray array];
+        NSMutableArray<SPKDialogAction *> *actions = [NSMutableArray array];
         if (can4K) {
-            [actions addObject:[SPKIGAlertAction actionWithTitle:@"Max" style:SPKIGAlertActionStyleDefault handler:^{
+            [actions addObject:[SPKDialogAction actionWithTitle:@"Max" style:SPKDialogActionStyleDefault handler:^{
                 performBatchDownloadWithQuality(@"max");
             }]];
         }
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"High" style:SPKIGAlertActionStyleDefault handler:^{
+        [actions addObject:[SPKDialogAction actionWithTitle:@"High" style:SPKDialogActionStyleDefault handler:^{
             performBatchDownloadWithQuality(@"high");
         }]];
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"Medium" style:SPKIGAlertActionStyleDefault handler:^{
+        [actions addObject:[SPKDialogAction actionWithTitle:@"Medium" style:SPKDialogActionStyleDefault handler:^{
             performBatchDownloadWithQuality(@"medium");
         }]];
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"Low" style:SPKIGAlertActionStyleDefault handler:^{
+        [actions addObject:[SPKDialogAction actionWithTitle:@"Low" style:SPKDialogActionStyleDefault handler:^{
             performBatchDownloadWithQuality(@"low");
         }]];
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel" style:SPKIGAlertActionStyleCancel handler:nil]];
+        [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel" style:SPKDialogActionStyleCancel handler:nil]];
 
-        [SPKIGAlertPresenter presentActionSheetFromViewController:presenter
+        [SPKDialog presentFromController:presenter
                                                              title:@"Batch Download Quality"
                                                            message:[NSString stringWithFormat:@"Select quality for all %lu items:", (unsigned long)selectedEntries.count]
                                                            actions:actions];
