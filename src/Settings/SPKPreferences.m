@@ -33,6 +33,15 @@ NSString *SPKPrefNotificationHapticKey(NSString *identifier) {
     return [NSString stringWithFormat:@"notifs_%@_haptic", identifier ?: @""];
 }
 
+// One key per section rather than one per notification.
+//
+// The per-notification keys are still written by SPKPrefNotificationKey and are
+// left where they are, unread: keeping them means the finer switches can come
+// back without anyone having to set them again.
+NSString *SPKPrefNotificationSectionKey(NSString *sectionIdentifier) {
+    return [NSString stringWithFormat:@"notifs_section_%@", sectionIdentifier ?: @""];
+}
+
 BOOL SPKDeviceHasCameraControl(void) {
     static BOOL hasCameraControl = NO;
     static dispatch_once_t onceToken;

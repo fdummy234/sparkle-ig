@@ -17,6 +17,7 @@ NSString *SPKPrefActionButtonBulkDownloadKey(NSString *topicKey);
 NSString *SPKPrefActionButtonBulkCopyKey(NSString *topicKey);
 NSString *SPKPrefNotificationKey(NSString *identifier);
 NSString *SPKPrefNotificationHapticKey(NSString *identifier);
+NSString *SPKPrefNotificationSectionKey(NSString *sectionIdentifier);
 
 /// YES on iPhone models that have the hardware Camera Control button
 /// (iPhone 16/17 families, excluding iPhone 16e which lacks it).
