@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKStoryAutoSave.h"
 
 #import "../../Networking/SPKInstagramAPI.h"
@@ -281,15 +282,15 @@ BOOL SPKStoryToggleAutoSaveCurrentUser(SPKStoryContext *context, NSString **noti
 }
 
 - (void)presentError:(NSString *)message {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"Unable to Add User"
                                                 message:message
-                                                actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
+                                                actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleCancel handler:nil] ]];
 }
 
 - (void)didTapAdd {
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"Add User"
                                                          message:@"Enter the Instagram username whose stories should be auto-saved."
                                                      placeholder:@"username"
@@ -297,7 +298,7 @@ BOOL SPKStoryToggleAutoSaveCurrentUser(SPKStoryContext *context, NSString **noti
                                                  autocapitalized:NO
                                                     confirmTitle:@"Search"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         [weakSelf lookupUsername:text];
                                                     }
@@ -333,15 +334,15 @@ BOOL SPKStoryToggleAutoSaveCurrentUser(SPKStoryContext *context, NSString **noti
                                                               ? [NSString stringWithFormat:@"@%@ (%@)", resolvedUsername, fullName]
                                                               : [@"@" stringByAppendingString:resolvedUsername];
 
-                                      [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
+                                      [SPKDialog presentFromController:strongSelf
                                                                                     title:@"Auto-save stories"
                                                                                   message:message
                                                                                   actions:@[
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                  style:SPKIGAlertActionStyleCancel
+                                                                                      [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                  style:SPKDialogActionStyleCancel
                                                                                                                 handler:nil],
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Add"
-                                                                                                                  style:SPKIGAlertActionStyleDefault
+                                                                                      [SPKDialogAction actionWithTitle:@"Add"
+                                                                                                                  style:SPKDialogActionStyleDefault
                                                                                                                 handler:^{
                                                                                                                     [strongSelf addResolvedUserPK:pk username:resolvedUsername fullName:fullName profilePicUrl:profilePicUrl];
                                                                                                                 }],

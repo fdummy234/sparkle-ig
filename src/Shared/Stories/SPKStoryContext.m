@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKStoryContext.h"
 
 #import <objc/message.h>
@@ -743,15 +744,15 @@ static NSString *SPKStoryManualSeenListHelpText(BOOL manualSeenEnabled) {
 }
 
 - (void)presentError:(NSString *)message {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"Unable to Add User"
                                                 message:message
-                                                actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
+                                                actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleCancel handler:nil] ]];
 }
 
 - (void)didTapAdd {
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"Add User"
                                                          message:@"Enter the Instagram username to add."
                                                      placeholder:@"username"
@@ -759,7 +760,7 @@ static NSString *SPKStoryManualSeenListHelpText(BOOL manualSeenEnabled) {
                                                  autocapitalized:NO
                                                     confirmTitle:@"Search"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         [weakSelf lookupUsername:text];
                                                     }
@@ -794,15 +795,15 @@ static NSString *SPKStoryManualSeenListHelpText(BOOL manualSeenEnabled) {
                                                               ? [NSString stringWithFormat:@"@%@ (%@)", resolvedUsername, fullName]
                                                               : [@"@" stringByAppendingString:resolvedUsername];
 
-                                      [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
+                                      [SPKDialog presentFromController:strongSelf
                                                                                     title:@"Add to list"
                                                                                   message:message
                                                                                   actions:@[
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                  style:SPKIGAlertActionStyleCancel
+                                                                                      [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                  style:SPKDialogActionStyleCancel
                                                                                                                 handler:nil],
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Add"
-                                                                                                                  style:SPKIGAlertActionStyleDefault
+                                                                                      [SPKDialogAction actionWithTitle:@"Add"
+                                                                                                                  style:SPKDialogActionStyleDefault
                                                                                                                 handler:^{
                                                                                                                     [strongSelf addResolvedUserPK:pk username:resolvedUsername fullName:fullName profilePicUrl:profilePicUrl];
                                                                                                                 }],
