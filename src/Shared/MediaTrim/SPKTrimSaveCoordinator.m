@@ -102,8 +102,8 @@
 
     NSString *title = (result.mode == SPKTrimResultModeFrameOnly) ? @"Save Photo" : (result.mode == SPKTrimResultModeTrimmedAudio) ? @"Save Audio"
                                                                                                                                    : @"Save Trimmed Clip";
-    SPKIGAlertAction *copy = [SPKIGAlertAction actionWithTitle:@"Save as Copy"
-                                                         style:SPKIGAlertActionStyleDefault
+    SPKDialogAction *copy = [SPKDialogAction actionWithTitle:@"Save as Copy"
+                                                         style:SPKDialogActionStyleDefault
                                                        handler:^{
                                                            [self renderResult:result
                                                                 progressTitle:nil
@@ -114,8 +114,8 @@
                                                                  }
                                                                    completion:completion];
                                                        }];
-    SPKIGAlertAction *replace = [SPKIGAlertAction actionWithTitle:@"Replace Original"
-                                                            style:SPKIGAlertActionStyleDestructive
+    SPKDialogAction *replace = [SPKDialogAction actionWithTitle:@"Replace Original"
+                                                            style:SPKDialogActionStyleDestructive
                                                           handler:^{
                                                               [self renderResult:result
                                                                    progressTitle:nil
@@ -126,14 +126,14 @@
                                                                     }
                                                                       completion:completion];
                                                           }];
-    SPKIGAlertAction *cancel = [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                           style:SPKIGAlertActionStyleCancel
+    SPKDialogAction *cancel = [SPKDialogAction actionWithTitle:@"Cancel"
+                                                           style:SPKDialogActionStyleCancel
                                                          handler:^{
                                                              if (completion)
                                                                  completion(NO);
                                                          }];
 
-    BOOL presented = [SPKIGAlertPresenter presentActionSheetFromViewController:presenter
+    [SPKDialog presentFromController:presenter
                                                                          title:title
                                                                        message:@"Replacing overwrites the file you started from."
                                                                        actions:@[ replace, copy, cancel ]];
