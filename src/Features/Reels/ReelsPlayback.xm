@@ -58,7 +58,7 @@
                 }
             }
             title:@"Confirm Reels Refresh"
-            message:@"Are you sure you want to refresh the reels feed?"];
+            message:@"The feed reloads and your place in it is lost."];
     } else {
         return %orig(arg1, arg2);
     }
@@ -72,7 +72,7 @@
             }
                cancelHandler:nil
                        title:@"Confirm Reels Refresh"
-                     message:@"Are you sure you want to refresh the reels feed?"];
+                     message:@"The feed reloads and your place in it is lost."];
     } else {
         %orig;
     }
