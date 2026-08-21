@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKGalleryFileDetailsViewController.h"
 #import "../../Utils.h"
 #import "../Account/SPKAccountManager.h"
@@ -211,31 +212,31 @@ typedef NS_ENUM(NSInteger, SPKDetailsEditRow) {
 
 - (void)presentAccountPicker {
     __weak typeof(self) weakSelf = self;
-    NSMutableArray<SPKIGAlertAction *> *actions = [NSMutableArray array];
+    NSMutableArray<SPKDialogAction *> *actions = [NSMutableArray array];
     for (NSDictionary *account in [self pickerAccounts]) {
         NSString *pk = account[@"pk"];
         NSString *username = account[@"username"];
         if (![pk isKindOfClass:[NSString class]] || pk.length == 0)
             continue;
         NSString *title = username.length > 0 ? [@"@" stringByAppendingString:username] : pk;
-        [actions addObject:[SPKIGAlertAction actionWithTitle:title
-                                                       style:SPKIGAlertActionStyleDefault
+        [actions addObject:[SPKDialogAction actionWithTitle:title
+                                                       style:SPKDialogActionStyleDefault
                                                      handler:^{
                                                          weakSelf.selectedOwnerPK = pk;
                                                          weakSelf.selectedOwnerUsername = username.length > 0 ? username : nil;
                                                          [weakSelf.tableView reloadData];
                                                      }]];
     }
-    [actions addObject:[SPKIGAlertAction actionWithTitle:@"Unassigned"
-                                                   style:SPKIGAlertActionStyleDestructive
+    [actions addObject:[SPKDialogAction actionWithTitle:@"Unassigned"
+                                                   style:SPKDialogActionStyleDestructive
                                                  handler:^{
                                                      weakSelf.selectedOwnerPK = nil;
                                                      weakSelf.selectedOwnerUsername = nil;
                                                      [weakSelf.tableView reloadData];
                                                  }]];
-    [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel" style:SPKIGAlertActionStyleCancel handler:nil]];
+    [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel" style:SPKDialogActionStyleCancel handler:nil]];
 
-    [SPKIGAlertPresenter presentActionSheetFromViewController:self
+    [SPKDialog presentFromController:self
                                                         title:@"Change File Owner"
                                                       message:@"Pick the account this file came from."
                                                       actions:actions];

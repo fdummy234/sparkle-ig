@@ -1847,7 +1847,7 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
 #pragma mark - Folder CRUD
 
 - (void)presentCreateFolder {
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"New Folder"
                                                          message:@""
                                                      placeholder:@"Folder name"
@@ -1855,7 +1855,7 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                                                  autocapitalized:YES
                                                     confirmTitle:@"Create"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         NSString *name = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
                                                         if (name.length == 0)
@@ -1908,7 +1908,7 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
 }
 
 - (void)renameFolder:(NSString *)folderPath {
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"Rename Folder"
                                                          message:@"Enter a new name for this folder."
                                                      placeholder:nil
@@ -1916,7 +1916,7 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                                                  autocapitalized:YES
                                                     confirmTitle:@"Rename"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         NSString *newName = [text stringByTrimmingCharactersInSet:
                                                                                       [NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -2139,11 +2139,11 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
     }
     BOOL currentIsRoot = sharesCurrentFolder && currentFolder == nil;
 
-    NSMutableArray<SPKIGAlertAction *> *actions = [NSMutableArray array];
+    NSMutableArray<SPKDialogAction *> *actions = [NSMutableArray array];
 
     if (!currentIsRoot) {
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"/"
-                                                       style:SPKIGAlertActionStyleDefault
+        [actions addObject:[SPKDialogAction actionWithTitle:@"/"
+                                                       style:SPKDialogActionStyleDefault
                                                      handler:^{
                                                          [self assignFolderPath:nil toFiles:files];
                                                      }]];
@@ -2153,17 +2153,17 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
         if (sharesCurrentFolder && currentFolder != nil && [folder isEqualToString:currentFolder]) {
             continue;
         }
-        [actions addObject:[SPKIGAlertAction actionWithTitle:folder
-                                                       style:SPKIGAlertActionStyleDefault
+        [actions addObject:[SPKDialogAction actionWithTitle:folder
+                                                       style:SPKDialogActionStyleDefault
                                                      handler:^{
                                                          [self assignFolderPath:folder toFiles:files];
                                                      }]];
     }
 
-    [actions addObject:[SPKIGAlertAction actionWithTitle:@"New folder..."
-                                                   style:SPKIGAlertActionStyleDefault
+    [actions addObject:[SPKDialogAction actionWithTitle:@"New folder..."
+                                                   style:SPKDialogActionStyleDefault
                                                  handler:^{
-                                                     [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+                                                     [SPKDialog presentTextInputFromController:self
                                                                                                             title:@"New Folder"
                                                                                                           message:@"Enter a new folder name, then move the selected files there."
                                                                                                       placeholder:@"Folder name"
@@ -2171,7 +2171,7 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                                                                                                   autocapitalized:NO
                                                                                                      confirmTitle:@"Create & Move"
                                                                                                       cancelTitle:@"Cancel"
-                                                                                                     confirmStyle:SPKIGAlertActionStyleDefault
+                                                                                                     confirmStyle:SPKDialogActionStyleDefault
                                                                                                      confirmBlock:^(NSString *text) {
                                                                                                          NSString *name = [text stringByTrimmingCharactersInSet:
                                                                                                                                     [NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -2183,18 +2183,17 @@ typedef NS_ENUM(NSInteger, SPKGalleryViewMode) {
                                                                                                       cancelBlock:nil];
                                                  }]];
 
-    [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel" style:SPKIGAlertActionStyleCancel handler:nil]];
+    [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel" style:SPKDialogActionStyleCancel handler:nil]];
 
     NSString *message = @"Choose where to move the selected file(s).";
     if (sharesCurrentFolder) {
         NSString *currentName = currentFolder.length > 0 ? [currentFolder lastPathComponent] : @"/";
         message = [NSString stringWithFormat:@"Currently in %@. Choose where to move the selected file(s).", currentName];
     }
-    [SPKIGAlertPresenter presentActionSheetFromViewController:self
+    [SPKDialog presentFromController:self
                                                         title:@"Move to Folder"
                                                       message:message
-                                                      actions:actions
-                                                   forceSheet:YES];
+                                                      actions:actions];
 }
 
 - (void)moveFile:(SPKGalleryFile *)file {

@@ -399,15 +399,15 @@ static NSString *const kGalleryQuickAccessDisabledValue = @"none";
                                                    count == 1 ? @"it" : @"them",
                                                    who];
 
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"Claim existing files"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Not Now"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Not Now"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Assign"
-                                                                                style:SPKIGAlertActionStyleDefault
+                                                    [SPKDialogAction actionWithTitle:@"Assign"
+                                                                                style:SPKDialogActionStyleDefault
                                                                               handler:^{
                                                                                   [SPKGalleryFile claimUnassignedFilesForAccountPK:pk username:username];
                                                                                   [[NSNotificationCenter defaultCenter] postNotificationName:SPKGalleryHiddenSourcesDidChangeNotification object:nil];
