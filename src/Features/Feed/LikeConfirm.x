@@ -300,9 +300,9 @@ static BOOL SPKCommentButtonIsDislike(id button) {
         SPKPresentLikeToggleConfirmation(                                                                \
             isUnlike,                                                                                    \
             @"Confirm Post Like",                                                                        \
-            @"Are you sure you want to like this post?",                                                 \
+            @"The like is sent as soon as you confirm.",                                                 \
             @"Confirm Post Unlike",                                                                      \
-            @"Are you sure you want to unlike this post?",                                               \
+            @"The like is removed as soon as you confirm.",                                               \
             ^{                                                                                           \
                 SPK_RUN_WITH_FEED_POST_LIKE_CONFIRM_BYPASS(orig);                                        \
             });                                                                                          \
@@ -317,9 +317,9 @@ static BOOL SPKCommentButtonIsDislike(id button) {
         SPKPresentLikeToggleConfirmation(                                                                      \
             isUnlike,                                                                                          \
             @"Confirm Post Like",                                                                              \
-            @"Are you sure you want to like this post?",                                                       \
+            @"The like is sent as soon as you confirm.",                                                       \
             @"Confirm Post Unlike",                                                                            \
-            @"Are you sure you want to unlike this post?",                                                     \
+            @"The like is removed as soon as you confirm.",                                                     \
             ^{                                                                                                 \
                 SPK_RUN_WITH_FEED_POST_LIKE_CONFIRM_BYPASS(orig);                                              \
             });                                                                                                \
@@ -337,9 +337,9 @@ static BOOL SPKCommentButtonIsDislike(id button) {
         SPKPresentLikeToggleConfirmation(                                                              \
             isUnlike,                                                                                  \
             @"Confirm Comment Like",                                                                   \
-            @"Are you sure you want to like this comment?",                                            \
+            @"The like is sent as soon as you confirm.",                                            \
             @"Confirm Comment Unlike",                                                                 \
-            @"Are you sure you want to unlike this comment?",                                          \
+            @"The like is removed as soon as you confirm.",                                          \
             ^{                                                                                         \
                 SPK_RUN_WITH_COMMENT_LIKE_CONFIRM_BYPASS(orig);                                        \
             });                                                                                        \
@@ -364,9 +364,9 @@ static BOOL SPKCommentButtonIsDislike(id button) {
         SPKPresentLikeToggleConfirmation(                                                            \
             isUnlike,                                                                                \
             @"Confirm Reel Like",                                                                    \
-            @"Are you sure you want to like this reel?",                                             \
+            @"The like is sent as soon as you confirm.",                                             \
             @"Confirm Reel Unlike",                                                                  \
-            @"Are you sure you want to unlike this reel?",                                           \
+            @"The like is removed as soon as you confirm.",                                           \
             ^{                                                                                       \
                 orig;                                                                                \
             });                                                                                      \
@@ -381,9 +381,9 @@ static BOOL SPKCommentButtonIsDislike(id button) {
         SPKPresentLikeToggleConfirmation(                                                                       \
             isUnlike,                                                                                           \
             @"Confirm Reel Like",                                                                               \
-            @"Are you sure you want to like this reel?",                                                        \
+            @"The like is sent as soon as you confirm.",                                                        \
             @"Confirm Reel Unlike",                                                                             \
-            @"Are you sure you want to unlike this reel?",                                                      \
+            @"The like is removed as soon as you confirm.",                                                      \
             ^{                                                                                                  \
                 orig;                                                                                           \
             });                                                                                                 \
@@ -553,7 +553,7 @@ static void new_spkStoryLikeTap(id self, SEL _cmd, id button) {
             }
         }
                    title:(isUnlike ? @"Confirm Story Unlike" : @"Confirm Story Like")
-                   message:(isUnlike ? @"Are you sure you want to unlike this story?" : @"Are you sure you want to like this story?")];
+                   message:(isUnlike ? @"The like is removed as soon as you confirm." : @"The like is sent as soon as you confirm.")];
 
     if (btn) {
         [UIView performWithoutAnimation:^{
@@ -613,8 +613,8 @@ static void SPKInstallStoryLikeConfirmHookIfNeeded(void) {
                 if (SPKActiveStoryOverlayForInteractions())
                     SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (SPKActiveStoryOverlayForInteractions()) {
@@ -633,8 +633,8 @@ static void SPKInstallStoryLikeConfirmHookIfNeeded(void) {
                 if (SPKActiveStoryOverlayForInteractions())
                     SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (SPKActiveStoryOverlayForInteractions()) {
@@ -655,8 +655,8 @@ static void SPKHookedStoryFooterEmojiQuick(id self, SEL _cmd, id inputView, id b
                     orig_storyFooterEmojiQuick(self, _cmd, inputView, button);
                 SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (orig_storyFooterEmojiQuick)
@@ -673,8 +673,8 @@ static void SPKHookedStoryFooterEmojiReaction(id self, SEL _cmd, id inputView, i
                     orig_storyFooterEmojiReaction(self, _cmd, inputView, button);
                 SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (orig_storyFooterEmojiReaction)
@@ -691,8 +691,8 @@ static void SPKHookedStoryQuickReaction(id self, SEL _cmd, id view, id sourceBut
                     orig_storyQuickReaction(self, _cmd, view, sourceButton, emoji);
                 SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (orig_storyQuickReaction)
@@ -709,8 +709,8 @@ static void SPKHookedStoryPrivateEmojiQuick(id self, SEL _cmd, id button) {
                     orig_storyPrivateEmojiQuick(self, _cmd, button);
                 SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (orig_storyPrivateEmojiQuick)
@@ -727,8 +727,8 @@ static void SPKHookedDirectReshareQuickReaction(id self, SEL _cmd, id arg) {
                     orig_directReshareQuickReaction(self, _cmd, arg);
                 SPKStoryReplySideEffects();
             }
-                       title:@"Confirm Quick Reaction"
-                     message:@"Are you sure you want to send this emoji reaction?"];
+                       title:@"Send reaction"
+                     message:@"The reaction is sent as soon as you confirm."];
         return;
     }
     if (orig_directReshareQuickReaction)
@@ -815,9 +815,9 @@ static void spkReelsLikeHandlerTap(id self, SEL _cmd, id context, id likeButton,
     SPKPresentLikeToggleConfirmation(
         isUnlike,
         @"Confirm Reel Like",
-        @"Are you sure you want to like this reel?",
+        @"The like is sent as soon as you confirm.",
         @"Confirm Reel Unlike",
-        @"Are you sure you want to unlike this reel?",
+        @"The like is removed as soon as you confirm.",
         ^{
             if (orig_spkReelsLikeHandlerTap)
                 orig_spkReelsLikeHandlerTap(self, _cmd, strongContext, strongButton, willAnimate);
@@ -840,9 +840,9 @@ static void spkReelsLikeHandlerTapCompletion(id self, SEL _cmd, id context, id l
     SPKPresentLikeToggleConfirmation(
         isUnlike,
         @"Confirm Reel Like",
-        @"Are you sure you want to like this reel?",
+        @"The like is sent as soon as you confirm.",
         @"Confirm Reel Unlike",
-        @"Are you sure you want to unlike this reel?",
+        @"The like is removed as soon as you confirm.",
         ^{
             if (orig_spkReelsLikeHandlerTapCompletion)
                 orig_spkReelsLikeHandlerTapCompletion(self, _cmd, strongContext, strongButton, willAnimate, strongCompletion);

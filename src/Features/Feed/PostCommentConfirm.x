@@ -12,7 +12,7 @@
                 %orig;
             }
                        title:@"Confirm Comment Post"
-                     message:@"Are you sure you want to post this comment?"];
+                     message:@"The comment is posted as soon as you confirm."];
     } else {
         return %orig;
     }
