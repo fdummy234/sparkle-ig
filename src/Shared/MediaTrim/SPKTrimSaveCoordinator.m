@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKTrimSaveCoordinator.h"
 #import "../../Utils.h"
 #import "../Downloads/SPKDownloadDestinationWriter.h"
@@ -101,8 +102,8 @@
 
     NSString *title = (result.mode == SPKTrimResultModeFrameOnly) ? @"Save Photo" : (result.mode == SPKTrimResultModeTrimmedAudio) ? @"Save Audio"
                                                                                                                                    : @"Save Trimmed Clip";
-    SPKIGAlertAction *copy = [SPKIGAlertAction actionWithTitle:@"Save as Copy"
-                                                         style:SPKIGAlertActionStyleDefault
+    SPKIGAlertAction *copy = [SPKDialogAction actionWithTitle:@"Save as Copy"
+                                                         style:SPKDialogActionStyleDefault
                                                        handler:^{
                                                            [self renderResult:result
                                                                 progressTitle:nil
@@ -113,8 +114,8 @@
                                                                  }
                                                                    completion:completion];
                                                        }];
-    SPKIGAlertAction *replace = [SPKIGAlertAction actionWithTitle:@"Replace Original"
-                                                            style:SPKIGAlertActionStyleDestructive
+    SPKIGAlertAction *replace = [SPKDialogAction actionWithTitle:@"Replace Original"
+                                                            style:SPKDialogActionStyleDestructive
                                                           handler:^{
                                                               [self renderResult:result
                                                                    progressTitle:nil
@@ -125,8 +126,8 @@
                                                                     }
                                                                       completion:completion];
                                                           }];
-    SPKIGAlertAction *cancel = [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                           style:SPKIGAlertActionStyleCancel
+    SPKIGAlertAction *cancel = [SPKDialogAction actionWithTitle:@"Cancel"
+                                                           style:SPKDialogActionStyleCancel
                                                          handler:^{
                                                              if (completion)
                                                                  completion(NO);
@@ -134,7 +135,7 @@
 
     BOOL presented = [SPKIGAlertPresenter presentActionSheetFromViewController:presenter
                                                                          title:title
-                                                                       message:@"Do you want to replace the original file or save a copy?"
+                                                                       message:@"Replacing overwrites the file you started from."
                                                                        actions:@[ replace, copy, cancel ]];
     if (!presented) {
         [self renderResult:result
@@ -562,18 +563,18 @@
             onConfirm();
         return;
     }
-    SPKIGAlertAction *keep = [SPKIGAlertAction actionWithTitle:@"Continue"
-                                                         style:SPKIGAlertActionStyleCancel
+    SPKIGAlertAction *keep = [SPKDialogAction actionWithTitle:@"Continue"
+                                                         style:SPKDialogActionStyleCancel
                                                        handler:nil];
-    SPKIGAlertAction *stop = [SPKIGAlertAction actionWithTitle:@"Stop"
-                                                         style:SPKIGAlertActionStyleDestructive
+    SPKIGAlertAction *stop = [SPKDialogAction actionWithTitle:@"Stop"
+                                                         style:SPKDialogActionStyleDestructive
                                                        handler:^{
                                                            if (onConfirm)
                                                                onConfirm();
                                                        }];
-    [SPKIGAlertPresenter presentAlertFromViewController:host
+    [SPKDialog presentFromController:host
                                                   title:@"Cancel Trim"
-                                                message:@"Stop trimming and discard progress?"
+                                                message:@"Discard the trim"
                                                 actions:@[ keep, stop ]];
 }
 
