@@ -1,7 +1,7 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKDownloadService.h"
 
 #import "../../Utils.h"
-#import "../UI/SPKIGAlertPresenter.h"
 #import "../UI/SPKMediaChrome.h"
 #import "../UI/SPKNotificationCenter.h"
 #import "SPKDownloadPresenter.h"
@@ -70,15 +70,15 @@
         UIViewController *presenter = topMostController();
         if (!presenter)
             return;
-        [SPKIGAlertPresenter presentAlertFromViewController:presenter
-                                                      title:@"Cancel Pending Downloads"
-                                                    message:@"This stops queued work and any active downloads that can still be cancelled."
+        [SPKDialog presentFromController:presenter
+                                                      title:@"Cancel pending downloads"
+                                                    message:@"The log and the captured files for this account are removed."
                                                     actions:@[
-                                                        [SPKIGAlertAction actionWithTitle:@"Keep"
-                                                                                    style:SPKIGAlertActionStyleCancel
+                                                        [SPKDialogAction actionWithTitle:@"Keep"
+                                                                                    style:SPKDialogActionStyleCancel
                                                                                   handler:nil],
-                                                        [SPKIGAlertAction actionWithTitle:@"Cancel All"
-                                                                                    style:SPKIGAlertActionStyleDestructive
+                                                        [SPKDialogAction actionWithTitle:@"Cancel all"
+                                                                                    style:SPKDialogActionStyleDestructive
                                                                                   handler:^{
                                                                                       [[SPKDownloadService shared] cancelAllActive];
                                                                                   }],
@@ -186,36 +186,33 @@
             }
         }
 
-        NSMutableArray<SPKIGAlertAction *> *actions = [NSMutableArray array];
+        NSMutableArray<SPKDialogAction *> *actions = [NSMutableArray array];
 
         // Keep at the top, blue bold font
-        [actions addObject:[SPKIGAlertAction actionWithTitle:@"Keep" style:SPKIGAlertActionStyleCancel handler:nil]];
+        [actions addObject:[SPKDialogAction actionWithTitle:@"Keep" style:SPKDialogActionStyleCancel handler:nil]];
 
         if (activeCount > 1) {
-            // Cancel current, still blue but not bold
-            [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel Current"
-                                                           style:SPKIGAlertActionStyleDefault
+            [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel this one"
+                                                           style:SPKDialogActionStyleDefault
                                                          handler:^{
                                                              [self cancelJobID:jobID];
                                                          }]];
-            // Cancel all, red, not bold
-            [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel All"
-                                                           style:SPKIGAlertActionStyleDestructive
+            [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel all"
+                                                           style:SPKDialogActionStyleDestructive
                                                          handler:^{
                                                              [self cancelAllActive];
                                                          }]];
         } else {
-            // Cancel, red not bold
-            [actions addObject:[SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                           style:SPKIGAlertActionStyleDestructive
+            [actions addObject:[SPKDialogAction actionWithTitle:@"Cancel"
+                                                           style:SPKDialogActionStyleDestructive
                                                          handler:^{
                                                              [self cancelJobID:jobID];
                                                          }]];
         }
 
-        [SPKIGAlertPresenter presentAlertFromViewController:presenterHost
-                                                      title:@"Cancel Download"
-                                                    message:activeCount > 1 ? @"Do you want to cancel the current download or all active downloads?" : @"Are you sure you want to cancel the download?"
+        [SPKDialog presentFromController:presenterHost
+                                                      title:@"Cancel this download"
+                                                    message:activeCount > 1 ? @"Pick the one you are on, or every download running now." : @"The file stops downloading and what was fetched is discarded."
                                                     actions:actions];
     });
 }

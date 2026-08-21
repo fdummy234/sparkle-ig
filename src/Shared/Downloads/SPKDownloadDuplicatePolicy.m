@@ -1,3 +1,4 @@
+#import "../../Shared/UI/SPKDialog.h"
 #import "SPKDownloadDuplicatePolicy.h"
 
 #import <Photos/Photos.h>
@@ -174,24 +175,24 @@ static BOOL SPKPresentSingleDuplicateAlert(SPKDownloadDuplicateDestination desti
     NSString *message = [NSString stringWithFormat:@"This %@ has previously been downloaded to %@.",
                                                    SPKMediaTypeLabel(mediaType),
                                                    SPKDestinationLabel(destination)];
-    [SPKIGAlertPresenter presentAlertFromViewController:presenter
-                                                  title:@"Duplicate Download Detected"
+    [SPKDialog presentFromController:presenter
+                                                  title:@"Already downloaded"
                                                 message:message
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Download Anyway"
-                                                                                style:SPKIGAlertActionStyleDefault
+                                                    [SPKDialogAction actionWithTitle:@"Download anyway"
+                                                                                style:SPKDialogActionStyleDefault
                                                                               handler:^{
                                                                                   if (continuation)
                                                                                       continuation(SPKDownloadDuplicateDecisionDownloadAgain);
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Delete Existing and Download"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Replace it"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   if (continuation)
                                                                                       continuation(SPKDownloadDuplicateDecisionDeleteExistingAndDownloadAgain);
                                                                               }],
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:^{
                                                                                   if (continuation)
                                                                                       continuation(SPKDownloadDuplicateDecisionCancel);
