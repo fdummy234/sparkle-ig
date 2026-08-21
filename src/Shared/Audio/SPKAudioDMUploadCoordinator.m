@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKAudioDMUploadCoordinator.h"
 
 #import <AVFoundation/AVFoundation.h>
@@ -170,27 +171,27 @@ static void SPKAudioDMNotify(NSString *title, NSString *message, BOOL success) {
     coordinator.sourceView = sourceView ?: presenter.view;
     sSPKAudioActiveDMUploadCoordinator = coordinator;
 
-    [SPKIGAlertPresenter presentActionSheetFromViewController:presenter
+    [SPKDialog presentFromController:presenter
                                                         title:@"Send Audio Message"
                                                       message:@"Choose an audio or video file to convert and send as a voice note."
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"Select from Photos"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"Select from Photos"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [coordinator presentLibraryPicker];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Select from Gallery"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"Select from Gallery"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [coordinator presentGalleryPicker];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Select from Files"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"Select from Files"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [coordinator presentFilesPicker];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                      style:SPKIGAlertActionStyleCancel
+                                                          [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                      style:SPKDialogActionStyleCancel
                                                                                     handler:^{
                                                                                         if (sSPKAudioActiveDMUploadCoordinator == coordinator)
                                                                                             sSPKAudioActiveDMUploadCoordinator = nil;
@@ -413,23 +414,23 @@ static void SPKAudioDMNotify(NSString *title, NSString *message, BOOL success) {
     [self finishUploadProgressWithCancel];
 
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentActionSheetFromViewController:presenter
+    [SPKDialog presentFromController:presenter
                                                         title:@"Send Voice Note"
                                                       message:@"Send now, or trim the audio first."
                                                       actions:@[
-                                                          [SPKIGAlertAction actionWithTitle:@"Send"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"Send"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf beginUploadProgressWithTitle:@"Sending audio" subtitle:nil];
                                                                                         [weakSelf sendConvertedURL:url duration:duration];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Trim & Send"
-                                                                                      style:SPKIGAlertActionStyleDefault
+                                                          [SPKDialogAction actionWithTitle:@"Trim & Send"
+                                                                                      style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [weakSelf presentAudioTrimForURL:url];
                                                                                     }],
-                                                          [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                      style:SPKIGAlertActionStyleCancel
+                                                          [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                      style:SPKDialogActionStyleCancel
                                                                                     handler:^{
                                                                                         if (sSPKAudioActiveDMUploadCoordinator == weakSelf)
                                                                                             sSPKAudioActiveDMUploadCoordinator = nil;
