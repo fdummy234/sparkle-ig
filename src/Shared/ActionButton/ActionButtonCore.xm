@@ -3068,8 +3068,8 @@ static BOOL SPKExecuteToggleProfileStorySeenUserRuleAction(SPKActionButtonContex
 
     NSString *title = applies ? @"Start Marking Stories as Seen" : @"Stop Marking Stories as Seen";
     NSString *message = applies
-                            ? [NSString stringWithFormat:@"Do you want to start marking stories from @%@ as seen?", username]
-                            : [NSString stringWithFormat:@"Do you want to stop marking stories from @%@ as seen?", username];
+                            ? [NSString stringWithFormat:@"Stories from @%@ are marked as seen from now on.", username]
+                            : [NSString stringWithFormat:@"Stories from @%@ stop being marked as seen.", username];
 
     [SPKUtils
         showConfirmation:^{
@@ -3103,8 +3103,8 @@ static BOOL SPKExecuteToggleProfileMessagesSeenUserRuleAction(SPKActionButtonCon
 
     NSString *title = applies ? @"Start Marking Messages as Seen" : @"Stop Marking Messages as Seen";
     NSString *message = applies
-                            ? [NSString stringWithFormat:@"Do you want to start marking messages from %@ as seen?", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])]
-                            : [NSString stringWithFormat:@"Do you want to stop marking messages from %@ as seen?", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])];
+                            ? [NSString stringWithFormat:@"Messages from %@ are marked as seen from now on.", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])]
+                            : [NSString stringWithFormat:@"Messages from %@ stop being marked as seen.", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])];
     [SPKUtils
         showConfirmation:^{
             if (listed) {
@@ -3685,11 +3685,10 @@ static NSArray<SPKActionMenuNode *> *SPKBuildActionMenuNodes(SPKActionButtonCont
 }
 
 
-static NSString *const kSPKActionButtonSparkleMenuPref = @"action_button_sparkle_menu";
 static const void *kSPKActionButtonSparkleMenuAssocKey = &kSPKActionButtonSparkleMenuAssocKey;
 
 static BOOL SPKActionButtonUsesSparkleMenu(void) {
-    return [SPKUtils getBoolPref:kSPKActionButtonSparkleMenuPref];
+    return [SPKUtils getBoolPref:kSPKPrefSparkleAppearance];
 }
 
 // Opens Sparkle's own menu under the button. Everything is resolved here, at
