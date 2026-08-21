@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import <AVFoundation/AVFoundation.h>
 #import <Photos/Photos.h>
 #include <UIKit/UIKit.h>
@@ -22,7 +23,6 @@
 #import "../MediaTrim/SPKTrimSaveCoordinator.h"
 #import "../PhotoEdit/SPKPhotoEditEntry.h"
 #import "../PhotoEdit/SPKPhotoEditorViewController.h"
-#import "../UI/SPKIGAlertPresenter.h"
 #import "../UI/SPKMediaChrome.h"
 #import "../UI/SPKNotificationCenter.h"
 #import "SPKFullScreenImageViewController.h"
@@ -2641,19 +2641,18 @@ static CGPoint SPKCenterForBounds(CGRect bounds) {
         return;
 
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter
-        presentAlertFromViewController:self
-                                 title:@"Delete from Gallery"
-                               message:@"This will permanently remove this file."
+    [SPKDialog presentFromController:self
+                                 title:@"Delete this file"
+                               message:@"It is removed from the gallery for good."
                                actions:@[
-                                   [SPKIGAlertAction
+                                   [SPKDialogAction
                                        actionWithTitle:@"Cancel"
-                                                 style:SPKIGAlertActionStyleCancel
+                                                 style:SPKDialogActionStyleCancel
                                                handler:nil],
-                                   [SPKIGAlertAction
+                                   [SPKDialogAction
                                        actionWithTitle:@"Delete"
                                                  style:
-                                                     SPKIGAlertActionStyleDestructive
+                                                     SPKDialogActionStyleDestructive
                                                handler:^{
                                                    [weakSelf
                                                        performDeleteCurrentItem];
