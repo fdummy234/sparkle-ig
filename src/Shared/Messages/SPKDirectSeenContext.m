@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKDirectSeenContext.h"
 
 #import <objc/message.h>
@@ -1193,15 +1194,15 @@ BOOL SPKDirectToggleCurrentThreadRule(SPKDirectThreadContext *context, NSString 
 }
 
 - (void)presentError:(NSString *)message {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"Unable to Add Chat"
                                                 message:message
-                                                actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
+                                                actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleCancel handler:nil] ]];
 }
 
 - (void)didTapAdd {
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"Add Chat"
                                                          message:@"Enter the Instagram username for a 1:1 DM thread."
                                                      placeholder:@"username"
@@ -1209,7 +1210,7 @@ BOOL SPKDirectToggleCurrentThreadRule(SPKDirectThreadContext *context, NSString 
                                                  autocapitalized:NO
                                                     confirmTitle:@"Search"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         [weakSelf lookupUsername:text];
                                                     }
@@ -1274,15 +1275,15 @@ BOOL SPKDirectToggleCurrentThreadRule(SPKDirectThreadContext *context, NSString 
                                     NSString *message = fullName.length > 0
                                                             ? [NSString stringWithFormat:@"@%@ (%@)", resolvedUsername, fullName]
                                                             : [@"@" stringByAppendingString:resolvedUsername];
-                                    [SPKIGAlertPresenter presentAlertFromViewController:innerSelf
+                                    [SPKDialog presentFromController:innerSelf
                                                                                   title:@"Add to list"
                                                                                 message:message
                                                                                 actions:@[
-                                                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                style:SPKIGAlertActionStyleCancel
+                                                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                style:SPKDialogActionStyleCancel
                                                                                                               handler:nil],
-                                                                                    [SPKIGAlertAction actionWithTitle:@"Add"
-                                                                                                                style:SPKIGAlertActionStyleDefault
+                                                                                    [SPKDialogAction actionWithTitle:@"Add"
+                                                                                                                style:SPKDialogActionStyleDefault
                                                                                                               handler:^{
                                                                                                                   NSMutableDictionary *usersEntry = [@{
                                                                                                                       @"pk" : pk,
