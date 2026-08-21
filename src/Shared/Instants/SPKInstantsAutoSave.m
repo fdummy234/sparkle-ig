@@ -1,3 +1,4 @@
+#import "../UI/SPKDialog.h"
 #import "SPKInstantsAutoSave.h"
 
 #import "../../Networking/SPKInstagramAPI.h"
@@ -182,15 +183,15 @@ void SPKInstantsAutoSaveConsiderSnap(id snap, NSString *username, NSString *snap
 }
 
 - (void)presentError:(NSString *)message {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
+    [SPKDialog presentFromController:self
                                                   title:@"Unable to Add User"
                                                 message:message
-                                                actions:@[ [SPKIGAlertAction actionWithTitle:@"OK" style:SPKIGAlertActionStyleCancel handler:nil] ]];
+                                                actions:@[ [SPKDialogAction actionWithTitle:@"OK" style:SPKDialogActionStyleCancel handler:nil] ]];
 }
 
 - (void)didTapAdd {
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentTextInputAlertFromViewController:self
+    [SPKDialog presentTextInputFromController:self
                                                            title:@"Add User"
                                                          message:@"Enter the Instagram username whose instants should be auto-saved."
                                                      placeholder:@"username"
@@ -198,7 +199,7 @@ void SPKInstantsAutoSaveConsiderSnap(id snap, NSString *username, NSString *snap
                                                  autocapitalized:NO
                                                     confirmTitle:@"Search"
                                                      cancelTitle:@"Cancel"
-                                                    confirmStyle:SPKIGAlertActionStyleDefault
+                                                    confirmStyle:SPKDialogActionStyleDefault
                                                     confirmBlock:^(NSString *text) {
                                                         [weakSelf lookupUsername:text];
                                                     }
@@ -236,15 +237,15 @@ void SPKInstantsAutoSaveConsiderSnap(id snap, NSString *username, NSString *snap
                                       if (profilePicUrl.length > 0)
                                           entry[@"profilePicUrl"] = profilePicUrl;
 
-                                      [SPKIGAlertPresenter presentAlertFromViewController:strongSelf
+                                      [SPKDialog presentFromController:strongSelf
                                                                                     title:@"Auto-save Instants"
                                                                                   message:message
                                                                                   actions:@[
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                                                  style:SPKIGAlertActionStyleCancel
+                                                                                      [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                                                  style:SPKDialogActionStyleCancel
                                                                                                                 handler:nil],
-                                                                                      [SPKIGAlertAction actionWithTitle:@"Add"
-                                                                                                                  style:SPKIGAlertActionStyleDefault
+                                                                                      [SPKDialogAction actionWithTitle:@"Add"
+                                                                                                                  style:SPKDialogActionStyleDefault
                                                                                                                 handler:^{
                                                                                                                     [strongSelf addResolvedEntry:entry.copy username:resolvedUsername];
                                                                                                                 }],
