@@ -1,8 +1,8 @@
+#import "../../../Shared/UI/SPKDialog.h"
 #import "SPKProfileAnalyzerListViewController.h"
 #import "../../../AssetUtils.h"
 #import "../../../Networking/SPKInstagramAPI.h"
 #import "../../../Shared/Avatars/SPKAvatarCache.h"
-#import "../../../Shared/UI/SPKIGAlertPresenter.h"
 #import "../../../Shared/UI/SPKMediaChrome.h"
 #import "../../../Utils.h"
 #import "../../../Shared/Avatars/SPKAvatarView.h"
@@ -441,15 +441,15 @@ typedef NS_ENUM(NSInteger, SPKPASortMode) {
 
 - (void)confirmClearHistory {
     __weak typeof(self) weakSelf = self;
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Clear Visited History"
-                                                message:@"This removes every profile from your visited history. This cannot be undone."
+    [SPKDialog presentFromController:self
+                                                  title:@"Clear visited profiles"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Clear History"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Clear History"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   typeof(self) strongSelf = weakSelf;
                                                                                   if (!strongSelf)

@@ -1,3 +1,4 @@
+#import "../../../Shared/UI/SPKDialog.h"
 #import "SPKProfileAnalyzerViewController.h"
 #import "../../../AssetUtils.h"
 #import "../../../Shared/UI/SPKIGAlertPresenter.h"
@@ -891,15 +892,15 @@ typedef NS_ENUM(NSInteger, SPKPASectionKind) {
 }
 
 - (void)confirmReset {
-    [SPKIGAlertPresenter presentAlertFromViewController:self
-                                                  title:@"Reset Profile Analyzer"
-                                                message:@"This deletes all stored snapshots, the change history and visited-profile history. This cannot be undone."
+    [SPKDialog presentFromController:self
+                                                  title:@"Reset the profile analyzer"
+                                                message:@"The log and the captured files for this account are removed."
                                                 actions:@[
-                                                    [SPKIGAlertAction actionWithTitle:@"Cancel"
-                                                                                style:SPKIGAlertActionStyleCancel
+                                                    [SPKDialogAction actionWithTitle:@"Cancel"
+                                                                                style:SPKDialogActionStyleCancel
                                                                               handler:nil],
-                                                    [SPKIGAlertAction actionWithTitle:@"Reset"
-                                                                                style:SPKIGAlertActionStyleDestructive
+                                                    [SPKDialogAction actionWithTitle:@"Reset"
+                                                                                style:SPKDialogActionStyleDestructive
                                                                               handler:^{
                                                                                   [SPKProfileAnalyzerStorage resetAll];
                                                                                   [self loadCachedData];
