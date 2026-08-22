@@ -1021,7 +1021,7 @@ static NSString *SPKActionButtonDisplayTitleForContext(NSString *identifier,
             BOOL manualSeenEnabled = [SPKUtils getBoolPref:@"stories_manual_seen"];
             BOOL listed = SPKStoryManualSeenListContainsUser(pk, manualSeenEnabled);
             BOOL applies = manualSeenEnabled ? !listed : listed;
-            return applies ? @"Start Marking Stories as Seen" : @"Stop Marking Stories as Seen";
+            return applies ? @"Mark stories seen" : @"Stop marking stories";
         }
         return @"Toggle Story Seen";
     }
@@ -1033,7 +1033,7 @@ static NSString *SPKActionButtonDisplayTitleForContext(NSString *identifier,
             NSDictionary *existingEntry = SPKDirectManualSeenThreadEntryForUserPK(pk, manualSeenEnabled);
             BOOL listed = (existingEntry != nil);
             BOOL applies = manualSeenEnabled ? !listed : listed;
-            return applies ? @"Start Marking Messages as Seen" : @"Stop Marking Messages as Seen";
+            return applies ? @"Mark messages seen" : @"Stop marking messages";
         }
         return @"Toggle Messages Seen";
     }
@@ -3067,7 +3067,7 @@ static BOOL SPKExecuteToggleProfileStorySeenUserRuleAction(SPKActionButtonContex
     BOOL listed = SPKStoryManualSeenListContainsUser(pk, manualSeenEnabled);
     BOOL applies = manualSeenEnabled ? !listed : listed;
 
-    NSString *title = applies ? @"Start Marking Stories as Seen" : @"Stop Marking Stories as Seen";
+    NSString *title = applies ? @"Mark stories seen" : @"Stop marking stories";
     NSString *message = applies
                             ? [NSString stringWithFormat:@"Stories from @%@ are marked as seen from now on.", username]
                             : [NSString stringWithFormat:@"Stories from @%@ stop being marked as seen.", username];
@@ -3102,7 +3102,7 @@ static BOOL SPKExecuteToggleProfileMessagesSeenUserRuleAction(SPKActionButtonCon
     BOOL listed = (existingEntry != nil);
     BOOL applies = manualSeenEnabled ? !listed : listed;
 
-    NSString *title = applies ? @"Start Marking Messages as Seen" : @"Stop Marking Messages as Seen";
+    NSString *title = applies ? @"Mark messages seen" : @"Stop marking messages";
     NSString *message = applies
                             ? [NSString stringWithFormat:@"Messages from %@ are marked as seen from now on.", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])]
                             : [NSString stringWithFormat:@"Messages from %@ stop being marked as seen.", (fullName.length > 0 ? fullName : [@"@" stringByAppendingString:username])];
