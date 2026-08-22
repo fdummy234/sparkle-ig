@@ -20,7 +20,7 @@
 // one of these: same width, same corner, same row height, same margin, same
 // shadow. A dialog that differed on seven of eight read as a stranger among
 // them.
-static CGFloat const kSPKDialogWidth = 250.0;
+static CGFloat const kSPKDialogWidth = 240.0;
 static CGFloat const kSPKDialogCornerRadius = 13.0;
 static CGFloat const kSPKDialogPadding = 14.0;
 static CGFloat const kSPKDialogButtonHeight = 44.0;
