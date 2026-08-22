@@ -1023,7 +1023,7 @@ static NSString *SPKActionButtonDisplayTitleForContext(NSString *identifier,
             BOOL applies = manualSeenEnabled ? !listed : listed;
             return applies ? @"Mark stories seen" : @"Stop marking stories";
         }
-        return @"Toggle Story Seen";
+        return @"Story seen";
     }
     if ([identifier isEqualToString:kSPKActionToggleProfileMessagesSeenUserRule]) {
         id user = SPKResolveMediaForContext(context);
@@ -1035,7 +1035,7 @@ static NSString *SPKActionButtonDisplayTitleForContext(NSString *identifier,
             BOOL applies = manualSeenEnabled ? !listed : listed;
             return applies ? @"Mark messages seen" : @"Stop marking messages";
         }
-        return @"Toggle Messages Seen";
+        return @"Messages seen";
     }
     if ([identifier isEqualToString:kSPKActionCopyMedia]) {
         BOOL isVideo = (currentEntry.videoURL != nil);

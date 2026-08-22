@@ -91,19 +91,19 @@
                                                     title:@"Repost"
                                                  iconName:@"repost"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionToggleStorySeenUserRule
-                                                    title:@"Toggle Story User Rule"
+                                                    title:@"Story rule"
                                                  iconName:@"eye"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionToggleStoryAutoSaveUserRule
-                                                    title:@"Toggle Story Auto-Save"
+                                                    title:@"Story auto-save"
                                                  iconName:@"download"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionToggleDirectAutoSaveThreadRule
-                                                    title:@"Toggle Chat Auto-Save"
+                                                    title:@"Chat auto-save"
                                                  iconName:@"download"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionToggleProfileStorySeenUserRule
-                                                    title:@"Toggle Story Seen"
+                                                    title:@"Story seen"
                                                  iconName:@"eye"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionToggleProfileMessagesSeenUserRule
-                                                    title:@"Toggle Messages Seen"
+                                                    title:@"Messages seen"
                                                  iconName:@"eye"],
             [SPKActionDescriptor descriptorWithIdentifier:kSPKActionStoryMentionsSheet
                                                     title:@"Story Mentions"
