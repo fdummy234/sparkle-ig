@@ -2301,7 +2301,7 @@ static NSString *SPKMediaCodecBadge(NSString *codec) {
     if (option.primaryURL.absoluteString.length > 0) {
         NSString *title =
             option.kind == SPKMediaOptionKindPhotoProgressive ? @"Copy Photo Download URL"
-            : option.kind == SPKMediaOptionKindAudioDash      ? @"Copy Audio Download URL"
+            : option.kind == SPKMediaOptionKindAudioDash      ? @"Copy audio URL"
                                                               : @"Copy Video Download URL";
         [children
             addObject:[UIAction
