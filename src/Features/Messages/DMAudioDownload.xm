@@ -477,7 +477,7 @@ static void SPKDMPresentAudioActions(UIView *view, SPKAudioSource source) {
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionPlay item:item presenter:presenter sourceView:view metadata:metadata notificationIdentifier:kSPKNotificationPlayAudio];
                                                                                     }],
-                                                          [SPKDialogAction actionWithTitle:@"Copy Audio Download URL"
+                                                          [SPKDialogAction actionWithTitle:@"Copy audio URL"
                                                                                       style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionCopyURL item:item presenter:presenter sourceView:view metadata:metadata notificationIdentifier:kSPKNotificationCopyAudioURL];
@@ -654,7 +654,7 @@ static void SPKDMPresentDownloadAudioActionsForViewModel(id viewModel) {
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionPlay item:audioItem presenter:presenter sourceView:sourceView metadata:metadata notificationIdentifier:kSPKNotificationPlayAudio];
                                                                                     }],
-                                                          [SPKDialogAction actionWithTitle:@"Copy Audio Download URL"
+                                                          [SPKDialogAction actionWithTitle:@"Copy audio URL"
                                                                                       style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionCopyURL item:audioItem presenter:presenter sourceView:sourceView metadata:metadata notificationIdentifier:kSPKNotificationCopyAudioURL];

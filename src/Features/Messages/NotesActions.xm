@@ -241,7 +241,7 @@ static void SPKNotesPresentAudioActions(NSArray *audioCandidates, id noteModel,
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionPlay item:item presenter:host sourceView:sourceView metadata:metadata notificationIdentifier:kSPKNotificationPlayAudio];
                                                                                     }],
-                                                          [SPKDialogAction actionWithTitle:@"Copy Audio Download URL"
+                                                          [SPKDialogAction actionWithTitle:@"Copy audio URL"
                                                                                       style:SPKDialogActionStyleDefault
                                                                                     handler:^{
                                                                                         [SPKAudioDownloadCoordinator performAction:SPKAudioActionCopyURL item:item presenter:host sourceView:sourceView metadata:metadata notificationIdentifier:kSPKNotificationCopyAudioURL];
