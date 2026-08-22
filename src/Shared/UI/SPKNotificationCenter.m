@@ -198,7 +198,7 @@ NSArray<NSDictionary *> *SPKNotificationPreferenceSections(void) {
               SPKNotificationItem(kSPKNotificationDownloadAudioShare, @"Share Audio", @"share"),
               SPKNotificationItem(kSPKNotificationDownloadAudioGallery, @"Save Audio to Gallery", @"sparkle_gallery"),
               SPKNotificationItem(kSPKNotificationPlayAudio, @"Play Audio", @"play"),
-              SPKNotificationItem(kSPKNotificationCopyAudioURL, @"Copy Audio Download URL", @"link"),
+              SPKNotificationItem(kSPKNotificationCopyAudioURL, @"Copy audio URL", @"link"),
           ]},
         // Every auto-save toast lives here rather than under its surface: they're
         // configured together, and the summary/pending pair isn't per-surface at all.
