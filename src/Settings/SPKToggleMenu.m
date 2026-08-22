@@ -10,7 +10,7 @@
 // Convention v1.2 metrics — see SPKToggleMenu.h.
 // Fixed, and matched to the action menu ceiling so the two cards are the same
 // width whichever one opens.
-static CGFloat const kSPKToggleMenuWidth = 250.0;
+static CGFloat const kSPKToggleMenuWidth = 240.0;
 static CGFloat const kSPKToggleMenuItemHeight = 44.0;  // = SPKUI_RowHeight
 static CGFloat const kSPKToggleMenuCornerRadius = 13.0;
 static CGFloat const kSPKToggleMenuIconSize = 22.0;
