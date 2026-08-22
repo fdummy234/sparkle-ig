@@ -869,7 +869,7 @@ NSString *SPKStoryCurrentUserRuleActionTitle(SPKStoryContext *context) {
     if (!SPKStoryCurrentUserRuleState(context, &username, NULL, NULL, NULL))
         return nil;
     BOOL applies = SPKStoryManualSeenAppliesToContext(context);
-    return applies ? @"Start Marking Stories as Seen" : @"Stop Marking Stories as Seen";
+    return applies ? @"Mark stories seen" : @"Stop marking stories";
 }
 
 NSString *SPKStoryCurrentUserRuleConfirmationTitle(SPKStoryContext *context) {
@@ -877,7 +877,7 @@ NSString *SPKStoryCurrentUserRuleConfirmationTitle(SPKStoryContext *context) {
     if (!SPKStoryCurrentUserRuleState(context, &username, NULL, NULL, NULL))
         return nil;
     BOOL applies = SPKStoryManualSeenAppliesToContext(context);
-    return applies ? @"Start Marking Stories as Seen" : @"Stop Marking Stories as Seen";
+    return applies ? @"Mark stories seen" : @"Stop marking stories";
 }
 
 NSString *SPKStoryCurrentUserRuleConfirmationMessage(SPKStoryContext *context) {
