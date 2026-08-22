@@ -220,7 +220,7 @@ static UIMenu *SPKAudioPageMenuForButton(UIButton *button) {
                             SPKAudioPageMenuAction(@"Share Audio", kSPKAudioPageActionShare, kSPKActionDownloadAudioShare, @"share", button),
                             SPKAudioPageMenuAction(@"Save Audio to Gallery", kSPKAudioPageActionGallery, kSPKActionDownloadAudioGallery, @"sparkle_gallery", button),
                             SPKAudioPageMenuAction(@"Play Audio", kSPKAudioPageActionPlay, kSPKActionPlayAudio, @"play", button),
-                            SPKAudioPageMenuAction(@"Copy Audio Download URL", kSPKAudioPageActionCopyURL, kSPKActionCopyAudioURL, @"link", button)
+                            SPKAudioPageMenuAction(@"Copy audio URL", kSPKAudioPageActionCopyURL, kSPKActionCopyAudioURL, @"link", button)
                         ]];
 }
 
