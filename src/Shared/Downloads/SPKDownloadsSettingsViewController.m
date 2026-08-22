@@ -18,7 +18,7 @@
         @{@"title" : @"Share Audio", @"value" : @"share", @"icon" : @"share"},
         @{@"title" : @"Save Audio to Gallery", @"value" : @"gallery", @"icon" : @"sparkle_gallery"},
         @{@"title" : @"Play Audio", @"value" : @"play", @"icon" : @"play"},
-        @{@"title" : @"Copy Audio Download URL", @"value" : @"copy_url", @"icon" : @"link"},
+        @{@"title" : @"Copy audio URL", @"value" : @"copy_url", @"icon" : @"link"},
         @{@"title" : @"Open menu", @"value" : @"none", @"icon" : @"action"}
     ];
     NSMutableArray<UICommand *> *commands = [NSMutableArray array];
